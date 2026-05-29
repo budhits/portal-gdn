@@ -34,10 +34,33 @@ Password mengikuti pola `<id>123`.
 | Leader | satya@email.com | satya123 |
 | PIC | rafli@email.com | rafli123 |
 
-## Endpoint (sejauh ini)
+## Endpoint
 
-| Method | Path | Keterangan |
-|--------|------|------------|
-| GET | `/api/health` | Cek server hidup |
-| POST | `/api/auth/login` | `{ email, password }` → `{ token, user }` |
-| GET | `/api/auth/me` | Butuh header `Authorization: Bearer <token>` |
+Semua rute (kecuali `/api/health` & `/api/auth/login`) butuh header
+`Authorization: Bearer <token>`.
+
+| Method | Path | Akses | Keterangan |
+|--------|------|-------|------------|
+| GET | `/api/health` | publik | Cek server hidup |
+| POST | `/api/auth/login` | publik | `{ email, password }` → `{ token, user }` |
+| GET | `/api/auth/me` | login | Profil user saat ini |
+| GET | `/api/users` | login | Daftar user (filter `?role=&unitId=`) |
+| POST | `/api/users` | owner | Tambah user |
+| PATCH | `/api/users/:id` | owner | Ubah data/role/password |
+| DELETE | `/api/users/:id` | owner | Hapus user |
+| GET | `/api/units` · `/api/units/:id` | login | Unit (+ sub-unit pada detail) |
+| GET | `/api/sub-units` | login | Sub-unit (filter `?unitId=`) |
+| POST/PATCH/DELETE | `/api/sub-units/:id` | owner/leader | Kelola sub-unit |
+| GET | `/api/projects` | login | Project (filter `?unitId=`) |
+| POST/PATCH/DELETE | `/api/projects/:id` | owner/leader | Kelola project |
+| GET | `/api/templates` · `/api/templates/:id` | login | Template KPI + field |
+| GET | `/api/submissions` · `/api/submissions/:id` | login | KPI submission + skor/margin turunan |
+| GET | `/api/audit` | login | Audit log (filter `?unitId=&limit=`) |
+| GET | `/api/dashboard/periods` | login | Daftar periode |
+| GET | `/api/dashboard?period=2026-05` | login | Ringkasan skor & margin per unit |
+
+## Scoring Engine
+
+Skor & margin sub-unit **diturunkan** dari `kpi_submissions` (bukan disimpan
+terpisah) oleh `src/lib/scoring.js` — port langsung dari engine di `src/App.jsx`.
+Test regresi: `npm test`.

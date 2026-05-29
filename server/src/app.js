@@ -3,6 +3,14 @@
 import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth.js";
+import usersRoutes from "./routes/users.js";
+import unitsRoutes from "./routes/units.js";
+import subUnitsRoutes from "./routes/subUnits.js";
+import projectsRoutes from "./routes/projects.js";
+import templatesRoutes from "./routes/templates.js";
+import submissionsRoutes from "./routes/submissions.js";
+import auditRoutes from "./routes/audit.js";
+import dashboardRoutes from "./routes/dashboard.js";
 
 export function createApp() {
   const app = express();
@@ -21,6 +29,14 @@ export function createApp() {
 
   // Rute domain
   app.use("/api/auth", authRoutes);
+  app.use("/api/users", usersRoutes);
+  app.use("/api/units", unitsRoutes);
+  app.use("/api/sub-units", subUnitsRoutes);
+  app.use("/api/projects", projectsRoutes);
+  app.use("/api/templates", templatesRoutes);
+  app.use("/api/submissions", submissionsRoutes);
+  app.use("/api/audit", auditRoutes);
+  app.use("/api/dashboard", dashboardRoutes);
 
   // 404 untuk rute API yang tidak dikenal
   app.use("/api", (_req, res) => {
