@@ -36,6 +36,7 @@
 import { useState, useMemo, useEffect, createContext, useContext } from "react";
 import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser } from "./api/auth.js";
 import { getToken } from "./api/client.js";
+import { fetchAllCoreData, indexById } from "./api/data.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -251,7 +252,9 @@ const STATUS_THRESHOLDS = {
 // ════════════════════════════════════════════════════════════════════════════
 
 /** @type {Record<string, User>} */
-const USERS = {
+// `let` (bukan const) supaya bisa diganti dari data API saat bootstrap.
+// Semua pembacaan `USERS[id]` tetap melihat binding terbaru.
+let USERS = {
   budhi:    { id: "budhi",    name: "Budhi",    email: "budhi@email.com",    role: ROLES.OWNER,   avatar: "", unitId: null, subUnitId: null },
   rarra:    { id: "rarra",    name: "Rarra",    email: "rarra@email.com",    role: ROLES.OWNER,   avatar: "", unitId: null, subUnitId: null },
 
@@ -273,7 +276,8 @@ const USERS = {
 };
 
 /** @type {Record<string, Unit>} */
-const UNITS = {
+// `let` (lihat catatan pada USERS) — diisi dari API saat bootstrap.
+let UNITS = {
   pixel:       { id: "pixel",       name: "Pixel Telemedia", leaderId: "sugianto", color: "#3B7BC4", colorDark: "#2C5F9E", colorLight: "#E7F0F8", icon: "signal" },
   retail:      { id: "retail",      name: "KK / Retail",     leaderId: "ferry",    color: "#C9A45C", colorDark: "#9A7B3E", colorLight: "#F4ECDB", icon: "store" },
   aquaculture: { id: "aquaculture", name: "Aquaculture",     leaderId: "satya",    color: "#5B9B47", colorDark: "#3F6E31", colorLight: "#EAF3E5", icon: "fish" },
@@ -3320,7 +3324,7 @@ function MarginUnitRow({ unit, isLast }) {
             <div style={{ marginTop: 8, fontSize: 10, color: COLORS.textMuted }}>
               <div style={{ fontWeight: 600, marginBottom: 4 }}>Detail closing:</div>
               {closedEntries.map(entry => (
-                <div key={entry.id} style={{
+                <div key={entry.submissionId || entry.id} style={{
                   display: "flex",
                   justifyContent: "space-between",
                   padding: "2px 0",
@@ -3368,7 +3372,7 @@ function MarginUnitRow({ unit, isLast }) {
               borderTop: "1px solid #FDE68A",
             }}>
               {pendingEntries.map(entry => (
-                <div key={entry.id} style={{
+                <div key={entry.submissionId || entry.id} style={{
                   display: "flex",
                   justifyContent: "space-between",
                   padding: "2px 0",
@@ -4172,7 +4176,7 @@ function MarginDetailUnitCard({ unit }) {
               }}>Sudah Closing ({closedEntries.length})
               </div>
               {closedEntries.map(entry => (
-                <MarginEntryRow key={entry.id} entry={entry} />
+                <MarginEntryRow key={entry.submissionId || entry.id} entry={entry} />
               ))}
             </div>
           )}
@@ -4186,7 +4190,7 @@ function MarginDetailUnitCard({ unit }) {
               }}>Pending Closing ({pendingEntries.length})
               </div>
               {pendingEntries.map(entry => (
-                <MarginEntryRow key={entry.id} entry={entry} isPending />
+                <MarginEntryRow key={entry.submissionId || entry.id} entry={entry} isPending />
               ))}
               <div style={{
                 marginTop: 6, padding: "6px 10px",
@@ -6491,6 +6495,14 @@ function syncLive(next) {
   if (next.templates) LIVE.templates = next.templates;
   if (next.subUnitWeights) LIVE.subUnitWeights = next.subUnitWeights;
 }
+
+/**
+ * Ganti binding modul UNITS & USERS dengan data dari API (objek ter-index id).
+ * Dipakai bootstrap loader setelah login. Pembacaan UNITS[id]/USERS[id] di mana
+ * pun akan otomatis melihat data terbaru karena ini binding modul.
+ */
+function setUnitsData(map) { UNITS = map; }
+function setUsersData(map) { USERS = map; }
 
 function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
   const store = useDataStore();
@@ -11049,8 +11061,10 @@ function DataStoreProvider({ children }) {
 // ════════════════════════════════════════════════════════════════════════════
 
 function AppInner() {
+  const store = useDataStore();
   const [activeUserId, setActiveUserId] = useState(null);
   const [page, setPage] = useState(null);
+  const [restoring, setRestoring] = useState(true); // sedang memulihkan sesi saat reload
 
   // Detail page context (which entity we're viewing)
   const [selectedUnitId, setSelectedUnitId] = useState(null);
@@ -11079,25 +11093,34 @@ function AppInner() {
     return "workspace";
   };
 
-  // Login sungguhan: kirim email+password ke API. Melempar error bila gagal
-  // (ditangkap & ditampilkan oleh LoginScreen).
+  // Bootstrap: muat seluruh data inti dari API ke binding LIVE/UNITS/USERS.
+  // Setelah ini selesai, seluruh aplikasi membaca data asli secara konsisten.
+  // (milestones & expenses sementara tetap dari seed — tabelnya belum dibuat.)
+  const loadAllData = async () => {
+    const { units, users, subUnits, projects, templates, submissions } = await fetchAllCoreData();
+    setUnitsData(indexById(units));
+    setUsersData(indexById(users));
+    store.setSubUnits(subUnits);
+    store.setProjects(projects);
+    store.setTemplates(templates);
+    store.setSubmissions(submissions);
+  };
+
+  // Login sungguhan: kirim email+password ke API, lalu muat data sebelum masuk.
+  // Melempar error bila gagal (ditangkap & ditampilkan oleh LoginScreen).
   const handleLogin = async (email, password) => {
     const user = await apiLogin(email, password);
+    await loadAllData();
     setActiveUserId(user.id);
     setPage(routeForRole(user.role));
   };
 
   // Pulihkan sesi saat halaman dimuat ulang jika token masih tersimpan & valid.
   useEffect(() => {
-    if (!getToken()) return;
-    const stored = getStoredUser();
-    if (stored) {
-      setActiveUserId(stored.id);
-      setPage(routeForRole(stored.role));
-    }
-    // Validasi token ke server; jika tidak valid, paksa logout.
+    if (!getToken()) { setRestoring(false); return; }
     fetchMe()
-      .then((user) => {
+      .then(async (user) => {
+        await loadAllData();
         setActiveUserId(user.id);
         setPage((p) => p || routeForRole(user.role));
       })
@@ -11105,7 +11128,8 @@ function AppInner() {
         apiLogout();
         setActiveUserId(null);
         setPage(null);
-      });
+      })
+      .finally(() => setRestoring(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -11154,6 +11178,20 @@ function AppInner() {
     // Return to where user came from
     setPage(formContext?.returnTo || "workspace");
   };
+
+  // Saat memulihkan sesi (reload dengan token tersimpan): tampilkan layar muat.
+  if (restoring && !activeUserId) {
+    return (
+      <div style={{
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        background: `linear-gradient(135deg, ${COLORS.dark}, #1E1B4B)`, color: COLORS.white,
+        fontFamily: FONTS.body, fontSize: 14, gap: 10, flexDirection: "column",
+      }}>
+        <img src={GDN_LOGO} alt="GDN" style={{ height: 48, opacity: 0.9 }} />
+        <div>Memuat data…</div>
+      </div>
+    );
+  }
 
   if (!activeUserId) {
     return <LoginScreen onAuthenticate={handleLogin} />;
