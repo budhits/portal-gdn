@@ -34,6 +34,8 @@
  */
 
 import { useState, useMemo, useEffect, createContext, useContext } from "react";
+import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser } from "./api/auth.js";
+import { getToken } from "./api/client.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2145,7 +2147,12 @@ function InfoBanner({ icon, title, children, variant = "info" }) {
 /**
  * Login screen with role-grouped user selection.
  */
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onAuthenticate }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const groupedUsers = useMemo(() => {
     const groups = { owners: [], support: [], leaders: [], pics: [] };
     Object.values(USERS).forEach(u => {
@@ -2156,6 +2163,25 @@ function LoginScreen({ onLogin }) {
     });
     return groups;
   }, []);
+
+  // Submit kredensial ke API (dipakai form manual maupun tombol demo).
+  const submit = async (em, pw) => {
+    setError("");
+    setLoading(true);
+    try {
+      await onAuthenticate(em.trim(), pw);
+    } catch (err) {
+      setError(err.message || "Login gagal.");
+      setLoading(false);
+    }
+  };
+
+  // Tombol demo: isi email user + password pola "<id>123", lalu submit.
+  const loginDemo = (user) => {
+    setEmail(user.email);
+    setPassword(`${user.id}123`);
+    submit(user.email, `${user.id}123`);
+  };
 
   return (
     <div style={{
@@ -2198,13 +2224,63 @@ function LoginScreen({ onLogin }) {
           marginBottom: 18,
           fontSize: 11,
           color: "#92400E",
-        }}><strong>Demo v{APP_CONFIG.version}</strong> — Pilih akun untuk merasakan tampilan tiap role
+        }}><strong>Demo v{APP_CONFIG.version}</strong> — Masuk dengan email & password, atau klik akun demo
         </div>
 
-        <LoginUserGroup label="Owner" users={groupedUsers.owners} onSelect={onLogin} />
-        <LoginUserGroup label="Support (Finance & HR)" users={groupedUsers.support} onSelect={onLogin} />
-        <LoginUserGroup label="Leader Unit" users={groupedUsers.leaders} onSelect={onLogin} />
-        <LoginUserGroup label="PIC Sub Unit (Baru di v2)" users={groupedUsers.pics} onSelect={onLogin} highlight />
+        {/* Form login email + password (autentikasi sungguhan ke backend) */}
+        <form
+          onSubmit={(e) => { e.preventDefault(); submit(email, password); }}
+          style={{ display: "grid", gap: 10, marginBottom: 16 }}
+        >
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            autoComplete="username"
+            style={{
+              padding: "11px 12px", borderRadius: 10, fontSize: 14,
+              border: `1px solid ${COLORS.border}`, outline: "none", fontFamily: FONTS.body,
+            }}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            autoComplete="current-password"
+            style={{
+              padding: "11px 12px", borderRadius: 10, fontSize: 14,
+              border: `1px solid ${COLORS.border}`, outline: "none", fontFamily: FONTS.body,
+            }}
+          />
+          {error && (
+            <div style={{ fontSize: 12, color: COLORS.danger, background: COLORS.dangerBg, padding: "8px 10px", borderRadius: 8 }}>
+              {error}
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={loading || !email || !password}
+            style={{
+              padding: "11px 12px", borderRadius: 10, fontSize: 14, fontWeight: 700,
+              color: COLORS.white, background: COLORS.primary, border: "none",
+              cursor: loading ? "wait" : "pointer", opacity: (loading || !email || !password) ? 0.6 : 1,
+              fontFamily: FONTS.body,
+            }}
+          >
+            {loading ? "Memproses…" : "Masuk"}
+          </button>
+        </form>
+
+        <div style={{ textAlign: "center", fontSize: 10, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.6, margin: "4px 0 12px" }}>
+          atau pilih akun demo
+        </div>
+
+        <LoginUserGroup label="Owner" users={groupedUsers.owners} onSelect={loginDemo} />
+        <LoginUserGroup label="Support (Finance & HR)" users={groupedUsers.support} onSelect={loginDemo} />
+        <LoginUserGroup label="Leader Unit" users={groupedUsers.leaders} onSelect={loginDemo} />
+        <LoginUserGroup label="PIC Sub Unit (Baru di v2)" users={groupedUsers.pics} onSelect={loginDemo} highlight />
 
         <div style={{
           marginTop: 18,
@@ -2234,7 +2310,7 @@ function LoginUserGroup({ label, users, onSelect, highlight }) {
       }}>{label}</div>
       <div style={{ display: "grid", gap: 6 }}>
         {users.map(u => (
-          <LoginUserButton key={u.id} user={u} onClick={() => onSelect(u.id)} />
+          <LoginUserButton key={u.id} user={u} onClick={() => onSelect(u)} />
         ))}
       </div>
     </div>
@@ -10997,18 +11073,44 @@ function AppInner() {
     document.head.appendChild(link);
   }, []);
 
-  const handleLogin = (userId) => {
-    const user = USERS[userId];
-    if (!user) return;
-    setActiveUserId(userId);
-    if ([ROLES.OWNER, ROLES.FINANCE, ROLES.HR].includes(user.role)) {
-      setPage("dashboard");
-    } else {
-      setPage("workspace");
-    }
+  // Arahkan halaman awal sesuai peran setelah login berhasil.
+  const routeForRole = (role) => {
+    if ([ROLES.OWNER, ROLES.FINANCE, ROLES.HR].includes(role)) return "dashboard";
+    return "workspace";
   };
 
+  // Login sungguhan: kirim email+password ke API. Melempar error bila gagal
+  // (ditangkap & ditampilkan oleh LoginScreen).
+  const handleLogin = async (email, password) => {
+    const user = await apiLogin(email, password);
+    setActiveUserId(user.id);
+    setPage(routeForRole(user.role));
+  };
+
+  // Pulihkan sesi saat halaman dimuat ulang jika token masih tersimpan & valid.
+  useEffect(() => {
+    if (!getToken()) return;
+    const stored = getStoredUser();
+    if (stored) {
+      setActiveUserId(stored.id);
+      setPage(routeForRole(stored.role));
+    }
+    // Validasi token ke server; jika tidak valid, paksa logout.
+    fetchMe()
+      .then((user) => {
+        setActiveUserId(user.id);
+        setPage((p) => p || routeForRole(user.role));
+      })
+      .catch(() => {
+        apiLogout();
+        setActiveUserId(null);
+        setPage(null);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleLogout = () => {
+    apiLogout();
     setActiveUserId(null);
     setPage(null);
     setSelectedUnitId(null);
@@ -11054,7 +11156,7 @@ function AppInner() {
   };
 
   if (!activeUserId) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return <LoginScreen onAuthenticate={handleLogin} />;
   }
 
   const user = USERS[activeUserId];
