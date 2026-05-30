@@ -36,7 +36,7 @@
 import { useState, useMemo, useEffect, createContext, useContext } from "react";
 import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser } from "./api/auth.js";
 import { getToken } from "./api/client.js";
-import { fetchAllCoreData, indexById } from "./api/data.js";
+import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser } from "./api/data.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -10061,33 +10061,85 @@ function SubUnitManagerRow({ subUnit, parentUnit, isLast, kpiCount = 0, onEdit, 
 }
 
 function UserManager() {
+  const [users, setUsers] = useState(() => Object.values(USERS));
   const [filterRole, setFilterRole] = useState("all");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null); // null = mode tambah
   const [fName, setFName] = useState("");
   const [fEmail, setFEmail] = useState("");
+  const [fPassword, setFPassword] = useState("");
   const [fRole, setFRole] = useState(ROLES.PIC);
   const [fUnitId, setFUnitId] = useState("");
   const [fSubUnitId, setFSubUnitId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  const allUsers = Object.values(USERS);
+  const allUsers = users;
   const filtered = filterRole === "all" ? allUsers : allUsers.filter(u => u.role === filterRole);
 
-  const handleAddUser = () => {
-    if (!fName.trim()) { alert("Isi nama user"); return; }
-    if (!fEmail.trim()) { alert("Isi email user"); return; }
-    if (fRole === ROLES.LEADER && !fUnitId) { alert("Leader harus punya unit"); return; }
-    if (fRole === ROLES.PIC && !fSubUnitId) { alert("PIC harus punya sub unit"); return; }
-    alert(
-      "Data user:\n\n" +
-      `Nama: ${fName}\n` +
-      `Email: ${fEmail}\n` +
-      `Role: ${ROLE_LABELS[fRole]}\n` +
-      (fRole === ROLES.LEADER ? `Unit: ${UNITS[fUnitId]?.name}\n` : "") +
-      (fRole === ROLES.PIC ? `Sub Unit: ${getSubUnitName(fSubUnitId)}\n` : "") +
-      "\nCatatan: manajemen user & login diaktifkan di Fase 3 (butuh autentikasi/OAuth). " +
-      "Untuk prototype, gunakan user yang sudah ada untuk uji peran."
-    );
-    setFName(""); setFEmail(""); setFRole(ROLES.PIC); setFUnitId(""); setFSubUnitId(""); setShowForm(false);
+  // Muat ulang dari API + perbarui binding modul USERS agar seluruh app ikut segar.
+  const reload = async () => {
+    const list = await fetchUsers();
+    setUsersData(indexById(list));
+    setUsers(list);
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setFName(""); setFEmail(""); setFPassword("");
+    setFRole(ROLES.PIC); setFUnitId(""); setFSubUnitId(""); setError("");
+  };
+  const openCreate = () => { resetForm(); setShowForm(true); };
+  const openEdit = (u) => {
+    setEditingId(u.id);
+    setFName(u.name); setFEmail(u.email); setFPassword("");
+    setFRole(u.role); setFUnitId(u.unitId || ""); setFSubUnitId(u.subUnitId || "");
+    setError(""); setShowForm(true);
+  };
+
+  const slugify = (s) => (s || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+  const handleSave = async () => {
+    setError("");
+    if (!fName.trim()) return setError("Nama wajib diisi.");
+    if (!fEmail.trim()) return setError("Email wajib diisi.");
+    if (!editingId && !fPassword.trim()) return setError("Password wajib diisi untuk user baru.");
+    if (fRole === ROLES.LEADER && !fUnitId) return setError("Leader harus punya unit.");
+    if (fRole === ROLES.PIC && !fSubUnitId) return setError("PIC harus punya sub unit.");
+
+    // unitId untuk PIC diturunkan dari sub-unit yang dipilih.
+    const unitId = fRole === ROLES.LEADER
+      ? fUnitId
+      : (fRole === ROLES.PIC ? (LIVE.subUnits.find(s => s.id === fSubUnitId)?.unitId || null) : null);
+    const subUnitId = fRole === ROLES.PIC ? fSubUnitId : null;
+
+    setBusy(true);
+    try {
+      if (editingId) {
+        const body = { name: fName.trim(), email: fEmail.trim(), role: fRole, unitId, subUnitId };
+        if (fPassword.trim()) body.password = fPassword.trim();
+        await updateUser(editingId, body);
+      } else {
+        const id = slugify(fEmail.split("@")[0]) || slugify(fName) || `user-${Date.now()}`;
+        await createUser({ id, name: fName.trim(), email: fEmail.trim(), password: fPassword.trim(), role: fRole, unitId, subUnitId });
+      }
+      await reload();
+      setShowForm(false); resetForm();
+    } catch (e) {
+      setError(e.message || "Gagal menyimpan user.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDelete = async (u) => {
+    if (!confirm(`Hapus user "${u.name}"?\n\nTindakan ini permanen dan tidak bisa dibatalkan.`)) return;
+    try {
+      await deleteUser(u.id);
+      await reload();
+    } catch (e) {
+      alert(e.message || "Gagal menghapus user.");
+    }
   };
 
   const counts = {
@@ -10117,7 +10169,7 @@ function UserManager() {
           </p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => { if (showForm) { setShowForm(false); resetForm(); } else { openCreate(); } }}
           type="button"
           style={{
             padding: "8px 14px",
@@ -10147,8 +10199,13 @@ function UserManager() {
           borderBottom: `1px solid ${COLORS.border}`,
         }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 12 }}>
-            User Baru
+            {editingId ? "Ubah User" : "User Baru"}
           </div>
+          {error && (
+            <div style={{ fontSize: 11, color: COLORS.danger, background: COLORS.dangerBg, padding: "8px 10px", borderRadius: 8, marginBottom: 12 }}>
+              {error}
+            </div>
+          )}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={labelStyle}>Nama <span style={{ color: COLORS.danger }}>*</span></label>
@@ -10158,6 +10215,21 @@ function UserManager() {
               <label style={labelStyle}>Email <span style={{ color: COLORS.danger }}>*</span></label>
               <input type="email" value={fEmail} onChange={e => setFEmail(e.target.value)} placeholder="email@gdn.co.id" style={inputStyle} />
             </div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={labelStyle}>
+              Password {editingId
+                ? <span style={{ color: COLORS.textLight, fontWeight: 400 }}>(kosongkan jika tidak diubah)</span>
+                : <span style={{ color: COLORS.danger }}>*</span>}
+            </label>
+            <input
+              type="password"
+              value={fPassword}
+              onChange={e => setFPassword(e.target.value)}
+              placeholder={editingId ? "••••••" : "Password awal"}
+              autoComplete="new-password"
+              style={inputStyle}
+            />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
@@ -10190,8 +10262,15 @@ function UserManager() {
             )}
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-            <button onClick={() => setShowForm(false)} type="button" style={adminBtnStyle}>Batal</button>
-            <button onClick={handleAddUser} type="button" style={{ padding: "8px 18px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan User</button>
+            <button onClick={() => { setShowForm(false); resetForm(); }} type="button" style={adminBtnStyle}>Batal</button>
+            <button
+              onClick={handleSave}
+              type="button"
+              disabled={busy}
+              style={{ padding: "8px 18px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1, fontFamily: "inherit" }}
+            >
+              {busy ? "Menyimpan…" : (editingId ? "Simpan Perubahan" : "Simpan User")}
+            </button>
           </div>
         </div>
       )}
@@ -10251,7 +10330,7 @@ function UserManager() {
           </thead>
           <tbody>
             {filtered.map(u => (
-              <UserManagerRow key={u.id} user={u} />
+              <UserManagerRow key={u.id} user={u} onEdit={openEdit} onDelete={handleDelete} />
             ))}
           </tbody>
         </table>
@@ -10269,7 +10348,7 @@ function UserManager() {
   );
 }
 
-function UserManagerRow({ user }) {
+function UserManagerRow({ user, onEdit, onDelete }) {
   const unit = user.unitId ? UNITS[user.unitId] : null;
   const subUnit = user.subUnitId ? LIVE.subUnits.find(su => su.id === user.subUnitId) : null;
 
@@ -10298,8 +10377,8 @@ function UserManagerRow({ user }) {
       <td style={{ padding: "10px 12px", color: COLORS.textMuted, fontSize: 11 }}>{location}</td>
       <td style={{ padding: "10px 12px" }}>
         <div style={{ display: "flex", gap: 4 }}>
-          <button onClick={() => alert(`Edit "${user.name}"\n\nUbah role, unit, atau sub unit user ini.`)} style={adminBtnStyle}>Edit</button>
-          <button onClick={() => { if (confirm(`Nonaktifkan "${user.name}"?\n\nUser tidak bisa login lagi sampai diaktifkan kembali.`)) alert("User dinonaktifkan."); }} style={adminBtnDanger}>Nonaktif</button>
+          <button onClick={() => onEdit(user)} style={adminBtnStyle}>Edit</button>
+          <button onClick={() => onDelete(user)} style={adminBtnDanger}>Hapus</button>
         </div>
       </td>
     </tr>

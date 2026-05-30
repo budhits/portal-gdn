@@ -10,6 +10,21 @@ export const fetchProjects     = () => apiFetch("/projects");
 export const fetchTemplates    = () => apiFetch("/templates");
 export const fetchSubmissions  = () => apiFetch("/submissions");
 
+// ── Mutasi user (Owner) ──────────────────────────────────────────────────────
+export const createUser = (body)     => apiFetch("/users", { method: "POST", body });
+export const updateUser = (id, body) => apiFetch(`/users/${id}`, { method: "PATCH", body });
+export const deleteUser = (id)       => apiFetch(`/users/${id}`, { method: "DELETE" });
+
+// ── Mutasi sub-unit (Owner/Leader) ───────────────────────────────────────────
+export const createSubUnit = (body)     => apiFetch("/sub-units", { method: "POST", body });
+export const updateSubUnit = (id, body) => apiFetch(`/sub-units/${id}`, { method: "PATCH", body });
+export const deleteSubUnit = (id)       => apiFetch(`/sub-units/${id}`, { method: "DELETE" });
+
+// ── Mutasi project (Owner/Leader) ────────────────────────────────────────────
+export const createProject = (body)     => apiFetch("/projects", { method: "POST", body });
+export const updateProject = (id, body) => apiFetch(`/projects/${id}`, { method: "PATCH", body });
+export const deleteProject = (id)       => apiFetch(`/projects/${id}`, { method: "DELETE" });
+
 /** Ubah array ber-`id` menjadi objek ter-index berdasarkan id (mis. UNITS[id]). */
 export function indexById(arr) {
   const map = {};
