@@ -8,15 +8,21 @@ import { pool } from "../src/db.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-async function main() {
+// Terapkan skema (dipakai juga oleh bootstrap otomatis). Tidak menutup pool.
+export async function applySchema() {
   const sql = readFileSync(join(__dirname, "schema.sql"), "utf8");
   console.log("📦 Menerapkan skema database...");
   await pool.query(sql);
   console.log("✅ Skema berhasil diterapkan.");
-  await pool.end();
 }
 
-main().catch((err) => {
-  console.error("❌ Gagal menerapkan skema:", err.message);
-  process.exit(1);
-});
+// Jalankan sebagai skrip CLI: terapkan skema lalu tutup pool.
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isMain) {
+  applySchema()
+    .then(() => pool.end())
+    .catch((err) => {
+      console.error("❌ Gagal menerapkan skema:", err.message);
+      process.exit(1);
+    });
+}

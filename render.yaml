@@ -18,6 +18,8 @@ services:
         value: production
       - key: DATABASE_SSL
         value: "true"
+      - key: AUTO_MIGRATE
+        value: "true"          # isi skema + data awal otomatis saat start pertama
       - key: JWT_SECRET
         generateValue: true          # Render membuat string acak aman
       - key: JWT_EXPIRES_IN

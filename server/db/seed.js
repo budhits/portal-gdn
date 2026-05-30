@@ -8,6 +8,7 @@
 //   3. update users -> isi unit_id & sub_unit_id
 //   4. projects, form_templates, form_fields, kpi_submissions, audit_log
 
+import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
 import { withTransaction, pool } from "../src/db.js";
 import {
@@ -18,7 +19,7 @@ import {
 // Password demo mengikuti pola `<id>123`.
 const passwordFor = (userId) => `${userId}123`;
 
-async function seed() {
+export async function seed() {
   await withTransaction(async (c) => {
     // Bersihkan dulu (urutan terbalik dari dependensi).
     await c.query("TRUNCATE audit_log, kpi_submissions, form_fields, form_templates, expenses, milestones, projects, sub_units, units, users RESTART IDENTITY CASCADE");
@@ -149,10 +150,14 @@ async function seed() {
   console.log("   PIC   : rafli@email.com  / rafli123");
 }
 
-seed()
-  .then(() => pool.end())
-  .catch((err) => {
-    console.error("❌ Seed gagal:", err);
-    pool.end();
-    process.exit(1);
-  });
+// Jalankan sebagai skrip CLI: seed lalu tutup pool.
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isMain) {
+  seed()
+    .then(() => pool.end())
+    .catch((err) => {
+      console.error("❌ Seed gagal:", err);
+      pool.end();
+      process.exit(1);
+    });
+}
