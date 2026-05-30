@@ -4181,7 +4181,7 @@ function ProjectListItem({ project, onClick }) {
 /**
  * Detail margin per unit, with drill-down per entry.
  */
-function MarginDetailPage({ user }) {
+function MarginDetailPage({ user, onSelectSubmission }) {
   const store = useDataStore(); // subscribe to live in-session data so this page re-renders on changes
   const periods = useMemo(() => getAvailablePeriods(), []);
   const [selectedPeriodKey, setSelectedPeriodKey] = useState("2026-05");
@@ -4314,7 +4314,7 @@ function MarginDetailPage({ user }) {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 12 }}>
         {unitsWithMargin.map(unit => (
-          <MarginDetailUnitCard key={unit.id} unit={unit} />
+          <MarginDetailUnitCard key={unit.id} unit={unit} onSelectSubmission={onSelectSubmission} />
         ))}
       </div>
     </div>
@@ -4332,7 +4332,7 @@ function MarginStat({ k, v, s, accent, small }) {
   );
 }
 
-function MarginDetailUnitCard({ unit }) {
+function MarginDetailUnitCard({ unit, onSelectSubmission }) {
   const { target, actual, percentage, closedEntries, pendingEntries, pendingTotal } = unit.margin;
   const [expanded, setExpanded] = useState(true);
 
@@ -4387,7 +4387,7 @@ function MarginDetailUnitCard({ unit }) {
               }}>Sudah Closing ({closedEntries.length})
               </div>
               {closedEntries.map(entry => (
-                <MarginEntryRow key={entry.submissionId || entry.id} entry={entry} />
+                <MarginEntryRow key={entry.submissionId || entry.id} entry={entry} onSelectSubmission={onSelectSubmission} />
               ))}
             </div>
           )}
@@ -4401,7 +4401,7 @@ function MarginDetailUnitCard({ unit }) {
               }}>Pending Closing ({pendingEntries.length})
               </div>
               {pendingEntries.map(entry => (
-                <MarginEntryRow key={entry.submissionId || entry.id} entry={entry} isPending />
+                <MarginEntryRow key={entry.submissionId || entry.id} entry={entry} isPending onSelectSubmission={onSelectSubmission} />
               ))}
               <div style={{
                 marginTop: 6, padding: "6px 10px",
@@ -4431,18 +4431,26 @@ function MarginDetailUnitCard({ unit }) {
   );
 }
 
-function MarginEntryRow({ entry, isPending }) {
+function MarginEntryRow({ entry, isPending, onSelectSubmission }) {
   const subUnitName = getSubUnitName(entry.subUnitId);
   const achieved = entry.targetMargin > 0
     ? Math.round((entry.actualMargin / entry.targetMargin) * 100)
     : 0;
   const gap = entry.actualMargin - entry.targetMargin;
   const achColor = achieved >= 100 ? COLORS.success : achieved >= 80 ? COLORS.warning : COLORS.danger;
+  const clickable = !!(onSelectSubmission && entry.submissionId);
+  const baseBg = isPending ? "#FEF6E7" : "#FAFBFC";
 
   return (
-    <div style={{
+    <div
+      onClick={clickable ? () => onSelectSubmission(entry.submissionId) : undefined}
+      title={clickable ? "Klik untuk buka detail & update margin / closing" : undefined}
+      onMouseEnter={clickable ? (e) => { e.currentTarget.style.background = isPending ? "#FCEFC7" : "#EEF2FF"; e.currentTarget.style.borderColor = COLORS.primary; } : undefined}
+      onMouseLeave={clickable ? (e) => { e.currentTarget.style.background = baseBg; e.currentTarget.style.borderColor = "transparent"; } : undefined}
+      style={{
       padding: "8px 10px",
-      background: isPending ? "#FEF6E7" : "#FAFBFC",
+      background: baseBg,
+      border: "1px solid transparent",
       borderRadius: 7,
       marginBottom: 5,
       display: "grid",
@@ -4450,9 +4458,14 @@ function MarginEntryRow({ entry, isPending }) {
       gap: 8,
       alignItems: "center",
       fontSize: 11,
+      cursor: clickable ? "pointer" : "default",
+      transition: "background 0.12s, border-color 0.12s",
     }}>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontWeight: 700, color: COLORS.dark }}>{subUnitName}</div>
+        <div style={{ fontWeight: 700, color: COLORS.dark, display: "inline-flex", alignItems: "center", gap: 4 }}>
+          {subUnitName}
+          {clickable && <Icon name="arrowRight" size={11} color={COLORS.textLight} />}
+        </div>
         <div style={{ fontSize: 9, color: COLORS.textMuted, marginTop: 1 }}>
           {entry.period}
           {!isPending && entry.closedAt && <> · closed {formatDate(entry.closedAt)}</>}
@@ -11676,7 +11689,7 @@ function AppInner() {
       return <ProjectListPage user={user} onSelectProject={goToProjectDetail} onNewProject={() => openForm("submit_project", null)} />;
     }
     if (page === "margin") {
-      return <MarginDetailPage user={user} />;
+      return <MarginDetailPage user={user} onSelectSubmission={goToSubmissionDetail} />;
     }
     if (page === "kpi") {
       return <KPIHistoryPage user={user} onSelectSubmission={goToSubmissionDetail}
