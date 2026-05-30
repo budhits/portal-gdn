@@ -33,8 +33,9 @@
  *       utils/
  */
 
-import { useState, useMemo, useEffect, createContext, useContext } from "react";
-import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser } from "./api/auth.js";
+import { useState, useMemo, useEffect, useRef, createContext, useContext } from "react";
+import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser,
+  loginWithGoogle as apiGoogleLogin, fetchConfig } from "./api/auth.js";
 import { getToken } from "./api/client.js";
 import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser,
   fetchUnits, createUnit, updateUnit, deleteUnit,
@@ -2168,11 +2169,51 @@ function InfoBanner({ icon, title, children, variant = "info" }) {
 /**
  * Login screen with role-grouped user selection.
  */
-function LoginScreen({ onAuthenticate }) {
+function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const googleBtnRef = useRef(null);
+
+  // Render tombol resmi Google Identity Services bila Client ID tersedia.
+  useEffect(() => {
+    if (!googleClientId || !googleBtnRef.current) return;
+    let cancelled = false;
+    const init = () => {
+      if (cancelled || !window.google?.accounts?.id) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async (resp) => {
+          setError("");
+          setLoading(true);
+          try {
+            await onGoogleAuth(resp.credential);
+          } catch (err) {
+            setError(err.message || "Login Google gagal.");
+            setLoading(false);
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: "outline", size: "large", width: 412, text: "signin_with", shape: "pill",
+      });
+    };
+    // Muat skrip GIS sekali.
+    if (window.google?.accounts?.id) {
+      init();
+    } else {
+      const id = "google-gis";
+      let s = document.getElementById(id);
+      if (!s) {
+        s = document.createElement("script");
+        s.id = id; s.src = "https://accounts.google.com/gsi/client"; s.async = true; s.defer = true;
+        document.head.appendChild(s);
+      }
+      s.addEventListener("load", init);
+    }
+    return () => { cancelled = true; };
+  }, [googleClientId, onGoogleAuth]);
 
   const groupedUsers = useMemo(() => {
     const groups = { owners: [], support: [], leaders: [], pics: [] };
@@ -2293,6 +2334,18 @@ function LoginScreen({ onAuthenticate }) {
             {loading ? "Memproses…" : "Masuk"}
           </button>
         </form>
+
+        {/* Login dengan Google (hanya email terdaftar yang diterima) */}
+        {googleClientId && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "4px 0 12px" }}>
+              <div style={{ flex: 1, height: 1, background: COLORS.border }} />
+              <span style={{ fontSize: 10, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.6 }}>atau</span>
+              <div style={{ flex: 1, height: 1, background: COLORS.border }} />
+            </div>
+            <div ref={googleBtnRef} style={{ display: "flex", justifyContent: "center", marginBottom: 16 }} />
+          </>
+        )}
 
         <div style={{ textAlign: "center", fontSize: 10, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.6, margin: "4px 0 12px" }}>
           atau pilih akun demo
@@ -11553,6 +11606,12 @@ function AppInner() {
   // formMode: "submit_new" | "close_kpi" | "update_monthly" | "add_expense"
   const [formMode, setFormMode] = useState(null);
   const [formContext, setFormContext] = useState(null);
+  const [googleClientId, setGoogleClientId] = useState("");
+
+  // Ambil konfigurasi publik (Google Client ID) sekali saat mount.
+  useEffect(() => {
+    fetchConfig().then(c => setGoogleClientId(c.googleClientId || "")).catch(() => {});
+  }, []);
 
   // Load brand fonts (Plus Jakarta Sans for body, Bricolage Grotesque for headings)
   useEffect(() => {
@@ -11596,6 +11655,14 @@ function AppInner() {
   // Melempar error bila gagal (ditangkap & ditampilkan oleh LoginScreen).
   const handleLogin = async (email, password) => {
     const user = await apiLogin(email, password);
+    await loadAllData();
+    setActiveUserId(user.id);
+    setPage(routeForRole(user.role));
+  };
+
+  // Login via Google: tukar credential -> user, lalu muat data & masuk.
+  const handleGoogleLogin = async (credential) => {
+    const user = await apiGoogleLogin(credential);
     await loadAllData();
     setActiveUserId(user.id);
     setPage(routeForRole(user.role));
@@ -11680,7 +11747,7 @@ function AppInner() {
   }
 
   if (!activeUserId) {
-    return <LoginScreen onAuthenticate={handleLogin} />;
+    return <LoginScreen onAuthenticate={handleLogin} onGoogleAuth={handleGoogleLogin} googleClientId={googleClientId} />;
   }
 
   const user = USERS[activeUserId];

@@ -16,6 +16,26 @@ export async function login(email, password) {
   return data.user;
 }
 
+/**
+ * Login dengan Google: kirim ID token (credential) ke API.
+ * Backend hanya mengizinkan email yang sudah terdaftar.
+ */
+export async function loginWithGoogle(credential) {
+  const data = await apiFetch("/auth/google", {
+    method: "POST",
+    body: { credential },
+    auth: false,
+  });
+  setToken(data.token);
+  setStoredUser(data.user);
+  return data.user;
+}
+
+/** Ambil konfigurasi publik (mis. Google Client ID). */
+export async function fetchConfig() {
+  return apiFetch("/config", { auth: false });
+}
+
 /** Ambil profil user dari token tersimpan (untuk validasi sesi saat reload). */
 export async function fetchMe() {
   const data = await apiFetch("/auth/me");

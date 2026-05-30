@@ -1,11 +1,15 @@
-// Rute autentikasi: login & profil user yang sedang masuk.
+// Rute autentikasi: login (email/password & Google) & profil user.
 
 import { Router } from "express";
+import { OAuth2Client } from "google-auth-library";
 import { query } from "../db.js";
 import { signToken, checkPassword } from "../lib/auth.js";
 import { authenticate } from "../middleware/authenticate.js";
 
 const router = Router();
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 // Bentuk user yang aman dikirim ke frontend (tanpa password_hash).
 const publicUser = (row) => ({
@@ -33,6 +37,55 @@ router.post("/login", async (req, res, next) => {
     const ok = user && (await checkPassword(password, user.password_hash));
     if (!ok) {
       return res.status(401).json({ error: "Email atau password salah." });
+    }
+
+    const token = signToken(user);
+    res.json({ token, user: publicUser(user) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/auth/google  { credential }  — login via Google Identity Services.
+// Verifikasi ID token Google, lalu HANYA izinkan email yang sudah terdaftar.
+router.post("/google", async (req, res, next) => {
+  try {
+    if (!googleClient) {
+      return res.status(503).json({ error: "Login Google belum dikonfigurasi di server." });
+    }
+    const { credential } = req.body || {};
+    if (!credential) return res.status(400).json({ error: "Credential Google tidak ada." });
+
+    // Verifikasi tanda tangan & audience token (aman dari pemalsuan).
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: GOOGLE_CLIENT_ID,
+      });
+      payload = ticket.getPayload();
+    } catch {
+      return res.status(401).json({ error: "Token Google tidak valid." });
+    }
+
+    if (!payload?.email_verified) {
+      return res.status(401).json({ error: "Email Google belum terverifikasi." });
+    }
+    const email = (payload.email || "").toLowerCase().trim();
+
+    // Hanya email yang sudah terdaftar di User Manager yang boleh masuk.
+    const { rows } = await query("SELECT * FROM users WHERE email = $1", [email]);
+    const user = rows[0];
+    if (!user) {
+      return res.status(403).json({
+        error: `Email ${email} belum terdaftar. Hubungi Administrator untuk didaftarkan.`,
+      });
+    }
+
+    // Simpan foto profil Google bila user belum punya avatar.
+    if (payload.picture && !user.avatar) {
+      await query("UPDATE users SET avatar = $1 WHERE id = $2", [payload.picture, user.id]);
+      user.avatar = payload.picture;
     }
 
     const token = signToken(user);

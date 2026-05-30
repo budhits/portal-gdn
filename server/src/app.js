@@ -32,6 +32,11 @@ export function createApp() {
     res.json({ ok: true, service: "portal-gdn-api", time: new Date().toISOString() });
   });
 
+  // Konfigurasi publik untuk frontend (mis. Google Client ID).
+  app.get("/api/config", (_req, res) => {
+    res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID || "" });
+  });
+
   // Rute domain
   app.use("/api/auth", authRoutes);
   app.use("/api/users", usersRoutes);
