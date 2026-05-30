@@ -37,6 +37,10 @@ import { useState, useMemo, useEffect, useRef, createContext, useContext } from 
 import { GDN_LOGO } from "./assets/logo.js";
 import { APP_CONFIG, ROLES, ROLE_LABELS, COLORS, FONTS, STATUS_THRESHOLDS,
   OWNER_LEVEL_ROLES, isOwnerLevel } from "./constants.js";
+import { MONTHS_ID, formatDate, formatRupiah, formatRupiahFull, formatDateTime,
+  getScoreStatus, getProjectStatusInfo, getAvailablePeriods, isDateInPeriod,
+  getAuditActionInfo, evalFormula, getFieldDirection, computeFieldAchievement,
+  formatFieldValue } from "./utils/format.js";
 import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser,
   loginWithGoogle as apiGoogleLogin, fetchConfig, changePassword as apiChangePassword } from "./api/auth.js";
 import { getToken } from "./api/client.js";
@@ -946,24 +950,12 @@ function getUser(userId) {
 // Period helpers
 // ──────────────────────────────────────────────────────────────────────────
 
-const MONTHS_ID = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 
 /**
  * Available periods for the dashboard filter.
  * Returned in chronological order (oldest first).
  * @returns {Array<{ key: string, label: string, type: "month"|"ytd" }>}
  */
-function getAvailablePeriods() {
-  // For prototype, hardcode based on mock data range (Feb 2026 → May 2026)
-  // In production, derive available periods from KPI_SUBMISSIONS closing dates.
-  return [
-    { key: "2026-02", label: "Feb 2026",       type: "month" },
-    { key: "2026-03", label: "Mar 2026",       type: "month" },
-    { key: "2026-04", label: "Apr 2026",       type: "month" },
-    { key: "2026-05", label: "Mei 2026",       type: "month" },
-    { key: "ytd-2026", label: "YTD 2026",      type: "ytd"   },
-  ];
-}
 
 /**
  * Check if an ISO date falls within the given period filter.
@@ -971,21 +963,6 @@ function getAvailablePeriods() {
  * @param {{ key: string, type: "month"|"ytd" }} period
  * @returns {boolean}
  */
-function isDateInPeriod(isoDate, period) {
-  if (!isoDate) return false;
-  const d = new Date(isoDate);
-  const year = d.getFullYear();
-  const month = d.getMonth() + 1; // 1-12
-
-  if (period.type === "ytd") {
-    const ytdYear = parseInt(period.key.split("-")[1], 10);
-    return year === ytdYear;
-  }
-
-  // Month type: key is "YYYY-MM"
-  const [pYear, pMonth] = period.key.split("-").map(n => parseInt(n, 10));
-  return year === pYear && month === pMonth;
-}
 
 // ──────────────────────────────────────────────────────────────────────────
 // KPI calculations (period-aware)
@@ -1073,12 +1050,6 @@ function calculateUnitScoreForPeriod(unitId, period) {
  * @param {number} score
  * @returns {{ label: string, color: string, bg: string }}
  */
-function getScoreStatus(score) {
-  if (score === 0) return { label: "Belum Mulai", color: COLORS.textLight, bg: COLORS.bgMuted };
-  if (score >= STATUS_THRESHOLDS.onTrack) return { label: "On Track", color: COLORS.success, bg: COLORS.successBg };
-  if (score >= STATUS_THRESHOLDS.attention) return { label: "Perlu Perhatian", color: COLORS.warning, bg: COLORS.warningBg };
-  return { label: "Tertinggal", color: COLORS.danger, bg: COLORS.dangerBg };
-}
 
 // ──────────────────────────────────────────────────────────────────────────
 // Formatters
@@ -1089,22 +1060,12 @@ function getScoreStatus(score) {
  * @param {string} isoDate
  * @returns {string}
  */
-function formatDate(isoDate) {
-  const d = new Date(isoDate);
-  return `${d.getDate()} ${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`;
-}
 
 /**
  * Format Rupiah amount in compact Indonesian form (Rp 1,2 M, Rp 350 Jt, Rp 5 Rb).
  * @param {number} amount
  * @returns {string}
  */
-function formatRupiah(amount) {
-  // Full format with thousand separators (e.g. Rp 1.000.000) — no Jt/Rb/M
-  // abbreviation, so figures are always exact across the whole app.
-  const num = Math.round(Number(amount) || 0);
-  return `Rp ${num.toLocaleString("id-ID")}`;
-}
 
 // ──────────────────────────────────────────────────────────────────────────
 // Margin calculations (period-aware)
@@ -1289,15 +1250,6 @@ function calculateProjectProgress(project) {
  * @param {string} status
  * @returns {{ label: string, color: string, bg: string }}
  */
-function getProjectStatusInfo(status) {
-  switch (status) {
-    case "on_track": return { label: "On Track",   color: COLORS.success,   bg: COLORS.successBg };
-    case "at_risk":  return { label: "Perhatian",  color: COLORS.warning,   bg: COLORS.warningBg };
-    case "behind":   return { label: "Tertinggal", color: COLORS.danger,    bg: COLORS.dangerBg };
-    case "done":     return { label: "Selesai",    color: COLORS.primary,   bg: COLORS.infoBg };
-    default:         return { label: status,       color: COLORS.textMuted, bg: COLORS.bgMuted };
-  }
-}
 
 /**
  * Look up sub-unit name by ID.
@@ -1405,14 +1357,6 @@ function computeFieldValues(template, valuesByFieldId) {
  * @param {{ name: string }} field
  * @returns {"higher_better" | "lower_better"}
  */
-function getFieldDirection(field) {
-  const name = (field.name || "").toLowerCase();
-  // Lower-is-better: costs, cost-of-goods, feed-conversion, losses
-  const lowerBetterKeywords = ["biaya", "hpp", "fcr", "stock loss", "loss", "kerugian"];
-  if (lowerBetterKeywords.some(k => name.includes(k))) return "lower_better";
-  // Everything else (omset, margin, sr, panen, transaksi, agen, pelanggan…) higher is better
-  return "higher_better";
-}
 
 /**
  * Compute one field's achievement % comparing actual vs target (estimated).
@@ -1423,18 +1367,6 @@ function getFieldDirection(field) {
  * @param {number} actual  realized value
  * @returns {number} achievement percentage
  */
-function computeFieldAchievement(field, target, actual) {
-  const dir = getFieldDirection(field);
-  const t = Number(target) || 0;
-  const a = Number(actual) || 0;
-  if (dir === "lower_better") {
-    if (a <= 0) return 0;
-    return (t / a) * 100;
-  }
-  // higher_better
-  if (t <= 0) return 0;
-  return (a / t) * 100;
-}
 
 /**
  * Derive a sub-unit's KPI score from a submission.
@@ -1544,10 +1476,6 @@ function getSubmissions(filters = {}) {
  * @param {number} amount
  * @returns {string}
  */
-function formatRupiahFull(amount) {
-  const num = Math.round(Number(amount) || 0);
-  return `Rp ${num.toLocaleString("id-ID")}`;
-}
 
 /**
  * Safe arithmetic formula evaluator (no eval).
@@ -1557,100 +1485,6 @@ function formatRupiahFull(amount) {
  *
  * Returns { ok: true, value } or { ok: false, error }.
  */
-function evalFormula(expr, vars) {
-  if (!expr || !expr.trim()) return { ok: false, error: "Rumus kosong" };
-
-  // 1. Substitute variable names with their numeric values.
-  // Sort names by length desc so longer names match before shorter substrings.
-  let work = expr;
-  const names = Object.keys(vars).sort((a, b) => b.length - a.length);
-  for (const nm of names) {
-    if (!nm.trim()) continue;
-    const val = Number(vars[nm]);
-    const safeVal = isNaN(val) ? 0 : val;
-    // Escape regex special chars in the name
-    const escaped = nm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    // Match the name as a whole token (not part of a larger word)
-    const re = new RegExp(`(^|[^A-Za-z0-9_])${escaped}(?![A-Za-z0-9_])`, "gi");
-    work = work.replace(re, (m, pre) => `${pre}(${safeVal})`);
-  }
-
-  // 2. After substitution, only digits, operators, parens, dot, spaces allowed.
-  if (/[A-Za-z_]/.test(work)) {
-    // Find the leftover token for a helpful error
-    const leftover = (work.match(/[A-Za-z_][A-Za-z0-9_ ]*/) || ["?"])[0].trim();
-    return { ok: false, error: `Nama tidak dikenal: "${leftover}"` };
-  }
-  if (/[^0-9+\-*/().\s]/.test(work)) {
-    return { ok: false, error: "Ada karakter tidak valid dalam rumus" };
-  }
-
-  // 3. Tokenize.
-  const tokens = work.match(/\d+\.?\d*|[+\-*/()]/g);
-  if (!tokens) return { ok: false, error: "Rumus tidak valid" };
-
-  // 4. Shunting-yard → RPN.
-  const prec = { "+": 1, "-": 1, "*": 2, "/": 2 };
-  const out = [];
-  const ops = [];
-  let prevType = null; // "num" | "op" | "(" | ")"
-  for (let i = 0; i < tokens.length; i++) {
-    const t = tokens[i];
-    if (/^\d/.test(t)) {
-      out.push(parseFloat(t));
-      prevType = "num";
-    } else if (t === "(") {
-      ops.push(t);
-      prevType = "(";
-    } else if (t === ")") {
-      while (ops.length && ops[ops.length - 1] !== "(") out.push(ops.pop());
-      if (!ops.length) return { ok: false, error: "Kurung tidak seimbang" };
-      ops.pop();
-      prevType = ")";
-    } else {
-      // Operator. Handle unary minus/plus.
-      let op = t;
-      if ((op === "-" || op === "+") && (prevType === null || prevType === "op" || prevType === "(")) {
-        // Unary: convert to (0 op x) by pushing 0 first
-        out.push(0);
-      }
-      while (
-        ops.length &&
-        ops[ops.length - 1] !== "(" &&
-        prec[ops[ops.length - 1]] >= prec[op]
-      ) {
-        out.push(ops.pop());
-      }
-      ops.push(op);
-      prevType = "op";
-    }
-  }
-  while (ops.length) {
-    const o = ops.pop();
-    if (o === "(") return { ok: false, error: "Kurung tidak seimbang" };
-    out.push(o);
-  }
-
-  // 5. Evaluate RPN.
-  const stack = [];
-  for (const tok of out) {
-    if (typeof tok === "number") {
-      stack.push(tok);
-    } else {
-      const b = stack.pop();
-      const a = stack.pop();
-      if (a === undefined || b === undefined) return { ok: false, error: "Rumus tidak lengkap" };
-      let r;
-      if (tok === "+") r = a + b;
-      else if (tok === "-") r = a - b;
-      else if (tok === "*") r = a * b;
-      else if (tok === "/") r = b === 0 ? 0 : a / b;
-      stack.push(r);
-    }
-  }
-  if (stack.length !== 1) return { ok: false, error: "Rumus tidak lengkap" };
-  return { ok: true, value: stack[0] };
-}
 
 /**
  * Format a field value with its unit (for display).
@@ -1658,22 +1492,6 @@ function evalFormula(expr, vars) {
  * @param {string} satuan
  * @param {string} type
  */
-function formatFieldValue(value, satuan, type) {
-  if (value === undefined || value === null || value === "") return "—";
-  if (type === "date") return value;
-  if (type === "text") return value;
-
-  const num = Number(value);
-  if (isNaN(num)) return String(value);
-
-  if (satuan === "Rp") return formatRupiahFull(num);
-  if (satuan === "Rp/kg") return `${formatRupiahFull(num)} /kg`;
-  if (satuan === "%" || satuan === "x") {
-    return `${num.toFixed(satuan === "x" ? 2 : 1)} ${satuan}`;
-  }
-  // ekor, kg, etc → integer with thousand separator
-  return `${num.toLocaleString("id-ID")} ${satuan}`.trim();
-}
 
 // ──────────────────────────────────────────────────────────────────────────
 // Role-based data filtering
@@ -1789,28 +1607,11 @@ function pendingProjectsForUser(user) {
  * Format ISO datetime to compact Indonesian datetime.
  * @param {string} isoDt
  */
-function formatDateTime(isoDt) {
-  const d = new Date(isoDt);
-  const date = formatDate(isoDt);
-  const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-  return `${date}, ${time}`;
-}
 
 /**
  * Get audit action display info.
  * @param {string} action
  */
-function getAuditActionInfo(action) {
-  switch (action) {
-    case "create":  return { label: "Buat",    icon: "plus",        color: COLORS.primary,   bg: COLORS.infoBg };
-    case "update":  return { label: "Ubah",    icon: "edit",        color: COLORS.warning,   bg: COLORS.warningBg };
-    case "approve": return { label: "Approve", icon: "check",       color: COLORS.success,   bg: COLORS.successBg };
-    case "reject":  return { label: "Reject",  icon: "x",           color: COLORS.danger,    bg: COLORS.dangerBg };
-    case "close":   return { label: "Closing", icon: "lock",        color: COLORS.secondary, bg: COLORS.goldLight };
-    case "delete":  return { label: "Hapus",   icon: "trash",       color: COLORS.danger,    bg: COLORS.dangerBg };
-    default:        return { label: action,    icon: "info",        color: COLORS.textMuted, bg: COLORS.bgMuted };
-  }
-}
 
 // ──────────────────────────────────────────────────────────────────────────
 // Backward-compatibility shims
