@@ -7446,8 +7446,9 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
   };
   const statusInfo = STATUS_INFO[submission.status];
 
-  // Permission for actions
-  const isMine = submission.createdBy === user.id ||
+  // Permission for actions. Admin/Owner = akses penuh ke semua submission.
+  const isMine = isOwnerLevel(user.role) ||
+    submission.createdBy === user.id ||
     (user.role === ROLES.LEADER && submission.unitId === user.unitId) ||
     (user.role === ROLES.PIC && submission.subUnitId === user.subUnitId);
 
