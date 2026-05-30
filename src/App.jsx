@@ -2065,11 +2065,11 @@ function ProgressBar({ value, color, height = 6 }) {
 
 function Button({ children, variant = "primary", onClick, disabled, size = "md", fullWidth }) {
   const VARIANTS = {
-    primary:   { bg: COLORS.primary, color: COLORS.white, border: "none" },
-    secondary: { bg: COLORS.white, color: COLORS.text, border: `1px solid ${COLORS.border}` },
-    success:   { bg: COLORS.success, color: COLORS.white, border: "none" },
-    danger:    { bg: COLORS.white, color: COLORS.danger, border: `1px solid ${COLORS.danger}` },
-    ghost:     { bg: "transparent", color: COLORS.textMuted, border: "none" },
+    primary:   { background: COLORS.primary, color: COLORS.white, border: "none" },
+    secondary: { background: COLORS.white, color: COLORS.text, border: `1px solid ${COLORS.border}` },
+    success:   { background: COLORS.success, color: COLORS.white, border: "none" },
+    danger:    { background: COLORS.white, color: COLORS.danger, border: `1px solid ${COLORS.danger}` },
+    ghost:     { background: "transparent", color: COLORS.textMuted, border: "none" },
   };
 
   const SIZES = {
