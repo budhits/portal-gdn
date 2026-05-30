@@ -17,6 +17,7 @@ export const subUnitToApi = (r) => ({
   picId: r.pic_id,
   icon: r.icon,
   status: r.status,
+  weight: r.weight,
   createdAt: r.created_at,
 });
 

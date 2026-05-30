@@ -50,7 +50,7 @@ router.post("/", requireRole("owner", "leader"), async (req, res, next) => {
 // PATCH /api/sub-units/:id  (Owner/Leader)
 router.patch("/:id", requireRole("owner", "leader"), async (req, res, next) => {
   try {
-    const allowed = { name: "name", picId: "pic_id", icon: "icon", status: "status", unitId: "unit_id" };
+    const allowed = { name: "name", picId: "pic_id", icon: "icon", status: "status", unitId: "unit_id", weight: "weight" };
     const sets = [];
     const params = [];
     for (const [key, col] of Object.entries(allowed)) {

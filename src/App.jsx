@@ -39,6 +39,7 @@ import { getToken } from "./api/client.js";
 import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser,
   fetchUnits, createUnit, updateUnit, deleteUnit,
   fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
+  fetchTemplates, createTemplate, updateTemplate, deleteTemplate,
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
   closeSubmission, updateSubmissionActual, saveDailyMargin,
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
@@ -3631,17 +3632,26 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
   };
   const cancelEditWeights = () => { setEditingWeights(false); };
   const draftTotal = Object.values(draftWeights).reduce((s, v) => s + (Number(v) || 0), 0);
-  const saveWeights = () => {
+  const saveWeights = async () => {
     if (draftTotal !== 100) { alert(`Total bobot harus 100%. Saat ini ${draftTotal}%.`); return; }
-    // Write to store so the new weights persist across all menus this session
-    if (store) {
-      store.setSubUnitWeights(prev => ({ ...prev, ...draftWeights }));
+    // Simpan bobot ke database (kolom weight pada sub_units) lalu segarkan.
+    try {
+      await Promise.all(Object.entries(draftWeights).map(([sid, w]) =>
+        updateSubUnit(sid, { weight: Number(w) })
+      ));
+      if (store) {
+        store.setSubUnitWeights(prev => ({ ...prev, ...draftWeights }));
+        store.setSubUnits(await fetchSubUnits());
+      }
+    } catch (e) {
+      alert(e.message || "Gagal menyimpan bobot.");
+      return;
     }
     setEditingWeights(false);
     alert(
-      "Bobot sub unit diperbarui.\n\n" +
+      "Bobot sub unit tersimpan ke database.\n\n" +
       subUnits.map(su => `${su.name}: ${draftWeights[su.id]}%`).join("\n") +
-      `\n\nSkor unit dihitung ulang otomatis & konsisten di semua menu.`
+      `\n\nSkor unit dihitung ulang otomatis & konsisten di semua menu & sesi.`
     );
   };
 
@@ -8561,7 +8571,7 @@ function FormBuilder({ onClose, initialData }) {
 
   const preview = showPreview ? computePreview() : null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) { alert("Isi nama template"); return; }
     const emptyField = fields.find(f => !f.name.trim());
     if (emptyField) { alert("Setiap field wajib punya nama"); return; }
@@ -8629,31 +8639,37 @@ function FormBuilder({ onClose, initialData }) {
     });
 
     const isEdit = !!initialData?.editId;
-    const templateObj = {
-      id: isEdit ? initialData.editId : `tpl-${Date.now()}`,
+    const payload = {
+      id: isEdit ? initialData.editId : `tpl-${Date.now().toString(36)}`,
       name: name.trim(),
       description: desc.trim(),
       frequency: freq,
-      createdAt: new Date().toISOString().slice(0, 10),
       fields: templateFields,
     };
 
-    if (store) {
+    // Simpan ke database (permanen), lalu segarkan daftar template dari API.
+    try {
       if (isEdit) {
-        store.setTemplates(prev => prev.map(t => t.id === templateObj.id ? templateObj : t));
+        await updateTemplate(payload.id, {
+          name: payload.name, description: payload.description,
+          frequency: payload.frequency, fields: payload.fields,
+        });
       } else {
-        store.setTemplates(prev => [...prev, templateObj]);
+        await createTemplate(payload);
       }
+      if (store) store.setTemplates(await fetchTemplates());
+    } catch (e) {
+      alert(e.message || "Gagal menyimpan template.");
+      return;
     }
 
     alert(
-      (isEdit ? "Template diperbarui." : "Template baru berhasil dibuat.") + "\n\n" +
+      (isEdit ? "Template diperbarui & tersimpan ke database." : "Template baru tersimpan ke database.") + "\n\n" +
       `Nama: ${name}\n` +
       `Frekuensi: ${freq === "monthly" ? "Bulanan" : freq === "cycle" ? "Per Siklus" : "Per Event"}\n` +
       `Jumlah field: ${fields.length}\n` +
       `Total bobot: ${totalWeight}%\n\n` +
-      `Field:\n${fieldSummary}\n\n` +
-      "Template sekarang muncul di Template Manager & pilihan saat Ajukan KPI."
+      "Template kini menetap & muncul di Form Library serta pilihan saat Ajukan KPI."
     );
     onClose();
   };
@@ -9554,10 +9570,14 @@ function FormTemplateDetail({ template, onDuplicate }) {
             </button>
           ) : (
             <button
-              onClick={() => {
-                if (confirm(`Hapus template "${template.name}"?\n\nTemplate ini belum dipakai di KPI manapun, jadi aman dihapus.`)) {
-                  if (store) store.setTemplates(prev => prev.filter(t => t.id !== template.id));
-                  alert(`Template "${template.name}" dihapus.`);
+              onClick={async () => {
+                if (!confirm(`Hapus template "${template.name}"?\n\nTemplate ini belum dipakai di KPI manapun, jadi aman dihapus.`)) return;
+                try {
+                  await deleteTemplate(template.id);
+                  if (store) store.setTemplates(await fetchTemplates());
+                  alert(`Template "${template.name}" dihapus dari database.`);
+                } catch (e) {
+                  alert(e.message || "Gagal menghapus template.");
                 }
               }}
               type="button"
@@ -11550,6 +11570,10 @@ function AppInner() {
     store.setSubmissions(submissions);
     store.setMilestones(groupByProject(milestones));
     store.setExpenses(groupByProject(expenses));
+    // Muat bobot sub-unit yang tersimpan (override persisten untuk scoring).
+    const weights = {};
+    subUnits.forEach(su => { if (su.weight !== null && su.weight !== undefined) weights[su.id] = su.weight; });
+    store.setSubUnitWeights(weights);
   };
 
   // Login sungguhan: kirim email+password ke API, lalu muat data sebelum masuk.

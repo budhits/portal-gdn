@@ -35,6 +35,11 @@ export const createUnit = (body)     => apiFetch("/units", { method: "POST", bod
 export const updateUnit = (id, body) => apiFetch(`/units/${id}`, { method: "PATCH", body });
 export const deleteUnit = (id)       => apiFetch(`/units/${id}`, { method: "DELETE" });
 
+// ── Mutasi form template (Owner/Admin) ───────────────────────────────────────
+export const createTemplate = (body)     => apiFetch("/templates", { method: "POST", body });
+export const updateTemplate = (id, body) => apiFetch(`/templates/${id}`, { method: "PATCH", body });
+export const deleteTemplate = (id)       => apiFetch(`/templates/${id}`, { method: "DELETE" });
+
 // ── Mutasi sub-unit (Owner/Leader) ───────────────────────────────────────────
 export const createSubUnit = (body)     => apiFetch("/sub-units", { method: "POST", body });
 export const updateSubUnit = (id, body) => apiFetch(`/sub-units/${id}`, { method: "PATCH", body });

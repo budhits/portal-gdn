@@ -76,6 +76,7 @@ CREATE TABLE sub_units (
   pic_id     TEXT REFERENCES users(id) ON DELETE SET NULL,
   icon       TEXT NOT NULL DEFAULT 'cog',
   status     sub_unit_status NOT NULL DEFAULT 'active',
+  weight     INTEGER,                    -- bobot sub-unit di unit (persisten; null = pakai bobot submission)
   created_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 CREATE INDEX idx_sub_units_unit ON sub_units(unit_id);
@@ -156,6 +157,7 @@ CREATE TABLE form_fields (
   satuan         TEXT NOT NULL DEFAULT '',
   source         TEXT NOT NULL DEFAULT 'Manual',  -- Manual|Pembukuan|Formula|...
   formula_id     TEXT,                      -- rujuk FORMULA_LIBRARY (di kode), null jika manual
+  formula_expr   TEXT,                      -- ekspresi formula template buatan user (mis. "Omset - Total_Biaya")
   default_weight INTEGER NOT NULL DEFAULT 0,
   is_margin      BOOLEAN NOT NULL DEFAULT false,
   sort_order     INTEGER NOT NULL DEFAULT 0,

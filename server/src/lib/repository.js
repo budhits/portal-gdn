@@ -16,7 +16,7 @@ export async function getTemplatesMap() {
   );
   const { rows: fields } = await query(
     `SELECT template_id, field_key, name, type, satuan, source, formula_id,
-            default_weight, is_margin, sort_order
+            formula_expr, default_weight, is_margin, sort_order
        FROM form_fields ORDER BY template_id, sort_order`
   );
 
@@ -40,6 +40,7 @@ export async function getTemplatesMap() {
       satuan: f.satuan,
       source: f.source,
       formulaId: f.formula_id,
+      formulaExpr: f.formula_expr,
       defaultWeight: f.default_weight,
       isMargin: f.is_margin,
     });
