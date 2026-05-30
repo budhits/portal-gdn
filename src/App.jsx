@@ -36,7 +36,8 @@
 import { useState, useMemo, useEffect, createContext, useContext } from "react";
 import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser } from "./api/auth.js";
 import { getToken } from "./api/client.js";
-import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser } from "./api/data.js";
+import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser,
+  fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit } from "./api/data.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -9743,9 +9744,19 @@ function SubUnitManager() {
   // PIC candidates: users with PIC role
   const picCandidates = Object.values(USERS).filter(u => u.role === ROLES.PIC);
 
+  const [busy, setBusy] = useState(false);
+
   // Count KPI submissions for a sub unit (for delete-safety)
   const kpiCountFor = (subUnitId) =>
     LIVE.submissions.filter(s => s.subUnitId === subUnitId).length;
+
+  // Muat ulang sub-unit dari API ke store (sumber tampilan).
+  const reloadSubUnits = async () => {
+    const list = await fetchSubUnits();
+    if (store) store.setSubUnits(list);
+  };
+
+  const slugify = (s) => (s || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
   const openAdd = () => {
     setEditingId(null);
@@ -9761,7 +9772,7 @@ function SubUnitManager() {
     setShowForm(true);
   };
 
-  const handleDeleteSub = (su) => {
+  const handleDeleteSub = async (su) => {
     const kpiCount = kpiCountFor(su.id);
     if (kpiCount > 0) {
       alert(
@@ -9770,49 +9781,46 @@ function SubUnitManager() {
       );
       return;
     }
-    if (confirm(`Hapus sub unit "${su.name}"?\n\nSub unit ini belum punya KPI, jadi aman dihapus.`)) {
-      if (store) store.setSubUnits(prev => prev.filter(s => s.id !== su.id));
-      alert(`Sub unit "${su.name}" dihapus.`);
+    if (!confirm(`Hapus sub unit "${su.name}"?\n\nSub unit ini belum punya KPI, jadi aman dihapus.`)) return;
+    try {
+      await deleteSubUnit(su.id);
+      await reloadSubUnits();
+    } catch (e) {
+      alert(e.message || "Gagal menghapus sub unit.");
     }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
+    if (busy) return;
     if (!formName.trim()) { alert("Isi nama sub unit"); return; }
     if (!formParentId)    { alert("Pilih parent unit"); return; }
-    const parentName = UNITS[formParentId]?.name;
-    if (editingId === null) {
-      // Create new sub-unit in the store
-      const newSub = {
-        id: `su-${Date.now()}`,
-        unitId: formParentId,
-        name: formName.trim(),
-        picId: formPicId || null,
-        icon: UNITS[formParentId]?.icon || "store",
-        status: "active",
-        createdAt: new Date().toISOString().slice(0, 10),
-      };
-      if (store) store.setSubUnits(prev => [...prev, newSub]);
-      alert(
-        "Sub unit berhasil ditambahkan.\n\n" +
-        `Parent Unit: ${parentName}\n` +
-        `Nama: ${formName}\n` +
-        `PIC: ${formPicId ? getUser(formPicId)?.name : "Belum di-assign"}`
-      );
-    } else {
-      // Update existing sub-unit (name, PIC, and parent if movable)
-      if (store) store.setSubUnits(prev => prev.map(s =>
-        s.id === editingId
-          ? { ...s, name: formName.trim(), picId: formPicId || null, unitId: formParentId }
-          : s
-      ));
-      alert(
-        "Sub unit diperbarui.\n\n" +
-        `Parent Unit: ${parentName}\n` +
-        `Nama: ${formName}\n` +
-        `PIC: ${formPicId ? getUser(formPicId)?.name : "Belum di-assign"}`
-      );
+    setBusy(true);
+    try {
+      if (editingId === null) {
+        const id = `${formParentId}-${slugify(formName)}-${Date.now().toString(36).slice(-4)}`;
+        await createSubUnit({
+          id,
+          unitId: formParentId,
+          name: formName.trim(),
+          picId: formPicId || null,
+          icon: UNITS[formParentId]?.icon || "store",
+          status: "active",
+        });
+      } else {
+        // Ubah nama, PIC, dan parent unit.
+        await updateSubUnit(editingId, {
+          name: formName.trim(),
+          picId: formPicId || null,
+          unitId: formParentId,
+        });
+      }
+      await reloadSubUnits();
+      setFormName(""); setFormPicId(""); setEditingId(null); setShowForm(false);
+    } catch (e) {
+      alert(e.message || "Gagal menyimpan sub unit.");
+    } finally {
+      setBusy(false);
     }
-    setFormName(""); setFormPicId(""); setEditingId(null); setShowForm(false);
   };
 
   return (
