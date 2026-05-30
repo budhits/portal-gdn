@@ -5,7 +5,7 @@ import { query, withTransaction } from "../db.js";
 import { authenticate, requireRole } from "../middleware/authenticate.js";
 import { projectToApi } from "../lib/serializers.js";
 import { logAudit } from "../lib/audit.js";
-import { recomputeProjectStats } from "../lib/projects.js";
+import { recomputeProjectStats, canEditProject } from "../lib/projects.js";
 
 const router = Router();
 router.use(authenticate);
@@ -71,6 +71,14 @@ router.post("/", requireRole("owner", "leader", "pic"), async (req, res, next) =
 // PATCH /api/projects/:id  (Owner/Leader)
 router.patch("/:id", requireRole("owner", "leader"), async (req, res, next) => {
   try {
+    // Cek kepemilikan: Owner/Admin semua; Leader hanya project di unitnya.
+    const { rows: prows } = await query("SELECT * FROM projects WHERE id = $1", [req.params.id]);
+    const target = prows[0];
+    if (!target) return res.status(404).json({ error: "Project tidak ditemukan." });
+    const { rows: arows } = await query("SELECT id, role, unit_id, sub_unit_id FROM users WHERE id = $1", [req.user.id]);
+    if (!canEditProject(arows[0], target)) {
+      return res.status(403).json({ error: "Anda tidak berwenang mengubah project ini." });
+    }
     const allowed = {
       name: "name", desc: "description", status: "status",
       milestonesTotal: "milestones_total", milestonesDone: "milestones_done",
@@ -95,12 +103,18 @@ router.patch("/:id", requireRole("owner", "leader"), async (req, res, next) => {
 });
 
 // DELETE /api/projects/:id  (Owner)
-router.delete("/:id", requireRole("owner"), async (req, res, next) => {
+router.delete("/:id", requireRole("owner", "leader"), async (req, res, next) => {
   try {
-    const { rows } = await query("DELETE FROM projects WHERE id = $1 RETURNING *", [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ error: "Project tidak ditemukan." });
+    const { rows: prows } = await query("SELECT * FROM projects WHERE id = $1", [req.params.id]);
+    const target = prows[0];
+    if (!target) return res.status(404).json({ error: "Project tidak ditemukan." });
+    const { rows: arows } = await query("SELECT id, role, unit_id, sub_unit_id FROM users WHERE id = $1", [req.user.id]);
+    if (!canEditProject(arows[0], target)) {
+      return res.status(403).json({ error: "Anda tidak berwenang menghapus project ini." });
+    }
+    await query("DELETE FROM projects WHERE id = $1", [req.params.id]);
     await logAudit({ actorId: req.user.id, action: "delete", entityType: "project",
-      entityId: req.params.id, entityLabel: `Hapus Project: ${rows[0].name}`, unitId: rows[0].unit_id });
+      entityId: req.params.id, entityLabel: `Hapus Project: ${target.name}`, unitId: target.unit_id });
     res.json({ ok: true });
   } catch (err) { next(err); }
 });

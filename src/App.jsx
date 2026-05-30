@@ -44,7 +44,8 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
   closeSubmission, updateSubmissionActual, saveDailyMargin, fetchAudit,
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
-  createProject, createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
+  createProject, updateProject, deleteProject,
+  createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
   createExpense } from "./api/data.js";
 
 
@@ -1829,11 +1830,12 @@ function getAuditLogForUser(user) {
 function getInboxCount(user) {
   if (!user) return 0;
   if (isOwnerLevel(user.role)) {
-    return getSubmissions({ status: "estimated" }).length;
+    return getSubmissions({ status: "estimated" }).length + pendingProjectsForUser(user).length;
   }
   if (user.role === ROLES.LEADER) {
-    // Inbox Leader = KPI di unitnya yang menunggu approval (perlu aksi).
-    return getSubmissions({ status: "estimated", unitId: user.unitId }).length;
+    // Inbox Leader = KPI + Project di unitnya yang menunggu approval (perlu aksi).
+    return getSubmissions({ status: "estimated", unitId: user.unitId }).length
+      + pendingProjectsForUser(user).length;
   }
   if (user.role === ROLES.PIC) {
     return LIVE.submissions.filter(s =>
@@ -1841,6 +1843,16 @@ function getInboxCount(user) {
     ).length;
   }
   return 0;
+}
+
+// Project berstatus pending_approval yang relevan untuk user (Admin/Owner: semua,
+// Leader: unitnya). Dipakai badge Inbox & daftar approval project.
+function pendingProjectsForUser(user) {
+  if (!user) return [];
+  const pending = (LIVE.projects || []).filter(p => p.status === "pending_approval");
+  if (isOwnerLevel(user.role)) return pending;
+  if (user.role === ROLES.LEADER) return pending.filter(p => p.unitId === user.unitId);
+  return [];
 }
 
 /**
@@ -4781,6 +4793,7 @@ function InboxPage({ user, onSubmitNew, onCloseKPI, onViewDetail }) {
           </p>
         </div>
         <ApprovalInbox user={user} />
+        <ProjectApprovalInbox user={user} />
       </div>
     );
   }
@@ -4831,6 +4844,97 @@ function InboxPage({ user, onSubmitNew, onCloseKPI, onViewDetail }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Approval project yang menunggu persetujuan (status pending_approval).
+// Admin/Owner melihat semua; Leader hanya project di unitnya.
+function ProjectApprovalInbox({ user }) {
+  const store = useDataStore();
+  const pending = useMemo(() => pendingProjectsForUser(user), [user, store?.projects]);
+  const [busyId, setBusyId] = useState(null);
+
+  const reload = async () => {
+    if (store) store.setProjects(await fetchProjects());
+  };
+
+  const approve = async (proj) => {
+    if (busyId) return;
+    setBusyId(proj.id);
+    try {
+      await updateProject(proj.id, { status: "on_track" });
+      await reload();
+    } catch (e) {
+      alert(e.message || "Gagal menyetujui project.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const reject = async (proj) => {
+    if (busyId) return;
+    if (!confirm(`Tolak & hapus pengajuan project "${proj.name}"?\n\nProject beserta milestone-nya akan dihapus.`)) return;
+    setBusyId(proj.id);
+    try {
+      await deleteProject(proj.id);
+      await reload();
+    } catch (e) {
+      alert(e.message || "Gagal menolak project.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  if (pending.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: 22 }}>
+      <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark, marginBottom: 4 }}>
+        Project Menunggu Approval ({pending.length})
+      </div>
+      <p style={{ fontSize: 11, color: COLORS.textMuted, margin: "0 0 10px" }}>
+        Pengajuan project baru dari unit. Setujui untuk mengaktifkan, atau tolak.
+      </p>
+      <div style={{ display: "grid", gap: 8 }}>
+        {pending.map(proj => {
+          const unit = UNITS[proj.unitId];
+          const subUnit = proj.subUnitId ? LIVE.subUnits.find(s => s.id === proj.subUnitId) : null;
+          const busy = busyId === proj.id;
+          return (
+            <Card key={proj.id} style={{ padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <div style={{
+                  width: 42, height: 42, borderRadius: 10,
+                  background: unit?.colorLight || COLORS.bgMuted,
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}><Icon name={unit?.icon || "folder"} size={20} color={unit?.color || COLORS.textMuted} /></div>
+                <div style={{ flex: 1, minWidth: 180 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>{proj.name}</div>
+                  <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+                    {unit?.name || "—"}{subUnit ? ` · ${subUnit.name}` : ""}
+                    {proj.budgetPlanned ? ` · Budget ${formatRupiah(proj.budgetPlanned)}` : ""}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => reject(proj)} type="button" disabled={busy}
+                    style={{ padding: "8px 14px", background: COLORS.white, color: COLORS.danger,
+                      border: `1px solid ${COLORS.danger}`, borderRadius: 8, fontSize: 12, fontWeight: 700,
+                      cursor: busy ? "not-allowed" : "pointer", opacity: busy ? 0.6 : 1, fontFamily: "inherit" }}>
+                    Tolak
+                  </button>
+                  <button onClick={() => approve(proj)} type="button" disabled={busy}
+                    style={{ padding: "8px 14px", background: COLORS.success, color: COLORS.white,
+                      border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                      cursor: busy ? "not-allowed" : "pointer", opacity: busy ? 0.6 : 1, fontFamily: "inherit" }}>
+                    {busy ? "Memproses..." : "Setujui"}
+                  </button>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
