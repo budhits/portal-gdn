@@ -28,7 +28,7 @@ router.get("/:id", async (req, res, next) => {
 });
 
 // POST /api/units  (Owner) — tambah unit bisnis baru
-router.post("/", requireRole("owner"), async (req, res, next) => {
+router.post("/", requireRole("owner", "hr"), async (req, res, next) => {
   try {
     const {
       id, name, leaderId = null,
@@ -53,7 +53,7 @@ router.post("/", requireRole("owner"), async (req, res, next) => {
 });
 
 // PATCH /api/units/:id  (Owner) — ubah nama, leader, warna, ikon
-router.patch("/:id", requireRole("owner"), async (req, res, next) => {
+router.patch("/:id", requireRole("owner", "hr"), async (req, res, next) => {
   try {
     const allowed = {
       name: "name", leaderId: "leader_id", color: "color",
@@ -77,7 +77,7 @@ router.patch("/:id", requireRole("owner"), async (req, res, next) => {
 });
 
 // DELETE /api/units/:id  (Owner) — hanya bila unit kosong
-router.delete("/:id", requireRole("owner"), async (req, res, next) => {
+router.delete("/:id", requireRole("owner", "hr"), async (req, res, next) => {
   try {
     // Cegah hapus bila masih ada sub-unit atau project yang menggantung.
     const { rows: subs } = await query("SELECT COUNT(*)::int AS n FROM sub_units WHERE unit_id = $1", [req.params.id]);

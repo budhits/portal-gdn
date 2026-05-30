@@ -30,7 +30,7 @@ router.get("/:id", async (req, res, next) => {
 });
 
 // POST /api/sub-units  (Owner/Leader)
-router.post("/", requireRole("owner", "leader"), async (req, res, next) => {
+router.post("/", requireRole("owner", "leader", "hr"), async (req, res, next) => {
   try {
     const { id, unitId, name, picId = null, icon = "cog", status = "active" } = req.body || {};
     if (!id || !unitId || !name) {
@@ -48,7 +48,7 @@ router.post("/", requireRole("owner", "leader"), async (req, res, next) => {
 });
 
 // PATCH /api/sub-units/:id  (Owner/Leader)
-router.patch("/:id", requireRole("owner", "leader"), async (req, res, next) => {
+router.patch("/:id", requireRole("owner", "leader", "hr"), async (req, res, next) => {
   try {
     const allowed = { name: "name", picId: "pic_id", icon: "icon", status: "status", unitId: "unit_id", weight: "weight" };
     const sets = [];
@@ -69,7 +69,7 @@ router.patch("/:id", requireRole("owner", "leader"), async (req, res, next) => {
 });
 
 // DELETE /api/sub-units/:id  (Owner)
-router.delete("/:id", requireRole("owner"), async (req, res, next) => {
+router.delete("/:id", requireRole("owner", "hr"), async (req, res, next) => {
   try {
     const { rows } = await query("DELETE FROM sub_units WHERE id = $1 RETURNING *", [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: "Sub-unit tidak ditemukan." });

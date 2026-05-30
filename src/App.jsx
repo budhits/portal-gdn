@@ -2371,12 +2371,19 @@ function getNavItems(role) {
         ["admin",     "Admin",     "admin"],
       ];
     case ROLES.FINANCE:
+      return [
+        ["dashboard", "Dashboard", "dashboard"],
+        ["projects",  "Project",   "project"],
+        ["margin",    "Margin",    "margin"],
+        ["kpi",       "KPI",       "kpi"],
+      ];
     case ROLES.HR:
       return [
         ["dashboard", "Dashboard", "dashboard"],
         ["projects",  "Project",   "project"],
         ["margin",    "Margin",    "margin"],
         ["kpi",       "KPI",       "kpi"],
+        ["admin",     "Admin",     "admin"],
       ];
     case ROLES.LEADER:
       return [
@@ -8129,11 +8136,13 @@ const tableCellStyle = {
 // §9  ADMIN PAGES (Owner only)
 // ════════════════════════════════════════════════════════════════════════════
 
-function AdminPanel() {
-  const [section, setSection] = useState("forms");
+function AdminPanel({ user }) {
+  // Form Library hanya untuk Owner/Admin. HR mengakses Unit/Sub-unit/User Manager.
+  const canForms = isOwnerLevel(user?.role);
+  const [section, setSection] = useState(canForms ? "forms" : "units");
 
   const sections = [
-    ["forms",       "Form Library"],
+    ...(canForms ? [["forms", "Form Library"]] : []),
     ["units",       "Unit Manager"],
     ["subunits",    "Sub Unit Manager"],
     ["users",       "User Manager"],
@@ -11960,7 +11969,7 @@ function AppInner() {
 
     // ─── Owner / Finance / HR ───────────────────────────────────────────
     if ([ROLES.ADMIN, ROLES.OWNER, ROLES.FINANCE, ROLES.HR].includes(user.role)) {
-      if (page === "admin" && isOwnerLevel(user.role)) return <AdminPanel />;
+      if (page === "admin" && (isOwnerLevel(user.role) || user.role === ROLES.HR)) return <AdminPanel user={user} />;
       if (page === "unit_detail" && selectedUnitId) {
         return <UnitDetailPage unitId={selectedUnitId} onBack={() => goToPage("dashboard")} onSelectSubmission={goToSubmissionDetail} />;
       }

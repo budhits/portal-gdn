@@ -37,7 +37,7 @@ router.get("/:id", async (req, res, next) => {
 });
 
 // POST /api/users  (Owner) — tambah user baru
-router.post("/", requireRole("owner"), async (req, res, next) => {
+router.post("/", requireRole("owner", "hr"), async (req, res, next) => {
   try {
     const { id, name, email, password, role, unitId = null, subUnitId = null } = req.body || {};
     if (!id || !name || !email || !password || !role) {
@@ -62,7 +62,7 @@ router.post("/", requireRole("owner"), async (req, res, next) => {
 });
 
 // PATCH /api/users/:id  (Owner) — ubah data / role / password
-router.patch("/:id", requireRole("owner"), async (req, res, next) => {
+router.patch("/:id", requireRole("owner", "hr"), async (req, res, next) => {
   try {
     const b = req.body || {};
     if (b.role && !ROLES.includes(b.role)) {
@@ -93,7 +93,7 @@ router.patch("/:id", requireRole("owner"), async (req, res, next) => {
 });
 
 // DELETE /api/users/:id  (Owner) — tidak boleh menghapus diri sendiri
-router.delete("/:id", requireRole("owner"), async (req, res, next) => {
+router.delete("/:id", requireRole("owner", "hr"), async (req, res, next) => {
   try {
     if (req.params.id === req.user.id) {
       return res.status(400).json({ error: "Tidak bisa menghapus akun sendiri." });
