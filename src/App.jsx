@@ -41,7 +41,7 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
   fetchTemplates, createTemplate, updateTemplate, deleteTemplate,
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
-  closeSubmission, updateSubmissionActual, saveDailyMargin,
+  closeSubmission, updateSubmissionActual, saveDailyMargin, fetchAudit,
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
   createProject, createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
   createExpense } from "./api/data.js";
@@ -1801,14 +1801,15 @@ function getSubmissionsForUser(user) {
  */
 function getAuditLogForUser(user) {
   if (!user) return [];
+  const log = LIVE.audit || [];
   switch (user.role) {
     case ROLES.ADMIN:
     case ROLES.OWNER:
-      return AUDIT_LOG;
+      return log;
     case ROLES.LEADER:
-      return AUDIT_LOG.filter(a => a.unitId === user.unitId);
+      return log.filter(a => a.unitId === user.unitId);
     case ROLES.PIC:
-      return AUDIT_LOG.filter(a => {
+      return log.filter(a => {
         // PIC sees entries related to their sub-unit OR their own actions
         const sub = LIVE.subUnits.find(su => su.id === user.subUnitId);
         return a.actorId === user.id ||
@@ -4941,7 +4942,16 @@ function InboxItem({ item, userRole, onCloseKPI, onViewDetail }) {
  * Activity log filtered by user role.
  */
 function AuditLogPage({ user }) {
-  const entries = useMemo(() => getAuditLogForUser(user), [user]);
+  const store = useDataStore();
+  // Segarkan audit dari database setiap kali halaman dibuka (agar aksi terbaru muncul).
+  useEffect(() => {
+    let active = true;
+    fetchAudit()
+      .then(rows => { if (active && store) store.setAudit(rows.map(a => ({ ...a, timestamp: a.ts }))); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+  const entries = useMemo(() => getAuditLogForUser(user), [user, store?.audit]);
   const [filterActor, setFilterActor] = useState("all");
   const [filterAction, setFilterAction] = useState("all");
   const [filterEntity, setFilterEntity] = useState("all");
@@ -6778,6 +6788,7 @@ const LIVE = {
   projects: PROJECTS,
   templates: FORM_TEMPLATES,
   subUnitWeights: {},
+  audit: [],
 };
 
 /** Sync the LIVE binding from store state. Called by the provider on changes. */
@@ -6789,6 +6800,7 @@ function syncLive(next) {
   if (next.projects) LIVE.projects = next.projects;
   if (next.templates) LIVE.templates = next.templates;
   if (next.subUnitWeights) LIVE.subUnitWeights = next.subUnitWeights;
+  if (next.audit) LIVE.audit = next.audit;
 }
 
 /**
@@ -11497,10 +11509,11 @@ function DataStoreProvider({ children }) {
   const [templates, setTemplates] = useState(() => LIVE.templates.map(t => ({ ...t })));
   // Sub-unit weight overrides keyed by subUnitId (set via Unit page)
   const [subUnitWeights, setSubUnitWeights] = useState({});
+  const [audit, setAudit] = useState(() => LIVE.audit.map(a => ({ ...a })));
 
   // Keep the LIVE module binding in sync so non-React helpers read current data.
   // Done during render (synchronously) so helpers called in the same render see it.
-  syncLive({ submissions, subUnits, milestones, expenses, projects, templates, subUnitWeights });
+  syncLive({ submissions, subUnits, milestones, expenses, projects, templates, subUnitWeights, audit });
 
   const value = useMemo(() => ({
     submissions, setSubmissions,
@@ -11510,7 +11523,8 @@ function DataStoreProvider({ children }) {
     projects, setProjects,
     templates, setTemplates,
     subUnitWeights, setSubUnitWeights,
-  }), [submissions, subUnits, milestones, expenses, projects, templates, subUnitWeights]);
+    audit, setAudit,
+  }), [submissions, subUnits, milestones, expenses, projects, templates, subUnitWeights, audit]);
 
   return (
     <DataStoreContext.Provider value={value}>
@@ -11560,8 +11574,8 @@ function AppInner() {
   // Bootstrap: muat seluruh data inti dari API ke binding LIVE/UNITS/USERS.
   // Setelah ini selesai, seluruh aplikasi membaca data asli secara konsisten.
   const loadAllData = async () => {
-    const [{ units, users, subUnits, projects, templates, submissions }, milestones, expenses] =
-      await Promise.all([fetchAllCoreData(), fetchMilestones(), fetchExpenses()]);
+    const [{ units, users, subUnits, projects, templates, submissions }, milestones, expenses, audit] =
+      await Promise.all([fetchAllCoreData(), fetchMilestones(), fetchExpenses(), fetchAudit()]);
     setUnitsData(indexById(units));
     setUsersData(indexById(users));
     store.setSubUnits(subUnits);
@@ -11574,6 +11588,8 @@ function AppInner() {
     const weights = {};
     subUnits.forEach(su => { if (su.weight !== null && su.weight !== undefined) weights[su.id] = su.weight; });
     store.setSubUnitWeights(weights);
+    // Audit log dari database (ts -> timestamp agar cocok dengan tampilan).
+    store.setAudit(audit.map(a => ({ ...a, timestamp: a.ts })));
   };
 
   // Login sungguhan: kirim email+password ke API, lalu muat data sebelum masuk.

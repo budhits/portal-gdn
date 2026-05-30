@@ -9,6 +9,7 @@ export const fetchSubUnits     = () => apiFetch("/sub-units");
 export const fetchProjects     = () => apiFetch("/projects");
 export const fetchTemplates    = () => apiFetch("/templates");
 export const fetchSubmissions  = () => apiFetch("/submissions");
+export const fetchAudit        = () => apiFetch("/audit");
 export const fetchMilestones   = () => apiFetch("/milestones");
 export const fetchExpenses     = () => apiFetch("/expenses");
 
