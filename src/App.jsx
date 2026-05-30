@@ -37,6 +37,7 @@ import { useState, useMemo, useEffect, createContext, useContext } from "react";
 import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser } from "./api/auth.js";
 import { getToken } from "./api/client.js";
 import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser,
+  fetchUnits, createUnit, updateUnit, deleteUnit,
   fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
   closeSubmission, updateSubmissionActual,
@@ -9406,16 +9407,28 @@ const UNIT_COLOR_OPTIONS = [
 const UNIT_ICON_OPTIONS = ["fish", "water", "store", "signal", "cog", "chart", "building"];
 
 function UnitManager() {
+  const store = useDataStore(); // subscribe agar hitungan dependensi ikut ter-update
+  const [units, setUnits] = useState(() => Object.values(UNITS));
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null); // null = add mode
   const [fName, setFName] = useState("");
   const [fLeaderId, setFLeaderId] = useState("");
   const [fColorIdx, setFColorIdx] = useState(0);
   const [fIcon, setFIcon] = useState("fish");
+  const [busy, setBusy] = useState(false);
 
-  const allUnits = Object.values(UNITS);
+  const allUnits = units;
   // Leaders available to assign
   const leaders = Object.values(USERS).filter(u => u.role === ROLES.LEADER);
+
+  const slugify = (s) => (s || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+  // Muat ulang unit dari API → perbarui binding modul UNITS + state lokal.
+  const reloadUnits = async () => {
+    const list = await fetchUnits();
+    setUnitsData(indexById(list));
+    setUnits(list);
+  };
 
   const openAdd = () => {
     setEditingId(null);
@@ -9433,21 +9446,39 @@ function UnitManager() {
     setShowForm(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (busy) return;
     if (!fName.trim()) { alert("Isi nama unit"); return; }
     const c = UNIT_COLOR_OPTIONS[fColorIdx];
-    const leaderName = fLeaderId ? getUser(fLeaderId)?.name : "Tanpa Leader";
-    alert(
-      (editingId === null ? "Unit baru:" : "Perubahan unit:") + "\n\n" +
-      `Nama: ${fName}\n` +
-      `Leader: ${leaderName}\n` +
-      `Warna: ${c.name}\n` +
-      `Ikon: ${fIcon}\n\n` +
-      "Catatan: perubahan STRUKTUR unit (tambah/edit unit induk) belum aktif di " +
-      "prototype ini — unit adalah fondasi yang menyentuh banyak relasi, jadi " +
-      "diaktifkan di Fase 2. Sub Unit, KPI, Project, dan Bobot sudah live."
-    );
-    setShowForm(false);
+    setBusy(true);
+    try {
+      if (editingId === null) {
+        // Buat id dari nama; pastikan unik terhadap unit yang sudah ada.
+        let id = slugify(fName) || `unit-${Date.now().toString(36).slice(-5)}`;
+        if (UNITS[id]) id = `${id}-${Date.now().toString(36).slice(-4)}`;
+        await createUnit({
+          id,
+          name: fName.trim(),
+          leaderId: fLeaderId || null,
+          color: c.color, colorDark: c.dark, colorLight: c.light,
+          icon: fIcon,
+        });
+      } else {
+        await updateUnit(editingId, {
+          name: fName.trim(),
+          leaderId: fLeaderId || null,
+          color: c.color, colorDark: c.dark, colorLight: c.light,
+          icon: fIcon,
+        });
+      }
+      await reloadUnits();
+      setShowForm(false);
+      setEditingId(null);
+    } catch (e) {
+      alert(e.message || "Gagal menyimpan unit.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   // Count dependents for delete-safety
@@ -9461,7 +9492,7 @@ function UnitManager() {
     return { subCount, kpiCount, projCount, total: subCount + kpiCount + projCount };
   };
 
-  const handleDelete = (unit) => {
+  const handleDelete = async (unit) => {
     const dep = dependents(unit.id);
     if (dep.total > 0) {
       alert(
@@ -9471,8 +9502,12 @@ function UnitManager() {
       );
       return;
     }
-    if (confirm(`Hapus unit "${unit.name}"?\n\nUnit ini kosong (tanpa sub unit/KPI/project), jadi aman dihapus.`)) {
-      alert(`Unit "${unit.name}" dihapus.`);
+    if (!confirm(`Hapus unit "${unit.name}"?\n\nUnit ini kosong (tanpa sub unit/KPI/project), jadi aman dihapus.`)) return;
+    try {
+      await deleteUnit(unit.id);
+      await reloadUnits();
+    } catch (e) {
+      alert(e.message || "Gagal menghapus unit.");
     }
   };
 
@@ -9627,6 +9662,7 @@ function UnitManager() {
             <button
               onClick={handleSave}
               type="button"
+              disabled={busy}
               style={{
                 padding: "8px 18px",
                 background: COLORS.primary,
@@ -9635,11 +9671,12 @@ function UnitManager() {
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
-                cursor: "pointer",
+                cursor: busy ? "not-allowed" : "pointer",
+                opacity: busy ? 0.6 : 1,
                 fontFamily: "inherit",
               }}
             >
-              {editingId === null ? "Simpan Unit" : "Simpan Perubahan"}
+              {busy ? "Menyimpan..." : (editingId === null ? "Simpan Unit" : "Simpan Perubahan")}
             </button>
           </div>
         </div>

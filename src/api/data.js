@@ -30,6 +30,11 @@ export const createUser = (body)     => apiFetch("/users", { method: "POST", bod
 export const updateUser = (id, body) => apiFetch(`/users/${id}`, { method: "PATCH", body });
 export const deleteUser = (id)       => apiFetch(`/users/${id}`, { method: "DELETE" });
 
+// ── Mutasi unit bisnis (Owner) ───────────────────────────────────────────────
+export const createUnit = (body)     => apiFetch("/units", { method: "POST", body });
+export const updateUnit = (id, body) => apiFetch(`/units/${id}`, { method: "PATCH", body });
+export const deleteUnit = (id)       => apiFetch(`/units/${id}`, { method: "DELETE" });
+
 // ── Mutasi sub-unit (Owner/Leader) ───────────────────────────────────────────
 export const createSubUnit = (body)     => apiFetch("/sub-units", { method: "POST", body });
 export const updateSubUnit = (id, body) => apiFetch(`/sub-units/${id}`, { method: "PATCH", body });
