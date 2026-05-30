@@ -12,8 +12,13 @@ if (!process.env.DATABASE_URL) {
   console.warn("⚠️  DATABASE_URL belum di-set. Salin server/.env.example ke server/.env.");
 }
 
+// Database managed (Render/Railway/Neon/Supabase) umumnya mewajibkan SSL.
+// Aktifkan dengan menyetel DATABASE_SSL=true di environment produksi.
+const useSsl = process.env.DATABASE_SSL === "true";
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: useSsl ? { rejectUnauthorized: false } : false,
 });
 
 pool.on("error", (err) => {

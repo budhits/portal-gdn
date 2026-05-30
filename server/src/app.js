@@ -2,6 +2,9 @@
 
 import express from "express";
 import cors from "cors";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import authRoutes from "./routes/auth.js";
 import usersRoutes from "./routes/users.js";
 import unitsRoutes from "./routes/units.js";
@@ -46,6 +49,19 @@ export function createApp() {
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Endpoint tidak ditemukan." });
   });
+
+  // ── Produksi: sajikan frontend hasil build (single service) ──────────────────
+  // Jika folder build frontend ada, layani sebagai file statis + fallback SPA.
+  // Frontend memanggil "/api" relatif (origin sama) sehingga tanpa CORS.
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const distPath = process.env.FRONTEND_DIST || path.resolve(__dirname, "../../dist");
+  if (fs.existsSync(path.join(distPath, "index.html"))) {
+    app.use(express.static(distPath));
+    // Semua GET non-/api dikembalikan ke index.html (single-page app).
+    app.get(/^(?!\/api\/).*/, (_req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
 
   // Penanganan error terpusat
   // eslint-disable-next-line no-unused-vars

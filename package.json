@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "install:all": "npm install && npm install --prefix server",
+    "build:all": "npm install && npm run build && npm install --prefix server",
+    "start": "node server/src/index.js",
+    "db:reset": "npm --prefix server run db:reset"
   },
   "dependencies": {
     "react": "^18.3.1",
