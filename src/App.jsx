@@ -2762,6 +2762,33 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
         />
       </div>
 
+      {/* Resume Margin per Unit (kartu, di atas ringkasan budget) */}
+      <div style={{ marginBottom: 26 }}>
+        <SectionHeader
+          title={`Margin per Unit · ${selectedPeriod.label}`}
+          subtitle="Target dari estimasi, realisasi dari closing. Sub-unit yang belum closing tampil sebagai pending."
+        />
+        {unitsWithMargin.length === 0 ? (
+          <Card style={{ padding: 24, textAlign: "center", color: COLORS.textLight, fontSize: 12 }}>
+            Belum ada margin di {selectedPeriod.label}
+          </Card>
+        ) : (
+          <>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: 12,
+              marginBottom: 12,
+            }}>
+              {unitsWithMargin.map(unit => (
+                <MarginUnitCard key={unit.id} unit={unit} />
+              ))}
+            </div>
+            <MarginGrandTotalCard total={grandTotalMargin} periodLabel={selectedPeriod.label} />
+          </>
+        )}
+      </div>
+
       {/* Budget summary — 6 boxes in 2 rows (Owner & Finance) */}
       <div style={{ marginBottom: 26 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 7 }}>
@@ -2875,69 +2902,6 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
         )}
       </div>
 
-      {/* SECTION 3: Margin per Unit */}
-      <div style={{ marginBottom: 18 }}>
-        <SectionHeader
-          title={`Margin per Unit · ${selectedPeriod.label}`}
-          subtitle="Hanya margin yang closing di periode ini dihitung. Siklus berjalan ditampilkan sebagai pending."
-        />
-        {unitsWithMargin.length === 0 ? (
-          <Card style={{ padding: 24, textAlign: "center", color: COLORS.textLight, fontSize: 12 }}>
-            Belum ada margin closing di {selectedPeriod.label}
-          </Card>
-        ) : (
-          <Card style={{ padding: 0 }}>
-            {unitsWithMargin.map((unit, i) => (
-              <MarginUnitRow
-                key={unit.id}
-                unit={unit}
-                isLast={i === unitsWithMargin.length - 1}
-              />
-            ))}
-            {/* Grand total */}
-            <div style={{
-              padding: "16px 18px",
-              background: `linear-gradient(135deg, ${COLORS.dark}, #1E293B)`,
-              borderTop: `1px solid ${COLORS.border}`,
-              color: COLORS.white,
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <div>
-                  <div style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: 0.6,
-                    color: "rgba(255,255,255,0.7)",
-                  }}>Total Semua Unit · {selectedPeriod.label}</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>
-                    Target: {formatRupiah(grandTotalMargin.target)}
-                    {" • "}
-                    Realisasi: {formatRupiah(grandTotalMargin.actual)}
-                    {grandTotalMargin.pendingTotal > 0 && (
-                      <> • Pending: {formatRupiah(grandTotalMargin.pendingTotal)}</>
-                    )}
-                  </div>
-                </div>
-                <div style={{
-                  fontSize: 24,
-                  fontWeight: 800,
-                  color: grandTotalMargin.percentage >= 100 ? "#86EFAC" : "#FCD34D",
-                }}>
-                  {grandTotalMargin.target > 0 ? `${grandTotalMargin.percentage}%` : "—"}
-                </div>
-              </div>
-              {grandTotalMargin.target > 0 && (
-                <ProgressBar
-                  value={Math.min(grandTotalMargin.percentage, 100)}
-                  color={grandTotalMargin.percentage >= 100 ? COLORS.success : COLORS.warning}
-                  height={8}
-                />
-              )}
-            </div>
-          </Card>
-        )}
-      </div>
     </div>
   );
 }
@@ -3249,6 +3213,147 @@ function ProjectRow({ project, onSelect }) {
 /**
  * One unit row in the Margin section.
  */
+// Kartu margin per unit (gaya sama dengan UnitCard "KPI per Unit").
+function MarginUnitCard({ unit }) {
+  const { target, actual, percentage, closedCount, closedEntries, pendingEntries } = unit.margin;
+  const hasClosing = target > 0;
+  const status = !hasClosing
+    ? { color: COLORS.textLight, bg: COLORS.bgMuted, label: pendingEntries.length ? "Belum closing" : "Belum mulai" }
+    : percentage >= 100
+    ? { color: COLORS.success, bg: COLORS.successBg, label: "Over target" }
+    : percentage >= 80
+    ? { color: COLORS.warning, bg: COLORS.warningBg, label: "Mendekati target" }
+    : { color: COLORS.danger, bg: COLORS.dangerBg, label: "Di bawah target" };
+
+  // Gabungan baris: yang sudah closing dulu, lalu yang pending.
+  const rows = [
+    ...closedEntries.map(e => ({ ...e, kind: "closed" })),
+    ...pendingEntries.map(e => ({ ...e, kind: "pending" })),
+  ];
+
+  return (
+    <Card>
+      <div style={{
+        background: unit.color,
+        padding: "12px 14px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <Icon name={unit.icon} size={20} color={COLORS.white} />
+          <div>
+            <div style={{ color: COLORS.white, fontWeight: 800, fontSize: 13 }}>{unit.name}</div>
+            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 10 }}>
+              {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name}` : "Tanpa Leader"}
+            </div>
+          </div>
+        </div>
+        <Pill color={COLORS.white} bg="rgba(255,255,255,0.25)">
+          {hasClosing ? `${percentage}%` : "—"}
+        </Pill>
+      </div>
+
+      <div style={{ padding: "11px 14px" }}>
+        {rows.length === 0 && (
+          <div style={{ fontSize: 11, color: COLORS.textLight, textAlign: "center", padding: "12px 0" }}>
+            Belum ada sub unit
+          </div>
+        )}
+        {rows.slice(0, 4).map(r => (
+          <MarginCardSubRow key={r.submissionId} entry={r} />
+        ))}
+        {rows.length > 4 && (
+          <div style={{ fontSize: 10, color: COLORS.textLight, textAlign: "center", marginTop: 6 }}>
+            +{rows.length - 4} sub unit lainnya
+          </div>
+        )}
+      </div>
+
+      <div style={{
+        padding: "8px 14px",
+        borderTop: `1px solid ${COLORS.bgMuted}`,
+        background: "#FAFBFC",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 8,
+        fontSize: 10,
+        color: COLORS.textMuted,
+      }}>
+        <span>
+          Target {formatRupiah(target)} · Real. <strong style={{ color: status.color }}>{formatRupiah(actual)}</strong>
+        </span>
+        <Pill color={status.color} bg={status.bg}>{status.label}</Pill>
+      </div>
+    </Card>
+  );
+}
+
+// Baris satu sub-unit di dalam kartu margin: % pencapaian + Target/Realisasi.
+function MarginCardSubRow({ entry }) {
+  const su = LIVE.subUnits.find(s => s.id === entry.subUnitId);
+  const name = su?.name || "—";
+  const icon = su?.icon || "store";
+  const isPending = entry.kind === "pending";
+  const pct = entry.targetMargin > 0 ? Math.round((entry.actualMargin / entry.targetMargin) * 100) : 0;
+  const color = isPending
+    ? COLORS.textLight
+    : pct >= 100 ? COLORS.success : pct >= 80 ? COLORS.warning : COLORS.danger;
+
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, marginBottom: 3 }}>
+        <span style={{ color: COLORS.text, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <Icon name={icon} size={13} color={COLORS.textMuted} /> {name}
+        </span>
+        <span style={{ color, fontWeight: 800 }}>{isPending ? "pending" : `${pct}%`}</span>
+      </div>
+      {!isPending && (
+        <ProgressBar value={Math.min(pct, 100)} color={color} height={4} />
+      )}
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: COLORS.textLight, marginTop: 2 }}>
+        <span>Target {formatRupiah(entry.targetMargin)}</span>
+        <span>{isPending ? "Belum closing" : `Real. ${formatRupiah(entry.actualMargin)}`}</span>
+      </div>
+    </div>
+  );
+}
+
+// Kartu total semua unit (sum all unit) untuk resume margin.
+function MarginGrandTotalCard({ total, periodLabel }) {
+  return (
+    <div style={{
+      padding: "16px 18px",
+      background: `linear-gradient(135deg, ${COLORS.dark}, #1E293B)`,
+      borderRadius: 12,
+      color: COLORS.white,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "rgba(255,255,255,0.7)" }}>
+            Total Semua Unit · {periodLabel}
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>
+            Target: {formatRupiah(total.target)}
+            {" • "}
+            Realisasi: {formatRupiah(total.actual)}
+            {total.pendingTotal > 0 && (
+              <> • Pending: {formatRupiah(total.pendingTotal)}</>
+            )}
+          </div>
+        </div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: total.percentage >= 100 ? "#86EFAC" : "#FCD34D" }}>
+          {total.target > 0 ? `${total.percentage}%` : "—"}
+        </div>
+      </div>
+      {total.target > 0 && (
+        <ProgressBar value={Math.min(total.percentage, 100)} color={total.percentage >= 100 ? COLORS.success : COLORS.warning} height={8} />
+      )}
+    </div>
+  );
+}
+
 function MarginUnitRow({ unit, isLast }) {
   const {
     target, actual, percentage,
