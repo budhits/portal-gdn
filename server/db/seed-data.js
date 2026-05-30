@@ -4,7 +4,7 @@
 // Password tiap user mengikuti pola: `<id>123`  (mis. budhi -> "budhi123").
 
 export const USERS = [
-  { id: "budhi",    name: "Budhi",    email: "budhi@email.com",    role: "owner",   unitId: null,          subUnitId: null },
+  { id: "budhi",    name: "Budhi",    email: "budhi@email.com",    role: "admin",   unitId: null,          subUnitId: null },
   { id: "rarra",    name: "Rarra",    email: "rarra@email.com",    role: "owner",   unitId: null,          subUnitId: null },
   { id: "lovia",    name: "Lovia",    email: "lovia@email.com",    role: "finance", unitId: null,          subUnitId: null },
   { id: "didi",     name: "Didi",     email: "didi@email.com",     role: "hr",      unitId: null,          subUnitId: null },

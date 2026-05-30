@@ -34,7 +34,7 @@ export async function loadActor(userId) {
  */
 export function canEditProject(actor, project) {
   if (!actor || !project) return false;
-  if (actor.role === "owner") return true;
+  if (actor.role === "admin" || actor.role === "owner") return true;
   if (actor.role === "leader") return project.unit_id === actor.unit_id;
   if (actor.role === "pic") {
     if (project.sub_unit_id && project.sub_unit_id === actor.sub_unit_id) return true;

@@ -33,7 +33,7 @@ DROP TYPE IF EXISTS submission_status    CASCADE;
 DROP TYPE IF EXISTS audit_action        CASCADE;
 
 -- ── Enums ───────────────────────────────────────────────────────────────────
-CREATE TYPE user_role         AS ENUM ('owner', 'finance', 'hr', 'leader', 'pic');
+CREATE TYPE user_role         AS ENUM ('admin', 'owner', 'finance', 'hr', 'leader', 'pic');
 CREATE TYPE sub_unit_status   AS ENUM ('active', 'inactive');
 CREATE TYPE project_status     AS ENUM ('on_track', 'at_risk', 'behind', 'done', 'pending_approval');
 CREATE TYPE template_frequency AS ENUM ('monthly', 'cycle', 'event');

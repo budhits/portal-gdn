@@ -18,7 +18,7 @@ async function loadActor(userId) {
 // Boleh mengajukan/closing/update: Owner (semua), Leader (unitnya), PIC (sub-unitnya).
 function canWrite(actor, target) {
   if (!actor) return false;
-  if (actor.role === "owner") return true;
+  if (actor.role === "admin" || actor.role === "owner") return true;
   if (actor.role === "leader") return target.unitId === actor.unit_id;
   if (actor.role === "pic") return target.subUnitId === actor.sub_unit_id;
   return false;
@@ -26,7 +26,7 @@ function canWrite(actor, target) {
 // Boleh approve/reject: Owner (semua), Leader (unitnya).
 function canApprove(actor, target) {
   if (!actor) return false;
-  if (actor.role === "owner") return true;
+  if (actor.role === "admin" || actor.role === "owner") return true;
   if (actor.role === "leader") return target.unitId === actor.unit_id;
   return false;
 }

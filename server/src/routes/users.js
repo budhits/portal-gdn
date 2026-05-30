@@ -11,7 +11,7 @@ import { logAudit } from "../lib/audit.js";
 const router = Router();
 router.use(authenticate);
 
-const ROLES = ["owner", "finance", "hr", "leader", "pic"];
+const ROLES = ["admin", "owner", "finance", "hr", "leader", "pic"];
 
 // GET /api/users  — semua user (tanpa password)
 router.get("/", async (req, res, next) => {

@@ -31,4 +31,23 @@ export async function bootstrapDatabase() {
   } else {
     console.log(`✔️  Database sudah berisi ${c[0].n} user — lewati pengisian data.`);
   }
+
+  // Migrasi idempoten (selalu dijalankan, aman diulang).
+  await runMigrations();
+}
+
+/**
+ * Migrasi ringan yang aman diulang. Untuk database yang sudah terisi
+ * (mis. produksi) yang tak melewati schema.sql terbaru.
+ */
+async function runMigrations() {
+  // 1. Tambah peran "admin" (Administrator) ke enum bila belum ada.
+  //    ADD VALUE IF NOT EXISTS aman & idempoten (Postgres 12+).
+  await pool.query("ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'admin'");
+
+  // 2. Jadikan user budhi sebagai Administrator (idempoten).
+  const { rowCount } = await pool.query(
+    "UPDATE users SET role = 'admin' WHERE id = 'budhi' AND role <> 'admin'"
+  );
+  if (rowCount > 0) console.log("🛡️  User 'budhi' disetel sebagai Administrator.");
 }

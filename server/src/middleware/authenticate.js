@@ -22,11 +22,12 @@ export function authenticate(req, res, next) {
 
 /**
  * Middleware: batasi akses ke peran tertentu.
+ * Peran "admin" (Administrator) selalu lolos — akses penuh ke semua fitur.
  * Contoh: router.post("/", authenticate, requireRole("owner"), handler)
  */
 export function requireRole(...roles) {
   return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!req.user || (req.user.role !== "admin" && !roles.includes(req.user.role))) {
       return res.status(403).json({ error: "Akses ditolak untuk peran Anda." });
     }
     next();
