@@ -7,7 +7,9 @@ services:
     runtime: node
     plan: free
     # Install deps frontend & backend, lalu build frontend (hasil di /dist).
-    buildCommand: npm install && npm run build && npm install --prefix server
+    # --include=dev wajib: NODE_ENV=production membuat npm melewati devDependencies
+    # (Vite) yang dibutuhkan untuk build frontend.
+    buildCommand: npm install --include=dev && npm run build && npm install --prefix server
     # Server Express menyajikan /dist (frontend) + /api (backend) dalam satu service.
     startCommand: node server/src/index.js
     healthCheckPath: /api/health
