@@ -182,7 +182,8 @@ CREATE TABLE kpi_submissions (
   approved_by      TEXT REFERENCES users(id) ON DELETE SET NULL,
   approved_at      TIMESTAMPTZ,
   closed_at        TIMESTAMPTZ,
-  closing_note     TEXT
+  closing_note     TEXT,
+  daily_margin     JSONB                                  -- { "1": 1000000, "2": ... } input margin harian KPI bulanan
 );
 CREATE INDEX idx_submissions_sub_unit ON kpi_submissions(sub_unit_id);
 CREATE INDEX idx_submissions_unit     ON kpi_submissions(unit_id);

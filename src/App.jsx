@@ -40,7 +40,7 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchUnits, createUnit, updateUnit, deleteUnit,
   fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
-  closeSubmission, updateSubmissionActual,
+  closeSubmission, updateSubmissionActual, saveDailyMargin,
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
   createProject, createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
   createExpense } from "./api/data.js";
@@ -4293,7 +4293,7 @@ function MarginEntryRow({ entry, isPending }) {
 /**
  * Table view of all KPI submissions (filtered by role).
  */
-function KPIHistoryPage({ user, onSelectSubmission }) {
+function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
   const store = useDataStore();
   const submissions = useMemo(() => getSubmissionsForUser(user), [user, store?.submissions]);
   const [filterUnit, setFilterUnit] = useState("all");
@@ -4343,12 +4343,23 @@ function KPIHistoryPage({ user, onSelectSubmission }) {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px" }}>
-      <div style={{ marginBottom: 18 }}>
+      <div style={{ marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+        <div>
         <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>KPI
         </h1>
         <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
           Performa & riwayat semua submission KPI ({submissions.length} total)
         </p>
+        </div>
+        {isOwnerLevel(user.role) && onNewKPI && (
+          <button onClick={onNewKPI} type="button" style={{
+            padding: "9px 16px", background: COLORS.primary, color: COLORS.white, border: "none",
+            borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+            display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+          }}>
+            <Icon name="plus" size={14} color={COLORS.white} /> Ajukan KPI Baru
+          </button>
+        )}
       </div>
 
       {/* Summary cards */}
@@ -5011,7 +5022,9 @@ function FormFieldInput({ field, value, onChange, disabled, computedValue }) {
  */
 function SubmitKPIForm({ user, context, onBack }) {
   const store = useDataStore();
-  const subUnitId = context?.subUnitId || user.subUnitId;
+  // Admin/Owner bisa membuka form tanpa sub-unit -> pilih sub-unit dulu.
+  const [pickedSubUnitId, setPickedSubUnitId] = useState(null);
+  const subUnitId = context?.subUnitId || user.subUnitId || pickedSubUnitId;
   const subUnit = LIVE.subUnits.find(s => s.id === subUnitId);
   const parentUnit = subUnit ? UNITS[subUnit.unitId] : null;
 
@@ -5030,6 +5043,38 @@ function SubmitKPIForm({ user, context, onBack }) {
   }, [template, values]);
 
   if (!subUnit || !parentUnit) {
+    // Admin/Owner: tampilkan pemilih sub-unit (mereka tak terikat satu sub-unit).
+    if (isOwnerLevel(user.role)) {
+      const subsByUnit = {};
+      LIVE.subUnits.forEach(s => { (subsByUnit[s.unitId] = subsByUnit[s.unitId] || []).push(s); });
+      return (
+        <FormPageWrapper title="Ajukan KPI Baru" subtitle="Pilih sub-unit yang KPI-nya akan diajukan" onBack={onBack}>
+          <Card style={{ padding: "16px 18px" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, marginBottom: 12 }}>Pilih Sub Unit</div>
+            <div style={{ display: "grid", gap: 14 }}>
+              {Object.keys(subsByUnit).map(uid => {
+                const u = UNITS[uid];
+                return (
+                  <div key={uid}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 800, color: u?.color || COLORS.dark, marginBottom: 6 }}>
+                      {u && <Icon name={u.icon} size={14} color={u.color} />}{u?.name || uid}
+                    </div>
+                    <div style={{ display: "grid", gap: 6 }}>
+                      {subsByUnit[uid].map(s => (
+                        <button key={s.id} type="button" onClick={() => setPickedSubUnitId(s.id)}
+                          style={{ textAlign: "left", padding: "10px 12px", border: `1px solid ${COLORS.border}`, borderRadius: 8, background: COLORS.white, cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 700, color: COLORS.dark }}>
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </FormPageWrapper>
+      );
+    }
     return (
       <FormPageWrapper title="Ajukan KPI Baru" onBack={onBack}>
         <Card style={{ padding: 20, textAlign: "center", color: COLORS.textMuted }}>
@@ -10667,12 +10712,15 @@ function daysInMonth(year, monthIdx) {
  * Two input modes: full month table + quick single-day entry.
  */
 function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
+  const store = useDataStore();
   const { year, monthIdx } = parsePeriodLabel(periodLabel || submission?.period);
   const totalDays = daysInMonth(year, monthIdx);
 
   // daily values: { [day:number]: number }  (day = 1..totalDays)
-  const [daily, setDaily] = useState({});
+  // Muat data tersimpan dari database (kalau ada) agar tidak hilang saat dibuka ulang.
+  const [daily, setDaily] = useState(() => ({ ...(submission?.dailyMargin || {}) }));
   const [mode, setMode] = useState("table"); // "table" | "quick"
+  const [busy, setBusy] = useState(false);
 
   // Quick-mode state
   const [quickDay, setQuickDay] = useState(1);
@@ -10697,16 +10745,31 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
   const targetMargin = submission?.targetMargin || 0;
   const pctOfTarget = targetMargin > 0 ? Math.round((totalMargin / targetMargin) * 100) : null;
 
-  const handleSaveAll = () => {
+  const handleSaveAll = async () => {
+    if (busy) return;
+    // Hanya simpan hari yang terisi (angka), buang yang kosong.
+    const clean = {};
+    for (const [d, v] of Object.entries(daily)) {
+      if (v !== "" && v !== undefined && v !== null && !isNaN(Number(v))) clean[d] = Number(v);
+    }
+    setBusy(true);
+    try {
+      await saveDailyMargin(submission.id, clean);
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      setBusy(false);
+      alert(e.message || "Gagal menyimpan margin harian.");
+      return;
+    }
+    setBusy(false);
     alert(
-      "Margin harian disimpan.\n\n" +
+      "Margin harian tersimpan ke database. ✅\n\n" +
       `Sub Unit: ${subUnitName}\n` +
       `Periode: ${MONTH_NAMES_ID[monthIdx]} ${year}\n` +
       `Hari terisi: ${filledDays} dari ${totalDays}\n` +
       `Total margin bulan: ${formatRupiahFull(totalMargin)}\n` +
       (pctOfTarget !== null ? `Capaian vs target: ${pctOfTarget}%\n` : "") +
-      "\nTotal ini otomatis menjadi realisasi margin bulan tersebut.\n" +
-      "(Level A: berlaku selama sesi ini.)"
+      "\nData ini permanen dan akan muncul lagi saat dibuka kembali."
     );
     onClose();
   };
@@ -10898,13 +10961,14 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={onClose} type="button" style={adminBtnStyle}>Batal</button>
-            <button onClick={handleSaveAll} type="button" style={{
+            <button onClick={handleSaveAll} type="button" disabled={busy} style={{
               padding: "9px 22px", background: COLORS.primary, color: COLORS.white, border: "none",
-              borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "inherit",
+              borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: busy ? "not-allowed" : "pointer",
+              opacity: busy ? 0.6 : 1, fontFamily: "inherit",
               display: "inline-flex", alignItems: "center", gap: 7,
             }}>
               <Icon name="save" size={15} color={COLORS.white} style={{ pointerEvents: "none" }} />
-              Simpan Margin Bulan
+              {busy ? "Menyimpan..." : "Simpan Margin Bulan"}
             </button>
           </div>
         </div>
@@ -11416,7 +11480,8 @@ function AppInner() {
       return <MarginDetailPage user={user} />;
     }
     if (page === "kpi") {
-      return <KPIHistoryPage user={user} onSelectSubmission={goToSubmissionDetail} />;
+      return <KPIHistoryPage user={user} onSelectSubmission={goToSubmissionDetail}
+        onNewKPI={() => openForm("submit_new", {})} />;
     }
     if (page === "inbox") {
       return <InboxPage

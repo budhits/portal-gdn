@@ -193,13 +193,28 @@ router.patch("/:id", async (req, res, next) => {
     const actor = await loadActor(req.user.id);
     if (!canWrite(actor, sub)) return res.status(403).json({ error: "Anda tidak berwenang mengubah KPI ini." });
 
-    const { actualValues } = req.body || {};
-    if (actualValues === undefined) return res.status(400).json({ error: "actualValues wajib diisi." });
+    const { actualValues, dailyMargin } = req.body || {};
+    if (actualValues === undefined && dailyMargin === undefined) {
+      return res.status(400).json({ error: "actualValues atau dailyMargin wajib diisi." });
+    }
 
-    await query("UPDATE kpi_submissions SET actual_values = $2 WHERE id = $1",
-      [req.params.id, JSON.stringify(actualValues)]);
+    const sets = [];
+    const params = [req.params.id];
+    if (actualValues !== undefined) {
+      params.push(JSON.stringify(actualValues));
+      sets.push(`actual_values = $${params.length}`);
+    }
+    if (dailyMargin !== undefined) {
+      params.push(JSON.stringify(dailyMargin));
+      sets.push(`daily_margin = $${params.length}`);
+    }
+    await query(`UPDATE kpi_submissions SET ${sets.join(", ")} WHERE id = $1`, params);
+
+    const label = dailyMargin !== undefined && actualValues === undefined
+      ? `Input margin harian KPI ${sub.period}`
+      : `Update realisasi KPI ${sub.period}`;
     await logAudit({ actorId: req.user.id, action: "update", entityType: "kpi_submission",
-      entityId: req.params.id, entityLabel: `Update realisasi KPI ${sub.period}`, unitId: sub.unitId });
+      entityId: req.params.id, entityLabel: label, unitId: sub.unitId });
     await respondEnriched(res, req.params.id);
   } catch (err) { next(err); }
 });

@@ -65,6 +65,7 @@ const submissionRowToApi = (r) => ({
   approvedAt: r.approved_at,
   closedAt: r.closed_at,
   closingNote: r.closing_note,
+  dailyMargin: r.daily_margin || null,
 });
 
 export async function getSubmissions(filters = {}) {

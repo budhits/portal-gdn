@@ -50,4 +50,7 @@ async function runMigrations() {
     "UPDATE users SET role = 'admin' WHERE id = 'budhi' AND role <> 'admin'"
   );
   if (rowCount > 0) console.log("🛡️  User 'budhi' disetel sebagai Administrator.");
+
+  // 3. Kolom daily_margin untuk menyimpan input margin harian (idempoten).
+  await pool.query("ALTER TABLE kpi_submissions ADD COLUMN IF NOT EXISTS daily_margin JSONB");
 }
