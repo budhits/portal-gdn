@@ -2774,17 +2774,28 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
           </Card>
         ) : (
           <>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: 12,
-              marginBottom: 12,
-            }}>
+            {/* RESUME utama: total semua unit (cerah, di atas) */}
+            <MarginGrandTotalCard total={grandTotalMargin} periodLabel={selectedPeriod.label} />
+
+            {/* RESUME per unit: chip cerah, 2 per baris */}
+            <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "16px 0 8px" }}>
+              Resume per Unit
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 12, marginBottom: 20 }}>
+              {unitsWithMargin.map(unit => (
+                <MarginResumeChip key={unit.id} unit={unit} />
+              ))}
+            </div>
+
+            {/* DETAIL sub-unit: kartu, 2 per baris */}
+            <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "0 0 8px" }}>
+              Detail Sub-Unit
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 12 }}>
               {unitsWithMargin.map(unit => (
                 <MarginUnitCard key={unit.id} unit={unit} />
               ))}
             </div>
-            <MarginGrandTotalCard total={grandTotalMargin} periodLabel={selectedPeriod.label} />
           </>
         )}
       </div>
@@ -3213,6 +3224,53 @@ function ProjectRow({ project, onSelect }) {
 /**
  * One unit row in the Margin section.
  */
+// Status margin (warna + label) berdasarkan % pencapaian.
+function getMarginStatus(percentage, hasClosing, hasPending) {
+  if (!hasClosing) return { color: COLORS.textLight, bg: COLORS.bgMuted, label: hasPending ? "Belum closing" : "Belum mulai" };
+  if (percentage >= 100) return { color: COLORS.success, bg: COLORS.successBg, label: "Over target" };
+  if (percentage >= 80) return { color: COLORS.warning, bg: COLORS.warningBg, label: "Mendekati target" };
+  return { color: COLORS.danger, bg: COLORS.dangerBg, label: "Di bawah target" };
+}
+
+// Chip resume margin per unit (cerah, ringkas) — warna khas unit.
+function MarginResumeChip({ unit }) {
+  const { target, actual, percentage, pendingEntries } = unit.margin;
+  const hasClosing = target > 0;
+  const status = getMarginStatus(percentage, hasClosing, pendingEntries.length > 0);
+  return (
+    <div style={{
+      borderRadius: 12,
+      padding: "14px 16px",
+      color: COLORS.white,
+      background: `linear-gradient(135deg, ${unit.color}, ${unit.colorDark})`,
+      boxShadow: `0 6px 18px ${unit.color}33`,
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 12,
+    }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name={unit.icon} size={18} color={COLORS.white} />
+          <span style={{ fontSize: 14, fontWeight: 800 }}>{unit.name}</span>
+        </div>
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>
+          {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name}` : "Tanpa Leader"} · {status.label}
+        </div>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.95)", marginTop: 7 }}>
+          Target {formatRupiah(target)} · Real. {formatRupiah(actual)}
+        </div>
+      </div>
+      <div style={{
+        fontSize: 24, fontWeight: 800, color: COLORS.white,
+        background: "rgba(255,255,255,0.22)", borderRadius: 10, padding: "6px 12px", whiteSpace: "nowrap",
+      }}>
+        {hasClosing ? `${percentage}%` : "—"}
+      </div>
+    </div>
+  );
+}
+
 // Kartu margin per unit (gaya sama dengan UnitCard "KPI per Unit").
 function MarginUnitCard({ unit }) {
   const { target, actual, percentage, closedCount, closedEntries, pendingEntries } = unit.margin;
@@ -3322,12 +3380,21 @@ function MarginCardSubRow({ entry }) {
 
 // Kartu total semua unit (sum all unit) untuk resume margin.
 function MarginGrandTotalCard({ total, periodLabel }) {
+  // Gradient cerah berdasarkan capaian keseluruhan.
+  const grad = total.target === 0
+    ? "linear-gradient(135deg, #64748B, #475569)"
+    : total.percentage >= 100
+    ? "linear-gradient(135deg, #16A34A, #0D9488)"
+    : total.percentage >= 80
+    ? "linear-gradient(135deg, #0EA5E9, #0D9488)"
+    : "linear-gradient(135deg, #F59E0B, #EF4444)";
   return (
     <div style={{
-      padding: "16px 18px",
-      background: `linear-gradient(135deg, ${COLORS.dark}, #1E293B)`,
-      borderRadius: 12,
+      padding: "18px 22px",
+      background: grad,
+      borderRadius: 14,
       color: COLORS.white,
+      boxShadow: "0 8px 22px rgba(15,23,42,0.18)",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
         <div>
@@ -3343,12 +3410,12 @@ function MarginGrandTotalCard({ total, periodLabel }) {
             )}
           </div>
         </div>
-        <div style={{ fontSize: 24, fontWeight: 800, color: total.percentage >= 100 ? "#86EFAC" : "#FCD34D" }}>
+        <div style={{ fontSize: 30, fontWeight: 800, color: COLORS.white }}>
           {total.target > 0 ? `${total.percentage}%` : "—"}
         </div>
       </div>
       {total.target > 0 && (
-        <ProgressBar value={Math.min(total.percentage, 100)} color={total.percentage >= 100 ? COLORS.success : COLORS.warning} height={8} />
+        <ProgressBar value={Math.min(total.percentage, 100)} color="rgba(255,255,255,0.92)" height={8} />
       )}
     </div>
   );
