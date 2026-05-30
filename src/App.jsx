@@ -2215,18 +2215,7 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
     return () => { cancelled = true; };
   }, [googleClientId, onGoogleAuth]);
 
-  const groupedUsers = useMemo(() => {
-    const groups = { owners: [], support: [], leaders: [], pics: [] };
-    Object.values(USERS).forEach(u => {
-      if (isOwnerLevel(u.role)) groups.owners.push(u);
-      else if (u.role === ROLES.FINANCE || u.role === ROLES.HR) groups.support.push(u);
-      else if (u.role === ROLES.LEADER) groups.leaders.push(u);
-      else if (u.role === ROLES.PIC) groups.pics.push(u);
-    });
-    return groups;
-  }, []);
-
-  // Submit kredensial ke API (dipakai form manual maupun tombol demo).
+  // Submit kredensial email/password ke API.
   const submit = async (em, pw) => {
     setError("");
     setLoading(true);
@@ -2236,13 +2225,6 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
       setError(err.message || "Login gagal.");
       setLoading(false);
     }
-  };
-
-  // Tombol demo: isi email user + password pola "<id>123", lalu submit.
-  const loginDemo = (user) => {
-    setEmail(user.email);
-    setPassword(`${user.id}123`);
-    submit(user.email, `${user.id}123`);
   };
 
   return (
@@ -2278,16 +2260,9 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
           Sistem Planning & Monitoring Bisnis
         </p>
 
-        <div style={{
-          background: COLORS.warningBg,
-          border: `1px solid #FDE68A`,
-          borderRadius: 10,
-          padding: "10px 12px",
-          marginBottom: 18,
-          fontSize: 11,
-          color: "#92400E",
-        }}><strong>Demo v{APP_CONFIG.version}</strong> — Masuk dengan email & password, atau klik akun demo
-        </div>
+        <p style={{ textAlign: "center", margin: "0 0 18px", fontSize: 11, color: COLORS.textMuted }}>
+          Silakan masuk dengan akun Anda
+        </p>
 
         {/* Form login email + password (autentikasi sungguhan ke backend) */}
         <form
@@ -2343,97 +2318,24 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
               <span style={{ fontSize: 10, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.6 }}>atau</span>
               <div style={{ flex: 1, height: 1, background: COLORS.border }} />
             </div>
-            <div ref={googleBtnRef} style={{ display: "flex", justifyContent: "center", marginBottom: 16 }} />
+            <div ref={googleBtnRef} style={{ display: "flex", justifyContent: "center", marginBottom: 8 }} />
           </>
         )}
 
-        <div style={{ textAlign: "center", fontSize: 10, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.6, margin: "4px 0 12px" }}>
-          atau pilih akun demo
-        </div>
-
-        <LoginUserGroup label="Owner" users={groupedUsers.owners} onSelect={loginDemo} />
-        <LoginUserGroup label="Support (Finance & HR)" users={groupedUsers.support} onSelect={loginDemo} />
-        <LoginUserGroup label="Leader Unit" users={groupedUsers.leaders} onSelect={loginDemo} />
-        <LoginUserGroup label="PIC Sub Unit (Baru di v2)" users={groupedUsers.pics} onSelect={loginDemo} highlight />
-
         <div style={{
-          marginTop: 18,
+          marginTop: 16,
           paddingTop: 14,
           borderTop: `1px solid ${COLORS.bgMuted}`,
           textAlign: "center",
           fontSize: 10,
           color: COLORS.textLight,
-        }}>Production: Login via Google OAuth
+          lineHeight: 1.5,
+        }}>Akses terbatas untuk pengguna terdaftar. Hubungi Administrator untuk mendapatkan akun.
         </div>
       </div>
     </div>
   );
 }
-
-function LoginUserGroup({ label, users, onSelect, highlight }) {
-  if (users.length === 0) return null;
-  return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{
-        fontSize: 10,
-        fontWeight: 700,
-        color: highlight ? COLORS.primary : COLORS.textLight,
-        textTransform: "uppercase",
-        letterSpacing: 0.6,
-        marginBottom: 6,
-      }}>{label}</div>
-      <div style={{ display: "grid", gap: 6 }}>
-        {users.map(u => (
-          <LoginUserButton key={u.id} user={u} onClick={() => onSelect(u)} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LoginUserButton({ user, onClick }) {
-  const [hovered, setHovered] = useState(false);
-  const unit = user.unitId ? UNITS[user.unitId] : null;
-  const subUnit = user.subUnitId ? LIVE.subUnits.find(su => su.id === user.subUnitId) : null;
-
-  let detail = ROLE_LABELS[user.role];
-  if (subUnit && unit) detail = `${ROLE_LABELS[user.role]} • ${subUnit.name}`;
-  else if (unit) detail = `${ROLE_LABELS[user.role]} • ${unit.name}`;
-
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        padding: "10px 12px",
-        border: `1px solid ${hovered ? COLORS.primary : COLORS.border}`,
-        borderRadius: 10,
-        background: hovered ? "#F8FAFC" : COLORS.white,
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 11,
-        textAlign: "left",
-        fontFamily: "inherit",
-        transition: "all 0.15s",
-      }}
-    >
-      <span style={{
-        width: 34, height: 34, borderRadius: 99,
-        background: COLORS.bgMuted, color: COLORS.text,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 14, fontWeight: 800, flexShrink: 0,
-      }}>{user.name.charAt(0)}</span>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>{user.name}</div>
-        <div style={{ fontSize: 10, color: COLORS.textMuted }}>{detail}</div>
-      </div>
-      <span style={{ color: COLORS.textLight, fontSize: 14 }}>→</span>
-    </button>
-  );
-}
-
 
 // ════════════════════════════════════════════════════════════════════════════
 // §7  NAVIGATION
