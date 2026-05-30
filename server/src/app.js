@@ -7,6 +7,8 @@ import usersRoutes from "./routes/users.js";
 import unitsRoutes from "./routes/units.js";
 import subUnitsRoutes from "./routes/subUnits.js";
 import projectsRoutes from "./routes/projects.js";
+import milestonesRoutes from "./routes/milestones.js";
+import expensesRoutes from "./routes/expenses.js";
 import templatesRoutes from "./routes/templates.js";
 import submissionsRoutes from "./routes/submissions.js";
 import auditRoutes from "./routes/audit.js";
@@ -33,6 +35,8 @@ export function createApp() {
   app.use("/api/units", unitsRoutes);
   app.use("/api/sub-units", subUnitsRoutes);
   app.use("/api/projects", projectsRoutes);
+  app.use("/api/milestones", milestonesRoutes);
+  app.use("/api/expenses", expensesRoutes);
   app.use("/api/templates", templatesRoutes);
   app.use("/api/submissions", submissionsRoutes);
   app.use("/api/audit", auditRoutes);

@@ -45,6 +45,26 @@ export const userToApi = (r) => ({
   subUnitId: r.sub_unit_id,
 });
 
+export const milestoneToApi = (r) => ({
+  id: r.id,
+  projectId: r.project_id,
+  name: r.name,
+  done: r.done,
+  date: r.date,
+  pic: r.pic,
+  budgetAllocated: Number(r.budget_allocated),
+});
+
+export const expenseToApi = (r) => ({
+  id: r.id,
+  projectId: r.project_id,
+  milestoneId: r.milestone_id,
+  name: r.name,
+  amount: Number(r.amount),
+  date: r.date,
+  hasReceipt: r.has_receipt,
+});
+
 export const auditToApi = (r) => ({
   id: r.id,
   ts: r.ts,

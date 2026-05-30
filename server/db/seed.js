@@ -11,7 +11,7 @@
 import bcrypt from "bcryptjs";
 import { withTransaction, pool } from "../src/db.js";
 import {
-  USERS, UNITS, SUB_UNITS, PROJECTS,
+  USERS, UNITS, SUB_UNITS, PROJECTS, MILESTONES, EXPENSES,
   FORM_TEMPLATES, KPI_SUBMISSIONS, AUDIT_LOG,
 } from "./seed-data.js";
 
@@ -21,7 +21,7 @@ const passwordFor = (userId) => `${userId}123`;
 async function seed() {
   await withTransaction(async (c) => {
     // Bersihkan dulu (urutan terbalik dari dependensi).
-    await c.query("TRUNCATE audit_log, kpi_submissions, form_fields, form_templates, projects, sub_units, units, users RESTART IDENTITY CASCADE");
+    await c.query("TRUNCATE audit_log, kpi_submissions, form_fields, form_templates, expenses, milestones, projects, sub_units, units, users RESTART IDENTITY CASCADE");
 
     // 1. users (tanpa referensi unit/sub_unit dulu)
     for (const u of USERS) {
@@ -90,6 +90,26 @@ async function seed() {
       }
     }
 
+    // 4b-2. milestones (urut per project untuk sort_order)
+    const msOrder = {};
+    for (const m of MILESTONES) {
+      const ord = (msOrder[m.projectId] = (msOrder[m.projectId] ?? -1) + 1);
+      await c.query(
+        `INSERT INTO milestones (id, project_id, name, done, date, pic, budget_allocated, sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [m.id, m.projectId, m.name, m.done, m.date, m.pic, m.budgetAllocated, ord]
+      );
+    }
+
+    // 4b-3. expenses
+    for (const e of EXPENSES) {
+      await c.query(
+        `INSERT INTO expenses (id, project_id, milestone_id, name, amount, date, has_receipt)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [e.id, e.projectId, e.milestoneId, e.name, e.amount, e.date, e.hasReceipt]
+      );
+    }
+
     // 4c. kpi_submissions
     for (const s of KPI_SUBMISSIONS) {
       await c.query(
@@ -117,7 +137,7 @@ async function seed() {
 
   // Ringkasan
   const counts = {};
-  for (const tbl of ["users", "units", "sub_units", "projects", "form_templates", "form_fields", "kpi_submissions", "audit_log"]) {
+  for (const tbl of ["users", "units", "sub_units", "projects", "milestones", "expenses", "form_templates", "form_fields", "kpi_submissions", "audit_log"]) {
     const { rows } = await pool.query(`SELECT COUNT(*)::int AS n FROM ${tbl}`);
     counts[tbl] = rows[0].n;
   }

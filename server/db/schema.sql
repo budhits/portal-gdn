@@ -17,6 +17,8 @@ DROP TABLE IF EXISTS audit_log       CASCADE;
 DROP TABLE IF EXISTS kpi_submissions CASCADE;
 DROP TABLE IF EXISTS form_fields     CASCADE;
 DROP TABLE IF EXISTS form_templates  CASCADE;
+DROP TABLE IF EXISTS expenses        CASCADE;
+DROP TABLE IF EXISTS milestones      CASCADE;
 DROP TABLE IF EXISTS projects        CASCADE;
 DROP TABLE IF EXISTS sub_units        CASCADE;
 DROP TABLE IF EXISTS units           CASCADE;
@@ -33,7 +35,7 @@ DROP TYPE IF EXISTS audit_action        CASCADE;
 -- ── Enums ───────────────────────────────────────────────────────────────────
 CREATE TYPE user_role         AS ENUM ('owner', 'finance', 'hr', 'leader', 'pic');
 CREATE TYPE sub_unit_status   AS ENUM ('active', 'inactive');
-CREATE TYPE project_status     AS ENUM ('on_track', 'at_risk', 'behind', 'done');
+CREATE TYPE project_status     AS ENUM ('on_track', 'at_risk', 'behind', 'done', 'pending_approval');
 CREATE TYPE template_frequency AS ENUM ('monthly', 'cycle', 'event');
 CREATE TYPE field_type         AS ENUM ('number', 'text', 'date', 'auto');
 CREATE TYPE submission_status  AS ENUM ('estimated', 'approved', 'closed', 'rejected');
@@ -103,6 +105,34 @@ CREATE TABLE projects (
 );
 CREATE INDEX idx_projects_unit     ON projects(unit_id);
 CREATE INDEX idx_projects_sub_unit ON projects(sub_unit_id);
+
+-- ── milestones ───────────────────────────────────────────────────────────────
+-- Tahapan sebuah project, masing-masing punya target tanggal & alokasi budget.
+CREATE TABLE milestones (
+  id               TEXT PRIMARY KEY,
+  project_id       TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name             TEXT NOT NULL,
+  done             BOOLEAN NOT NULL DEFAULT false,
+  date             DATE,                         -- target tanggal
+  pic              TEXT NOT NULL DEFAULT '',
+  budget_allocated BIGINT NOT NULL DEFAULT 0,    -- Rupiah
+  sort_order       INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_milestones_project ON milestones(project_id);
+
+-- ── expenses ─────────────────────────────────────────────────────────────────
+-- Realisasi pengeluaran project, opsional terkait sebuah milestone.
+CREATE TABLE expenses (
+  id           TEXT PRIMARY KEY,
+  project_id   TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  milestone_id TEXT REFERENCES milestones(id) ON DELETE SET NULL,
+  name         TEXT NOT NULL,
+  amount       BIGINT NOT NULL DEFAULT 0,        -- Rupiah
+  date         DATE,
+  has_receipt  BOOLEAN NOT NULL DEFAULT false
+);
+CREATE INDEX idx_expenses_project   ON expenses(project_id);
+CREATE INDEX idx_expenses_milestone ON expenses(milestone_id);
 
 -- ── form_templates ───────────────────────────────────────────────────────────
 -- Owner rancang sekali, dipakai banyak sub-unit.

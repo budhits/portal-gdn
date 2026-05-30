@@ -1,10 +1,11 @@
 // Rute projects: list + CRUD.
 
 import { Router } from "express";
-import { query } from "../db.js";
+import { query, withTransaction } from "../db.js";
 import { authenticate, requireRole } from "../middleware/authenticate.js";
 import { projectToApi } from "../lib/serializers.js";
 import { logAudit } from "../lib/audit.js";
+import { recomputeProjectStats } from "../lib/projects.js";
 
 const router = Router();
 router.use(authenticate);
@@ -29,24 +30,41 @@ router.get("/:id", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/projects  (Owner/Leader)
-router.post("/", requireRole("owner", "leader"), async (req, res, next) => {
+// POST /api/projects  (Owner/Leader/PIC) — sekaligus milestones (transaksional)
+router.post("/", requireRole("owner", "leader", "pic"), async (req, res, next) => {
   try {
     const b = req.body || {};
-    if (!b.id || !b.unitId || !b.name) {
-      return res.status(400).json({ error: "id, unitId, dan name wajib diisi." });
+    if (!b.unitId || !b.name) {
+      return res.status(400).json({ error: "unitId dan name wajib diisi." });
     }
-    const { rows } = await query(
-      `INSERT INTO projects (id, unit_id, sub_unit_id, name, description, status,
-          milestones_total, milestones_done, budget_planned, budget_spent, start_date, end_date)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-      [b.id, b.unitId, b.subUnitId ?? null, b.name, b.desc ?? "", b.status ?? "on_track",
-       b.milestonesTotal ?? 0, b.milestonesDone ?? 0, b.budgetPlanned ?? 0, b.budgetSpent ?? 0,
-       b.startDate ?? null, b.endDate ?? null]
-    );
-    await logAudit({ actorId: req.user.id, action: "create", entityType: "project",
-      entityId: b.id, entityLabel: `Ajukan Project: ${b.name}`, unitId: b.unitId });
-    res.status(201).json(projectToApi(rows[0]));
+    const id = b.id || `pj-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const milestones = Array.isArray(b.milestones) ? b.milestones : [];
+
+    const created = await withTransaction(async (c) => {
+      const { rows } = await c.query(
+        `INSERT INTO projects (id, unit_id, sub_unit_id, name, description, status,
+            milestones_total, milestones_done, budget_planned, budget_spent, start_date, end_date)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,0,$8,0,$9,$10) RETURNING *`,
+        [id, b.unitId, b.subUnitId ?? null, b.name, b.desc ?? "", b.status ?? "pending_approval",
+         milestones.length, b.budgetPlanned ?? 0, b.startDate ?? null, b.endDate ?? null]
+      );
+      let order = 0;
+      for (const m of milestones) {
+        const msId = m.id || `ms-${id}-${order + 1}`;
+        await c.query(
+          `INSERT INTO milestones (id, project_id, name, done, date, pic, budget_allocated, sort_order)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [msId, id, m.name, !!m.done, m.date || null, m.pic || "", Number(m.budgetAllocated) || 0, order++]
+        );
+      }
+      await recomputeProjectStats(id, c);
+      await logAudit({ actorId: req.user.id, action: "create", entityType: "project",
+        entityId: id, entityLabel: `Ajukan Project: ${b.name}`, unitId: b.unitId }, c);
+      const { rows: fresh } = await c.query("SELECT * FROM projects WHERE id = $1", [id]);
+      return fresh[0];
+    });
+
+    res.status(201).json(projectToApi(created));
   } catch (err) { next(err); }
 });
 

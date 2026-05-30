@@ -208,6 +208,105 @@ export const KPI_SUBMISSIONS = [
     createdBy: "satya", createdAt: "2026-04-10", approvedBy: "budhi", approvedAt: "2026-04-12", closedAt: null, closingNote: null },
 ];
 
+// Milestones per project (flat; sort_order = urutan dalam project).
+export const MILESTONES = [
+  { id: "ms-1", projectId: "pj-001", name: "Survey & izin lahan",      done: true,  date: "2026-01-31", pic: "Pa Wahyu", budgetAllocated:  6000000 },
+  { id: "ms-2", projectId: "pj-001", name: "Konstruksi kolam",         done: true,  date: "2026-03-31", pic: "Pa Wahyu", budgetAllocated: 60000000 },
+  { id: "ms-3", projectId: "pj-001", name: "Instalasi pipa & aerasi",  done: true,  date: "2026-04-30", pic: "Andi",     budgetAllocated: 25000000 },
+  { id: "ms-4", projectId: "pj-001", name: "Uji coba sistem air",      done: false, date: "2026-05-31", pic: "Rizal",    budgetAllocated:  9000000 },
+  { id: "ms-5", projectId: "pj-001", name: "Stocking benih perdana",   done: false, date: "2026-06-15", pic: "Rizal",    budgetAllocated: 35000000 },
+  { id: "ms-6", projectId: "pj-001", name: "Panen perdana & evaluasi", done: false, date: "2026-09-20", pic: "Satya",    budgetAllocated: 20000000 },
+  { id: "ms-7", projectId: "pj-001", name: "Operasional penuh",        done: false, date: "2026-12-31", pic: "Satya",    budgetAllocated: 25000000 },
+
+  { id: "ms-b1", projectId: "pj-002", name: "Desain sistem biofloc",       done: true,  date: "2026-03-20", pic: "Satya", budgetAllocated:  5000000 },
+  { id: "ms-b2", projectId: "pj-002", name: "Pengadaan peralatan aerasi",  done: false, date: "2026-05-15", pic: "Satya", budgetAllocated: 18000000 },
+  { id: "ms-b3", projectId: "pj-002", name: "Instalasi kolam percontohan", done: false, date: "2026-07-10", pic: "Rizal", budgetAllocated: 14000000 },
+  { id: "ms-b4", projectId: "pj-002", name: "Uji coba & kalibrasi",        done: false, date: "2026-08-20", pic: "Rizal", budgetAllocated:  5000000 },
+  { id: "ms-b5", projectId: "pj-002", name: "Migrasi penuh semua kolam",   done: false, date: "2026-09-30", pic: "Satya", budgetAllocated:  3000000 },
+
+  { id: "ms-f1", projectId: "pj-101", name: "Desain filter zigzag",      done: true,  date: "2026-04-10", pic: "Taufik", budgetAllocated:  4000000 },
+  { id: "ms-f2", projectId: "pj-101", name: "Pengadaan material filter", done: true,  date: "2026-04-25", pic: "Hendra", budgetAllocated: 12000000 },
+  { id: "ms-f3", projectId: "pj-101", name: "Konstruksi bak filter",     done: true,  date: "2026-05-15", pic: "Hendra", budgetAllocated: 11000000 },
+  { id: "ms-f4", projectId: "pj-101", name: "Instalasi UV sterilizer",   done: true,  date: "2026-06-05", pic: "Hendra", budgetAllocated:  9000000 },
+  { id: "ms-f5", projectId: "pj-101", name: "Pemasangan pompa & pipa",   done: true,  date: "2026-06-25", pic: "Taufik", budgetAllocated:  4000000 },
+  { id: "ms-f6", projectId: "pj-101", name: "Uji aliran & tekanan",      done: false, date: "2026-07-10", pic: "Taufik", budgetAllocated:  2000000 },
+  { id: "ms-f7", projectId: "pj-101", name: "Commissioning sistem",      done: false, date: "2026-07-25", pic: "Taufik", budgetAllocated:  1000000 },
+
+  { id: "ms-c1", projectId: "pj-201", name: "Survey lokasi cabang",   done: true,  date: "2026-03-15", pic: "Rina",     budgetAllocated:  3000000 },
+  { id: "ms-c2", projectId: "pj-201", name: "Sewa & renovasi tempat", done: true,  date: "2026-04-20", pic: "Rina",     budgetAllocated: 18000000 },
+  { id: "ms-c3", projectId: "pj-201", name: "Pengadaan perangkat",    done: true,  date: "2026-05-25", pic: "Sugianto", budgetAllocated: 12000000 },
+  { id: "ms-c4", projectId: "pj-201", name: "Rekrut & training staff", done: true, date: "2026-06-20", pic: "Sugianto", budgetAllocated:  6000000 },
+  { id: "ms-c5", projectId: "pj-201", name: "Soft opening",           done: false, date: "2026-08-01", pic: "Rina",     budgetAllocated:  4000000 },
+  { id: "ms-c6", projectId: "pj-201", name: "Grand opening & promo",  done: false, date: "2026-09-15", pic: "Rina",     budgetAllocated:  2000000 },
+
+  { id: "ms-p1", projectId: "pj-202", name: "Analisa kebutuhan sistem", done: true,  date: "2026-02-20", pic: "Sugianto", budgetAllocated:  4000000 },
+  { id: "ms-p2", projectId: "pj-202", name: "Pembelian lisensi POS",    done: false, date: "2026-03-25", pic: "Sugianto", budgetAllocated: 12000000 },
+  { id: "ms-p3", projectId: "pj-202", name: "Setup & konfigurasi",      done: false, date: "2026-04-30", pic: "Andi",     budgetAllocated:  6000000 },
+  { id: "ms-p4", projectId: "pj-202", name: "Migrasi data lama",        done: false, date: "2026-05-25", pic: "Andi",     budgetAllocated:  4000000 },
+  { id: "ms-p5", projectId: "pj-202", name: "Training kasir & go-live", done: false, date: "2026-06-25", pic: "Sugianto", budgetAllocated:  2000000 },
+
+  { id: "ms-r1", projectId: "pj-301", name: "Riset & moodboard brand",   done: true,  date: "2026-01-31", pic: "Ferry", budgetAllocated:  5000000 },
+  { id: "ms-r2", projectId: "pj-301", name: "Desain logo & identitas",   done: true,  date: "2026-03-15", pic: "Ferry", budgetAllocated: 12000000 },
+  { id: "ms-r3", projectId: "pj-301", name: "Pembuatan website baru",    done: false, date: "2026-04-30", pic: "Ferry", budgetAllocated: 13000000 },
+  { id: "ms-r4", projectId: "pj-301", name: "Produksi materi marketing", done: false, date: "2026-05-31", pic: "Ferry", budgetAllocated:  3000000 },
+  { id: "ms-r5", projectId: "pj-301", name: "Peluncuran brand baru",     done: false, date: "2026-06-25", pic: "Ferry", budgetAllocated:  2000000 },
+
+  { id: "ms-s1", projectId: "pj-302", name: "Desain interior outlet",   done: true,  date: "2026-02-15", pic: "Ferry", budgetAllocated:  6000000 },
+  { id: "ms-s2", projectId: "pj-302", name: "Pembongkaran & persiapan", done: true,  date: "2026-03-10", pic: "Bayu",  budgetAllocated:  8000000 },
+  { id: "ms-s3", projectId: "pj-302", name: "Renovasi struktur & cat",  done: true,  date: "2026-04-15", pic: "Bayu",  budgetAllocated: 20000000 },
+  { id: "ms-s4", projectId: "pj-302", name: "Pemasangan signage",       done: true,  date: "2026-05-10", pic: "Bayu",  budgetAllocated: 10000000 },
+  { id: "ms-s5", projectId: "pj-302", name: "Furnishing & display",     done: true,  date: "2026-05-30", pic: "Ferry", budgetAllocated:  6000000 },
+  { id: "ms-s6", projectId: "pj-302", name: "Soft launch outlet",       done: false, date: "2026-06-15", pic: "Ferry", budgetAllocated:  2000000 },
+
+  { id: "ms-x1", projectId: "pj-401", name: "Analisa & spesifikasi",    done: true,  date: "2026-02-25", pic: "Fahrizal", budgetAllocated: 10000000 },
+  { id: "ms-x2", projectId: "pj-401", name: "Desain database & UI",     done: true,  date: "2026-03-31", pic: "Fahrizal", budgetAllocated: 15000000 },
+  { id: "ms-x3", projectId: "pj-401", name: "Pengembangan modul order", done: false, date: "2026-05-15", pic: "Fahrizal", budgetAllocated: 20000000 },
+  { id: "ms-x4", projectId: "pj-401", name: "Modul stok & laporan",     done: false, date: "2026-06-30", pic: "Fahrizal", budgetAllocated: 20000000 },
+  { id: "ms-x5", projectId: "pj-401", name: "Integrasi & testing",      done: false, date: "2026-07-31", pic: "Fahrizal", budgetAllocated: 12000000 },
+  { id: "ms-x6", projectId: "pj-401", name: "Deployment & training",    done: false, date: "2026-08-25", pic: "Fahrizal", budgetAllocated:  8000000 },
+];
+
+// Expenses per project (flat).
+export const EXPENSES = [
+  { id: "ex-1", projectId: "pj-001", name: "Survey BPN & dokumen izin",     amount:  4500000, date: "2026-01-25", milestoneId: "ms-1", hasReceipt: true },
+  { id: "ex-2", projectId: "pj-001", name: "Batu kali 5 truk",              amount:  8500000, date: "2026-02-15", milestoneId: "ms-2", hasReceipt: true },
+  { id: "ex-3", projectId: "pj-001", name: "Semen 100 sak",                 amount:  6700000, date: "2026-02-20", milestoneId: "ms-2", hasReceipt: true },
+  { id: "ex-4", projectId: "pj-001", name: "Bayar tukang konstruksi H1-H30", amount: 18000000, date: "2026-03-15", milestoneId: "ms-2", hasReceipt: true },
+  { id: "ex-5", projectId: "pj-001", name: "Bayar tukang H31-H60",          amount: 12000000, date: "2026-03-31", milestoneId: "ms-2", hasReceipt: true },
+  { id: "ex-6", projectId: "pj-001", name: "Pipa PVC + sambungan",          amount:  9300000, date: "2026-04-10", milestoneId: "ms-3", hasReceipt: true },
+  { id: "ex-7", projectId: "pj-001", name: "Blower aerasi 2 unit",          amount:  8000000, date: "2026-04-25", milestoneId: "ms-3", hasReceipt: true },
+
+  { id: "ex-b1", projectId: "pj-002", name: "Jasa desain sistem biofloc", amount:  5000000, date: "2026-03-24", milestoneId: "ms-b1", hasReceipt: true },
+
+  { id: "ex-f1", projectId: "pj-101", name: "Jasa desain filter zigzag",       amount:  4000000, date: "2026-04-12", milestoneId: "ms-f1", hasReceipt: true },
+  { id: "ex-f2", projectId: "pj-101", name: "Material filter (gravel, zeolit)", amount:  7000000, date: "2026-04-22", milestoneId: "ms-f2", hasReceipt: true },
+  { id: "ex-f3", projectId: "pj-101", name: "Pasir silika + tandon",           amount:  5000000, date: "2026-05-02", milestoneId: "ms-f2", hasReceipt: true },
+  { id: "ex-f4", projectId: "pj-101", name: "Upah konstruksi bak filter",      amount: 11000000, date: "2026-05-18", milestoneId: "ms-f3", hasReceipt: true },
+  { id: "ex-f5", projectId: "pj-101", name: "Unit UV sterilizer",              amount:  9000000, date: "2026-06-08", milestoneId: "ms-f4", hasReceipt: true },
+  { id: "ex-f6", projectId: "pj-101", name: "Pompa + instalasi pipa",          amount:  4000000, date: "2026-06-27", milestoneId: "ms-f5", hasReceipt: true },
+
+  { id: "ex-c1", projectId: "pj-201", name: "Biaya survey & administrasi", amount:  3000000, date: "2026-03-18", milestoneId: "ms-c1", hasReceipt: true },
+  { id: "ex-c2", projectId: "pj-201", name: "Sewa tempat 1 tahun",         amount: 12000000, date: "2026-04-15", milestoneId: "ms-c2", hasReceipt: true },
+  { id: "ex-c3", projectId: "pj-201", name: "Renovasi & cat cabang",       amount:  6000000, date: "2026-04-28", milestoneId: "ms-c2", hasReceipt: true },
+  { id: "ex-c4", projectId: "pj-201", name: "Komputer + perangkat server", amount: 12000000, date: "2026-05-28", milestoneId: "ms-c3", hasReceipt: true },
+  { id: "ex-c5", projectId: "pj-201", name: "Honor training staff",        amount:  6000000, date: "2026-06-22", milestoneId: "ms-c4", hasReceipt: true },
+
+  { id: "ex-p1", projectId: "pj-202", name: "Jasa analisa kebutuhan sistem", amount:  4000000, date: "2026-02-22", milestoneId: "ms-p1", hasReceipt: true },
+
+  { id: "ex-r1", projectId: "pj-301", name: "Riset brand & moodboard",      amount:  5000000, date: "2026-02-03", milestoneId: "ms-r1", hasReceipt: true },
+  { id: "ex-r2", projectId: "pj-301", name: "Jasa desain logo & identitas", amount: 12000000, date: "2026-03-20", milestoneId: "ms-r2", hasReceipt: true },
+
+  { id: "ex-s1", projectId: "pj-302", name: "Jasa desain interior",      amount:  6000000, date: "2026-02-18", milestoneId: "ms-s1", hasReceipt: true },
+  { id: "ex-s2", projectId: "pj-302", name: "Upah bongkar & persiapan",  amount:  8000000, date: "2026-03-12", milestoneId: "ms-s2", hasReceipt: true },
+  { id: "ex-s3", projectId: "pj-302", name: "Material renovasi & cat",   amount: 14000000, date: "2026-04-10", milestoneId: "ms-s3", hasReceipt: true },
+  { id: "ex-s4", projectId: "pj-302", name: "Upah tukang renovasi",      amount:  6000000, date: "2026-04-20", milestoneId: "ms-s3", hasReceipt: true },
+  { id: "ex-s5", projectId: "pj-302", name: "Signage & neon box",        amount: 10000000, date: "2026-05-12", milestoneId: "ms-s4", hasReceipt: true },
+  { id: "ex-s6", projectId: "pj-302", name: "Furnitur & display produk", amount:  6000000, date: "2026-06-02", milestoneId: "ms-s5", hasReceipt: true },
+
+  { id: "ex-x1", projectId: "pj-401", name: "Honor analisa & spesifikasi", amount: 10000000, date: "2026-02-28", milestoneId: "ms-x1", hasReceipt: true },
+  { id: "ex-x2", projectId: "pj-401", name: "Honor desain DB & UI",        amount: 15000000, date: "2026-04-05", milestoneId: "ms-x2", hasReceipt: true },
+];
+
 export const AUDIT_LOG = [
   { ts: "2026-05-31T16:45:00", actorId: "andi",     action: "close",   entityType: "kpi_submission", entityId: "sub-004", entityLabel: "Closing KPI Pixel BDG Pusat",            unitId: "pixel",       details: "Pertumbuhan transaksi naik 8% dari bulan lalu, didorong promo Lebaran.", diff: null },
   { ts: "2026-05-31T15:20:00", actorId: "budhi",    action: "approve", entityType: "kpi_submission", entityId: "sub-004", entityLabel: "Approve closing Pixel BDG Pusat Mei",    unitId: "pixel",       details: null, diff: null },
