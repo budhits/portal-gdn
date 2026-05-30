@@ -1820,9 +1820,8 @@ function getInboxCount(user) {
     return getSubmissions({ status: "estimated" }).length;
   }
   if (user.role === ROLES.LEADER) {
-    return LIVE.submissions.filter(s =>
-      s.unitId === user.unitId && s.status === "approved"
-    ).length;
+    // Inbox Leader = KPI di unitnya yang menunggu approval (perlu aksi).
+    return getSubmissions({ status: "estimated", unitId: user.unitId }).length;
   }
   if (user.role === ROLES.PIC) {
     return LIVE.submissions.filter(s =>
@@ -4305,6 +4304,13 @@ function KPIHistoryPage({ user, onSelectSubmission }) {
     return new Date(bDate).getTime() - new Date(aDate).getTime();
   });
 
+  // Pisahkan menjadi grup: Aktif (sedang berjalan) vs Selesai (Closed) vs lainnya.
+  const groups = [
+    { key: "approved", label: "Aktif — Sedang Berjalan",      color: COLORS.success, rows: sorted.filter(s => s.status === "approved") },
+    { key: "closed",   label: "Selesai — Closed",             color: COLORS.primary, rows: sorted.filter(s => s.status === "closed") },
+    { key: "other",    label: "Menunggu Approval / Lainnya",  color: COLORS.warning, rows: sorted.filter(s => !["approved", "closed"].includes(s.status)) },
+  ].filter(g => g.rows.length > 0);
+
   const visibleUnitIds = Array.from(new Set(submissions.map(s => s.unitId)));
   const visibleTemplateIds = Array.from(new Set(submissions.map(s => s.templateId)));
 
@@ -4405,44 +4411,65 @@ function KPIHistoryPage({ user, onSelectSubmission }) {
         </div>
       </Card>
 
-      {/* Table */}
-      <Card style={{ padding: 0 }}>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ background: "#F8FAFC" }}>
-                {["Periode", "Sub Unit", "Template", "Skor", "Margin", "Status", "Tanggal"].map(h => (
-                  <th key={h} style={{
-                    padding: "10px 12px",
-                    fontSize: 10, fontWeight: 700,
-                    color: COLORS.textMuted,
-                    textAlign: h === "Skor" || h === "Margin" ? "right" : "left",
-                    textTransform: "uppercase", letterSpacing: 0.4,
-                  }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 12 }}>
-                    Tidak ada submission yang sesuai filter
-                  </td>
-                </tr>
-              ) : (
-                sorted.map(sub => (
-                  <KPIHistoryRow
-                    key={sub.id}
-                    submission={sub}
-                    onClick={() => onSelectSubmission && onSelectSubmission(sub.id)}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Tabel dipisah per status: Aktif vs Selesai (Closed) vs lainnya */}
+      {sorted.length === 0 ? (
+        <Card style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 12 }}>
+          Tidak ada submission yang sesuai filter
+        </Card>
+      ) : (
+        <div style={{ display: "grid", gap: 16 }}>
+          {groups.map(g => (
+            <KPISection
+              key={g.key}
+              label={g.label}
+              color={g.color}
+              count={g.rows.length}
+              rows={g.rows}
+              onSelectSubmission={onSelectSubmission}
+            />
+          ))}
         </div>
-      </Card>
+      )}
     </div>
+  );
+}
+
+// Satu seksi tabel KPI untuk satu status (Aktif / Selesai / lainnya).
+function KPISection({ label, color, count, rows, onSelectSubmission }) {
+  return (
+    <Card style={{ padding: 0 }}>
+      <div style={{ padding: "10px 14px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ width: 9, height: 9, borderRadius: 5, background: color, flexShrink: 0 }} />
+        <span style={{ fontSize: 12, fontWeight: 800, color: COLORS.dark }}>{label}</span>
+        <span style={{ fontSize: 11, color: COLORS.textMuted }}>({count})</span>
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: "#F8FAFC" }}>
+              {["Periode", "Sub Unit", "Template", "Skor", "Margin", "Status", "Tanggal"].map(h => (
+                <th key={h} style={{
+                  padding: "10px 12px",
+                  fontSize: 10, fontWeight: 700,
+                  color: COLORS.textMuted,
+                  textAlign: h === "Skor" || h === "Margin" ? "right" : "left",
+                  textTransform: "uppercase", letterSpacing: 0.4,
+                }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(sub => (
+              <KPIHistoryRow
+                key={sub.id}
+                submission={sub}
+                onClick={() => onSelectSubmission && onSelectSubmission(sub.id)}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }
 
@@ -4538,29 +4565,29 @@ function KPIHistoryRow({ submission, onClick }) {
  */
 function InboxPage({ user, onSubmitNew, onCloseKPI, onViewDetail }) {
   useDataStore(); // subscribe to live in-session data so this page re-renders on changes
-  // Owner gets the full ApprovalInbox with side-by-side detail view
-  if (user.role === ROLES.OWNER) {
+  // Owner & Leader memakai Approval Inbox (Leader ter-scope ke unitnya).
+  // Inbox hanya berisi KPI yang menunggu approval (perlu aksi); progres KPI
+  // yang sedang berjalan ada di menu KPI.
+  if (user.role === ROLES.OWNER || user.role === ROLES.LEADER) {
+    const scoped = user.role === ROLES.LEADER;
     return (
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 14px" }}>
         <div style={{ marginBottom: 18 }}>
           <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Approval Inbox
           </h1>
           <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
-            Review estimasi KPI yang diajukan leader & PIC. Set bobot lalu approve.
+            {scoped
+              ? "Review estimasi KPI yang diajukan PIC di unit Anda. Set bobot lalu approve. Progres KPI yang berjalan ada di menu KPI."
+              : "Review estimasi KPI yang diajukan leader & PIC. Set bobot lalu approve."}
           </p>
         </div>
-        <ApprovalInbox />
+        <ApprovalInbox user={user} />
       </div>
     );
   }
 
-  // Leader / PIC: simpler list
+  // PIC: simpler list
   const items = useMemo(() => {
-    if (user.role === ROLES.LEADER) {
-      return LIVE.submissions
-        .filter(s => s.unitId === user.unitId && s.status === "approved")
-        .map(s => ({ ...s, inboxType: "running_in_unit" }));
-    }
     if (user.role === ROLES.PIC) {
       return LIVE.submissions
         .filter(s => s.subUnitId === user.subUnitId && (s.status === "approved" || s.status === "estimated"))
@@ -4572,10 +4599,8 @@ function InboxPage({ user, onSubmitNew, onCloseKPI, onViewDetail }) {
     return [];
   }, [user]);
 
-  const title = user.role === ROLES.LEADER ? "KPI di Unit Saya" : "Inbox Saya";
-  const subtitle = user.role === ROLES.LEADER
-    ? `${items.length} KPI yang sedang berjalan di unit Anda`
-    : `${items.length} KPI menunggu aksi Anda`;
+  const title = "Inbox Saya";
+  const subtitle = `${items.length} KPI menunggu aksi Anda`;
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "20px 14px" }}>
@@ -7674,9 +7699,14 @@ function AdminPanel() {
  * Inbox showing KPI submissions waiting for Owner approval.
  * Owner reviews estimated values, can adjust weights, and approves.
  */
-function ApprovalInbox() {
+function ApprovalInbox({ user } = {}) {
   const store = useDataStore();
-  const allPending = useMemo(() => getSubmissions({ status: "estimated" }), [store?.submissions]);
+  // Owner melihat semua estimasi; Leader hanya estimasi di unitnya.
+  const allPending = useMemo(() => {
+    const filters = { status: "estimated" };
+    if (user && user.role === ROLES.LEADER) filters.unitId = user.unitId;
+    return getSubmissions(filters);
+  }, [store?.submissions, user]);
   // Track which submissions have been acted on this session (approved/rejected)
   const [processedIds, setProcessedIds] = useState([]);
   const pending = allPending.filter(p => !processedIds.includes(p.id));
