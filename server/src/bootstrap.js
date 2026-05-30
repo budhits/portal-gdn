@@ -11,6 +11,7 @@
 import { pool } from "./db.js";
 import { applySchema } from "../db/run-schema.js";
 import { seed } from "../db/seed.js";
+import { clearTrialData } from "../db/clear-trial.js";
 
 export async function bootstrapDatabase() {
   // Apakah tabel inti (users) sudah ada?
@@ -59,4 +60,24 @@ async function runMigrations() {
 
   // 5. Kolom weight untuk bobot sub-unit yang persisten.
   await pool.query("ALTER TABLE sub_units ADD COLUMN IF NOT EXISTS weight INTEGER");
+
+  // 6. Tabel meta untuk penanda operasi sekali-jalan.
+  await pool.query(
+    "CREATE TABLE IF NOT EXISTS app_meta (key TEXT PRIMARY KEY, value TEXT, created_at TIMESTAMPTZ DEFAULT now())"
+  );
+
+  // 7. Pembersihan data trial SEKALI JALAN bila CLEAR_TRIAL_DATA=true.
+  //    Penanda 'trial_cleared' mencegah pengulangan (aman di free-tier yang
+  //    sering restart) — jadi data trial yang Anda input tak akan ikut terhapus.
+  if (process.env.CLEAR_TRIAL_DATA === "true") {
+    const { rows } = await pool.query("SELECT 1 FROM app_meta WHERE key = 'trial_cleared'");
+    if (rows.length === 0) {
+      console.log("🧹 CLEAR_TRIAL_DATA=true → mengosongkan Project, KPI & Margin (sekali jalan)...");
+      await clearTrialData();
+      await pool.query("INSERT INTO app_meta (key, value) VALUES ('trial_cleared', now()::text)");
+      console.log("✅ Data trial dikosongkan. User/Unit/Sub-unit/Template/Audit tetap.");
+    } else {
+      console.log("✔️  Pembersihan trial sudah pernah dijalankan — dilewati.");
+    }
+  }
 }

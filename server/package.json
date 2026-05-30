@@ -10,7 +10,8 @@
     "test": "node --test",
     "db:schema": "node db/run-schema.js",
     "db:seed": "node db/seed.js",
-    "db:reset": "node db/run-schema.js && node db/seed.js"
+    "db:reset": "node db/run-schema.js && node db/seed.js",
+    "db:clear-trial": "node db/clear-trial.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
