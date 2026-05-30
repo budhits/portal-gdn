@@ -9,6 +9,21 @@ export const fetchSubUnits     = () => apiFetch("/sub-units");
 export const fetchProjects     = () => apiFetch("/projects");
 export const fetchTemplates    = () => apiFetch("/templates");
 export const fetchSubmissions  = () => apiFetch("/submissions");
+export const fetchMilestones   = () => apiFetch("/milestones");
+export const fetchExpenses     = () => apiFetch("/expenses");
+
+/** Kelompokkan array ber-`projectId` menjadi objek { projectId: [item...] }. */
+export function groupByProject(arr) {
+  const out = {};
+  for (const item of arr) (out[item.projectId] = out[item.projectId] || []).push(item);
+  return out;
+}
+
+// ── Mutasi milestone & expense ───────────────────────────────────────────────
+export const createMilestone = (body)     => apiFetch("/milestones", { method: "POST", body });
+export const updateMilestone = (id, body) => apiFetch(`/milestones/${id}`, { method: "PATCH", body });
+export const deleteMilestone = (id)       => apiFetch(`/milestones/${id}`, { method: "DELETE" });
+export const createExpense   = (body)     => apiFetch("/expenses", { method: "POST", body });
 
 // ── Mutasi user (Owner) ──────────────────────────────────────────────────────
 export const createUser = (body)     => apiFetch("/users", { method: "POST", body });

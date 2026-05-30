@@ -39,7 +39,10 @@ import { getToken } from "./api/client.js";
 import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser,
   fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
-  closeSubmission, updateSubmissionActual } from "./api/data.js";
+  closeSubmission, updateSubmissionActual,
+  fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
+  createProject, createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
+  createExpense } from "./api/data.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -5901,7 +5904,7 @@ function SubmitProjectForm({ user, context, onBack }) {
     setMilestones(milestones.map(m => m.key === key ? { ...m, [field]: value } : m));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!unitId)      { alert("Pilih unit dulu"); return; }
     if (!name.trim()) { alert("Isi nama project"); return; }
     if (!desc.trim()) { alert("Isi deskripsi project"); return; }
@@ -5924,33 +5927,32 @@ function SubmitProjectForm({ user, context, onBack }) {
       .join("\n");
     const totalAlloc = milestones.reduce((sum, m) => sum + (Number(m.budget) || 0), 0);
 
-    // Write the new project + its milestones to the store
-    const projectId = `pj-${Date.now()}`;
-    const newProject = {
-      id: projectId,
-      name: name.trim(),
-      unitId,
-      subUnitId: subUnitId || null,
-      description: desc.trim(),
-      status: "pending_approval",
-      budgetPlanned: Number(budgetPlanned),
-      budgetSpent: 0,
-      milestonesTotal: milestones.length,
-      milestonesDone: 0,
-      startDate,
-      endDate,
-    };
-    const newMilestones = milestones.map((m, i) => ({
-      id: `${projectId}-ms${i + 1}`,
-      name: m.name.trim(),
-      done: false,
-      date: m.date,
-      pic: m.pic || "",
-      budgetAllocated: Number(m.budget) || 0,
-    }));
-    if (store) {
-      store.setProjects(prev => [...prev, newProject]);
-      store.setMilestones(prev => ({ ...prev, [projectId]: newMilestones }));
+    // Simpan project + milestones ke database (transaksional), lalu segarkan store.
+    try {
+      await createProject({
+        unitId,
+        subUnitId: subUnitId || null,
+        name: name.trim(),
+        desc: desc.trim(),
+        status: "pending_approval",
+        budgetPlanned: Number(budgetPlanned),
+        startDate,
+        endDate,
+        milestones: milestones.map(m => ({
+          name: m.name.trim(),
+          date: m.date,
+          pic: m.pic || "",
+          budgetAllocated: Number(m.budget) || 0,
+        })),
+      });
+      if (store) {
+        const [projects, ms] = await Promise.all([fetchProjects(), fetchMilestones()]);
+        store.setProjects(projects);
+        store.setMilestones(groupByProject(ms));
+      }
+    } catch (e) {
+      alert(e.message || "Gagal mengajukan project.");
+      return;
     }
 
     alert(
@@ -6558,14 +6560,18 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
     (user.role === ROLES.LEADER && user.unitId === project.unitId) ||
     (user.role === ROLES.PIC && (user.subUnitId === project.subUnitId || project.subUnitId === null));
 
-  const toggleMilestone = (msId) => {
+  const toggleMilestone = async (msId) => {
     if (!canEdit) {
       alert("Anda tidak punya akses untuk update milestone ini");
       return;
     }
-    setMilestones(prev => prev.map(m =>
-      m.id === msId ? { ...m, done: !m.done } : m
-    ));
+    const cur = milestones.find(m => m.id === msId);
+    try {
+      await updateMilestone(msId, { done: !cur.done });
+      setMilestones(prev => prev.map(m => m.id === msId ? { ...m, done: !m.done } : m));
+    } catch (e) {
+      alert(e.message || "Gagal memperbarui milestone.");
+    }
   };
 
   // ─── Milestone CRUD (Level A: local state only) ───
@@ -6593,38 +6599,38 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
     setShowMsForm(true);
   };
 
-  const saveMilestone = () => {
+  const saveMilestone = async () => {
     if (!msFormName.trim()) { alert("Isi nama milestone"); return; }
     if (!msFormDate)        { alert("Isi tanggal target"); return; }
 
-    if (editingMsId === null) {
-      // Add new
-      const newMs = {
-        id: `ms-new-${Date.now()}`,
-        name: msFormName.trim(),
-        date: msFormDate,
-        pic: msFormPic.trim(),
-        budgetAllocated: Number(msFormBudget) || 0,
-        done: false,
-      };
-      setMilestones(prev => [...prev, newMs]);
-      alert(`Milestone "${newMs.name}" ditambahkan.`);
-    } else {
-      // Edit existing
-      setMilestones(prev => prev.map(m =>
-        m.id === editingMsId
-          ? { ...m, name: msFormName.trim(), date: msFormDate, pic: msFormPic.trim(), budgetAllocated: Number(msFormBudget) || 0 }
-          : m
-      ));
-      alert(`Milestone "${msFormName}" diperbarui.`);
+    const payload = {
+      name: msFormName.trim(), date: msFormDate,
+      pic: msFormPic.trim(), budgetAllocated: Number(msFormBudget) || 0,
+    };
+    try {
+      if (editingMsId === null) {
+        const created = await createMilestone({ projectId, ...payload });
+        setMilestones(prev => [...prev, created]);
+      } else {
+        const updated = await updateMilestone(editingMsId, payload);
+        setMilestones(prev => prev.map(m => m.id === editingMsId ? updated : m));
+      }
+    } catch (e) {
+      alert(e.message || "Gagal menyimpan milestone.");
+      return;
     }
     setShowMsForm(false);
   };
 
-  const deleteMilestone = (ms) => {
+  const deleteMilestone = async (ms) => {
     if (!canEdit) { alert("Anda tidak punya akses untuk hapus milestone"); return; }
     if (!confirm(`Hapus milestone "${ms.name}"?\n\nExpense yang terkait milestone ini akan kehilangan referensinya.`)) return;
-    setMilestones(prev => prev.filter(m => m.id !== ms.id));
+    try {
+      await apiDeleteMilestone(ms.id);
+      setMilestones(prev => prev.filter(m => m.id !== ms.id));
+    } catch (e) {
+      alert(e.message || "Gagal menghapus milestone.");
+    }
   };
 
   // ─── Expense / Realisasi rinci (inline, Level A in-session) ───
@@ -6641,21 +6647,27 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
     setShowExpenseForm(true);
   };
 
-  const saveExpense = () => {
+  const saveExpense = async () => {
     if (!exName.trim())  { alert("Isi keterangan realisasi"); return; }
     if (!exAmount)       { alert("Isi jumlah realisasi"); return; }
     if (!exDate)         { alert("Isi tanggal"); return; }
     if (!exHasReceipt)   { alert("Bukti/nota wajib dikonfirmasi (centang 'Bukti terlampir')"); return; }
-    const newEx = {
-      id: `ex-new-${Date.now()}`,
-      name: exName.trim(),
-      amount: Number(exAmount),
-      date: exDate,
-      milestoneId: exMilestoneId || null,
-      hasReceipt: true,
-    };
-    setExpenses(prev => [...prev, newEx]);
-    alert(`Realisasi "${newEx.name}" sebesar ${formatRupiahFull(newEx.amount)} dicatat.`);
+    let created;
+    try {
+      created = await createExpense({
+        projectId,
+        milestoneId: exMilestoneId || null,
+        name: exName.trim(),
+        amount: Number(exAmount),
+        date: exDate,
+        hasReceipt: true,
+      });
+    } catch (e) {
+      alert(e.message || "Gagal mencatat realisasi.");
+      return;
+    }
+    setExpenses(prev => [...prev, created]);
+    alert(`Realisasi "${created.name}" sebesar ${formatRupiahFull(created.amount)} dicatat.`);
     setShowExpenseForm(false);
   };
 
@@ -11170,15 +11182,17 @@ function AppInner() {
 
   // Bootstrap: muat seluruh data inti dari API ke binding LIVE/UNITS/USERS.
   // Setelah ini selesai, seluruh aplikasi membaca data asli secara konsisten.
-  // (milestones & expenses sementara tetap dari seed — tabelnya belum dibuat.)
   const loadAllData = async () => {
-    const { units, users, subUnits, projects, templates, submissions } = await fetchAllCoreData();
+    const [{ units, users, subUnits, projects, templates, submissions }, milestones, expenses] =
+      await Promise.all([fetchAllCoreData(), fetchMilestones(), fetchExpenses()]);
     setUnitsData(indexById(units));
     setUsersData(indexById(users));
     store.setSubUnits(subUnits);
     store.setProjects(projects);
     store.setTemplates(templates);
     store.setSubmissions(submissions);
+    store.setMilestones(groupByProject(milestones));
+    store.setExpenses(groupByProject(expenses));
   };
 
   // Login sungguhan: kirim email+password ke API, lalu muat data sebelum masuk.
