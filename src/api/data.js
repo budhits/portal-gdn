@@ -25,6 +25,13 @@ export const createProject = (body)     => apiFetch("/projects", { method: "POST
 export const updateProject = (id, body) => apiFetch(`/projects/${id}`, { method: "PATCH", body });
 export const deleteProject = (id)       => apiFetch(`/projects/${id}`, { method: "DELETE" });
 
+// ── Alur KPI submission ──────────────────────────────────────────────────────
+export const createSubmission       = (body)     => apiFetch("/submissions", { method: "POST", body });
+export const approveSubmission      = (id, body) => apiFetch(`/submissions/${id}/approve`, { method: "POST", body });
+export const rejectSubmission       = (id, body) => apiFetch(`/submissions/${id}/reject`, { method: "POST", body });
+export const closeSubmission        = (id, body) => apiFetch(`/submissions/${id}/close`, { method: "POST", body });
+export const updateSubmissionActual = (id, body) => apiFetch(`/submissions/${id}`, { method: "PATCH", body });
+
 /** Ubah array ber-`id` menjadi objek ter-index berdasarkan id (mis. UNITS[id]). */
 export function indexById(arr) {
   const map = {};

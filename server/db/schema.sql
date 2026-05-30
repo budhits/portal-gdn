@@ -36,7 +36,7 @@ CREATE TYPE sub_unit_status   AS ENUM ('active', 'inactive');
 CREATE TYPE project_status     AS ENUM ('on_track', 'at_risk', 'behind', 'done');
 CREATE TYPE template_frequency AS ENUM ('monthly', 'cycle', 'event');
 CREATE TYPE field_type         AS ENUM ('number', 'text', 'date', 'auto');
-CREATE TYPE submission_status  AS ENUM ('estimated', 'approved', 'closed');
+CREATE TYPE submission_status  AS ENUM ('estimated', 'approved', 'closed', 'rejected');
 CREATE TYPE audit_action       AS ENUM ('create', 'update', 'approve', 'reject', 'close', 'delete');
 
 -- ── users ───────────────────────────────────────────────────────────────────

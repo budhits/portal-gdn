@@ -37,7 +37,9 @@ import { useState, useMemo, useEffect, createContext, useContext } from "react";
 import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser } from "./api/auth.js";
 import { getToken } from "./api/client.js";
 import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser,
-  fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit } from "./api/data.js";
+  fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
+  fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
+  closeSubmission, updateSubmissionActual } from "./api/data.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -4998,7 +5000,7 @@ function SubmitKPIForm({ user, context, onBack }) {
     );
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!template) {
       alert("Pilih template dulu");
       return;
@@ -5021,34 +5023,19 @@ function SubmitKPIForm({ user, context, onBack }) {
       if (!confirmSubmit) return;
     }
 
-    // Build field weights from template defaults
-    const fieldWeights = {};
-    template.fields.forEach(f => {
-      if (f.defaultWeight && f.defaultWeight > 0) fieldWeights[f.id] = f.defaultWeight;
-    });
-
-    // Create the new submission and write to the store (status: estimated = menunggu approval)
-    const newSubmission = {
-      id: `sub-${Date.now()}`,
-      templateId: template.id,
-      subUnitId: subUnit.id,
-      unitId: subUnit.unitId,
-      status: "estimated",
-      period,
-      estimatedValues: { ...values },
-      actualValues: null,
-      fieldWeights,
-      subUnitWeight: subUnit.id in LIVE.subUnitWeights ? LIVE.subUnitWeights[subUnit.id] : 50,
-      createdBy: user.id,
-      createdAt: new Date().toISOString().slice(0, 10),
-      approvedBy: null,
-      approvedAt: null,
-      closedAt: null,
-      closingNote: null,
-      expectedCloseAt,
-    };
-    if (store) {
-      store.setSubmissions(prev => [...prev, newSubmission]);
+    // Simpan ke database (status: estimated = menunggu approval), lalu segarkan store.
+    try {
+      await createSubmission({
+        templateId: template.id,
+        subUnitId: subUnit.id,
+        period,
+        estimatedValues: { ...values },
+        subUnitWeight: subUnit.id in LIVE.subUnitWeights ? LIVE.subUnitWeights[subUnit.id] : 50,
+      });
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal mengajukan KPI.");
+      return;
     }
 
     alert(
@@ -5341,19 +5328,21 @@ function CloseKPIForm({ user, context, onBack }) {
     );
   }
 
-  const handleClose = () => {
+  const handleClose = async () => {
     if (!closingNote.trim() || closingNote.trim().length < 10) {
       alert("Catatan/alasan WAJIB diisi (minimal 10 karakter).\nJelaskan kondisi closing, kendala, atau hal penting periode ini.");
       return;
     }
-    // Write closing to store: set actualValues, status closed, closedAt, note
-    if (store) {
-      const today = new Date().toISOString().slice(0, 10);
-      store.setSubmissions(prev => prev.map(s =>
-        s.id === submission.id
-          ? { ...s, status: "closed", actualValues: { ...actualValues }, closedAt: today, closingNote: closingNote.trim() }
-          : s
-      ));
+    // Simpan closing ke database (realisasi + catatan), lalu segarkan store.
+    try {
+      await closeSubmission(submission.id, {
+        actualValues: { ...actualValues },
+        closingNote: closingNote.trim(),
+      });
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal menutup KPI.");
+      return;
     }
     alert(
       `KPI berhasil ditutup!\n\n` +
@@ -5612,14 +5601,14 @@ function UpdateMonthlyKPIForm({ user, context, onBack }) {
     );
   }
 
-  const handleUpdate = () => {
-    // Persist updated actual values to the store (keeps status as-is, e.g. approved)
-    if (store) {
-      store.setSubmissions(prev => prev.map(s =>
-        s.id === submission.id
-          ? { ...s, actualValues: { ...actualValues } }
-          : s
-      ));
+  const handleUpdate = async () => {
+    // Simpan realisasi terbaru ke database (status tetap), lalu segarkan store.
+    try {
+      await updateSubmissionActual(submission.id, { actualValues: { ...actualValues } });
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal memperbarui KPI.");
+      return;
     }
     alert(
       `KPI berhasil di-update!\n\n` +
@@ -7810,36 +7799,35 @@ function ApprovalDetail({ submission, onProcessed }) {
   const totalWeight = Object.values(weights).reduce((sum, w) => sum + Number(w || 0), 0);
   const weightValid = totalWeight === 100;
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!weightValid) {
       alert(`Total bobot KPI harus = 100% (saat ini ${totalWeight}%)`);
       return;
     }
-    // Write to store: status approved + final field weights + sub-unit weight
-    if (store) {
-      const today = new Date().toISOString().slice(0, 10);
-      store.setSubmissions(prev => prev.map(s =>
-        s.id === submission.id
-          ? { ...s, status: "approved", fieldWeights: { ...weights }, subUnitWeight, approvedAt: today }
-          : s
-      ));
+    // Simpan approval ke database: status approved + bobot final, lalu segarkan.
+    try {
+      await approveSubmission(submission.id, { fieldWeights: { ...weights }, subUnitWeight });
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal menyetujui KPI.");
+      return;
     }
     alert(`KPI "${template?.name}" untuk ${subUnit?.name} telah disetujui.\n\nStatus berubah ke "approved", bobot tersimpan, dan KPI keluar dari antrian.`);
     if (onProcessed) onProcessed(submission.id);
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!feedback.trim()) {
       alert("Mohon isi catatan/koreksi sebelum reject");
       return;
     }
-    // Write to store: mark as rejected (kept in data with note, removed from queue)
-    if (store) {
-      store.setSubmissions(prev => prev.map(s =>
-        s.id === submission.id
-          ? { ...s, status: "rejected", closingNote: feedback.trim() }
-          : s
-      ));
+    // Simpan penolakan ke database (status rejected + catatan), lalu segarkan.
+    try {
+      await rejectSubmission(submission.id, { note: feedback.trim() });
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal menolak KPI.");
+      return;
     }
     alert(`KPI ditolak & dikembalikan ke pengaju.\n\nCatatan ke PIC:\n"${feedback}"\n\nKPI keluar dari antrian approval.`);
     if (onProcessed) onProcessed(submission.id);
