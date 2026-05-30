@@ -2801,8 +2801,30 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
         )}
       </div>
 
-      {/* Budget summary — 6 boxes in 2 rows (Owner & Finance) */}
-      <div style={{ marginBottom: 26 }}>
+      {/* SECTION 1: KPI per Unit */}
+      <div style={{ marginBottom: 32 }}>
+        <SectionHeader
+          title={`KPI per Unit · ${selectedPeriod.label}`}
+          subtitle="Hanya sub-unit yang closing di periode ini berkontribusi ke skor unit"
+        />
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: 12,
+        }}>
+          {unitsWithScores.map(unit => (
+            <UnitCard
+              key={unit.id}
+              unit={unit}
+              period={selectedPeriod}
+              onClick={() => onSelectUnit(unit.id)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Budget summary — 6 boxes in 2 rows (Owner & Finance) — di bawah KPI */}
+      <div style={{ marginBottom: 32 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 7 }}>
           <Icon name="money" size={14} color={COLORS.secondary} />
           Ringkasan Budget Project
@@ -2866,28 +2888,6 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
             accent={budgetSummary.sisaAllPeriod >= 0 ? COLORS.success : COLORS.danger}
             sub={budgetSummary.sisaAllPeriod >= 0 ? "Belum terpakai" : "Realisasi melebihi rencana"}
           />
-        </div>
-      </div>
-
-      {/* SECTION 1: KPI per Unit */}
-      <div style={{ marginBottom: 32 }}>
-        <SectionHeader
-          title={`KPI per Unit · ${selectedPeriod.label}`}
-          subtitle="Hanya sub-unit yang closing di periode ini berkontribusi ke skor unit"
-        />
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: 12,
-        }}>
-          {unitsWithScores.map(unit => (
-            <UnitCard
-              key={unit.id}
-              unit={unit}
-              period={selectedPeriod}
-              onClick={() => onSelectUnit(unit.id)}
-            />
-          ))}
         </div>
       </div>
 
