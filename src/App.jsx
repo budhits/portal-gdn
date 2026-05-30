@@ -34,6 +34,15 @@
  */
 
 import { useState, useMemo, useEffect, createContext, useContext } from "react";
+import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser } from "./api/auth.js";
+import { getToken } from "./api/client.js";
+import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser,
+  fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
+  fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
+  closeSubmission, updateSubmissionActual,
+  fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
+  createProject, createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
+  createExpense } from "./api/data.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -249,7 +258,9 @@ const STATUS_THRESHOLDS = {
 // ════════════════════════════════════════════════════════════════════════════
 
 /** @type {Record<string, User>} */
-const USERS = {
+// `let` (bukan const) supaya bisa diganti dari data API saat bootstrap.
+// Semua pembacaan `USERS[id]` tetap melihat binding terbaru.
+let USERS = {
   budhi:    { id: "budhi",    name: "Budhi",    email: "budhi@email.com",    role: ROLES.OWNER,   avatar: "", unitId: null, subUnitId: null },
   rarra:    { id: "rarra",    name: "Rarra",    email: "rarra@email.com",    role: ROLES.OWNER,   avatar: "", unitId: null, subUnitId: null },
 
@@ -271,7 +282,8 @@ const USERS = {
 };
 
 /** @type {Record<string, Unit>} */
-const UNITS = {
+// `let` (lihat catatan pada USERS) — diisi dari API saat bootstrap.
+let UNITS = {
   pixel:       { id: "pixel",       name: "Pixel Telemedia", leaderId: "sugianto", color: "#3B7BC4", colorDark: "#2C5F9E", colorLight: "#E7F0F8", icon: "signal" },
   retail:      { id: "retail",      name: "KK / Retail",     leaderId: "ferry",    color: "#C9A45C", colorDark: "#9A7B3E", colorLight: "#F4ECDB", icon: "store" },
   aquaculture: { id: "aquaculture", name: "Aquaculture",     leaderId: "satya",    color: "#5B9B47", colorDark: "#3F6E31", colorLight: "#EAF3E5", icon: "fish" },
@@ -2145,7 +2157,12 @@ function InfoBanner({ icon, title, children, variant = "info" }) {
 /**
  * Login screen with role-grouped user selection.
  */
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onAuthenticate }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const groupedUsers = useMemo(() => {
     const groups = { owners: [], support: [], leaders: [], pics: [] };
     Object.values(USERS).forEach(u => {
@@ -2156,6 +2173,25 @@ function LoginScreen({ onLogin }) {
     });
     return groups;
   }, []);
+
+  // Submit kredensial ke API (dipakai form manual maupun tombol demo).
+  const submit = async (em, pw) => {
+    setError("");
+    setLoading(true);
+    try {
+      await onAuthenticate(em.trim(), pw);
+    } catch (err) {
+      setError(err.message || "Login gagal.");
+      setLoading(false);
+    }
+  };
+
+  // Tombol demo: isi email user + password pola "<id>123", lalu submit.
+  const loginDemo = (user) => {
+    setEmail(user.email);
+    setPassword(`${user.id}123`);
+    submit(user.email, `${user.id}123`);
+  };
 
   return (
     <div style={{
@@ -2198,13 +2234,63 @@ function LoginScreen({ onLogin }) {
           marginBottom: 18,
           fontSize: 11,
           color: "#92400E",
-        }}><strong>Demo v{APP_CONFIG.version}</strong> — Pilih akun untuk merasakan tampilan tiap role
+        }}><strong>Demo v{APP_CONFIG.version}</strong> — Masuk dengan email & password, atau klik akun demo
         </div>
 
-        <LoginUserGroup label="Owner" users={groupedUsers.owners} onSelect={onLogin} />
-        <LoginUserGroup label="Support (Finance & HR)" users={groupedUsers.support} onSelect={onLogin} />
-        <LoginUserGroup label="Leader Unit" users={groupedUsers.leaders} onSelect={onLogin} />
-        <LoginUserGroup label="PIC Sub Unit (Baru di v2)" users={groupedUsers.pics} onSelect={onLogin} highlight />
+        {/* Form login email + password (autentikasi sungguhan ke backend) */}
+        <form
+          onSubmit={(e) => { e.preventDefault(); submit(email, password); }}
+          style={{ display: "grid", gap: 10, marginBottom: 16 }}
+        >
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            autoComplete="username"
+            style={{
+              padding: "11px 12px", borderRadius: 10, fontSize: 14,
+              border: `1px solid ${COLORS.border}`, outline: "none", fontFamily: FONTS.body,
+            }}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            autoComplete="current-password"
+            style={{
+              padding: "11px 12px", borderRadius: 10, fontSize: 14,
+              border: `1px solid ${COLORS.border}`, outline: "none", fontFamily: FONTS.body,
+            }}
+          />
+          {error && (
+            <div style={{ fontSize: 12, color: COLORS.danger, background: COLORS.dangerBg, padding: "8px 10px", borderRadius: 8 }}>
+              {error}
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={loading || !email || !password}
+            style={{
+              padding: "11px 12px", borderRadius: 10, fontSize: 14, fontWeight: 700,
+              color: COLORS.white, background: COLORS.primary, border: "none",
+              cursor: loading ? "wait" : "pointer", opacity: (loading || !email || !password) ? 0.6 : 1,
+              fontFamily: FONTS.body,
+            }}
+          >
+            {loading ? "Memproses…" : "Masuk"}
+          </button>
+        </form>
+
+        <div style={{ textAlign: "center", fontSize: 10, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.6, margin: "4px 0 12px" }}>
+          atau pilih akun demo
+        </div>
+
+        <LoginUserGroup label="Owner" users={groupedUsers.owners} onSelect={loginDemo} />
+        <LoginUserGroup label="Support (Finance & HR)" users={groupedUsers.support} onSelect={loginDemo} />
+        <LoginUserGroup label="Leader Unit" users={groupedUsers.leaders} onSelect={loginDemo} />
+        <LoginUserGroup label="PIC Sub Unit (Baru di v2)" users={groupedUsers.pics} onSelect={loginDemo} highlight />
 
         <div style={{
           marginTop: 18,
@@ -2234,7 +2320,7 @@ function LoginUserGroup({ label, users, onSelect, highlight }) {
       }}>{label}</div>
       <div style={{ display: "grid", gap: 6 }}>
         {users.map(u => (
-          <LoginUserButton key={u.id} user={u} onClick={() => onSelect(u.id)} />
+          <LoginUserButton key={u.id} user={u} onClick={() => onSelect(u)} />
         ))}
       </div>
     </div>
@@ -3244,7 +3330,7 @@ function MarginUnitRow({ unit, isLast }) {
             <div style={{ marginTop: 8, fontSize: 10, color: COLORS.textMuted }}>
               <div style={{ fontWeight: 600, marginBottom: 4 }}>Detail closing:</div>
               {closedEntries.map(entry => (
-                <div key={entry.id} style={{
+                <div key={entry.submissionId || entry.id} style={{
                   display: "flex",
                   justifyContent: "space-between",
                   padding: "2px 0",
@@ -3292,7 +3378,7 @@ function MarginUnitRow({ unit, isLast }) {
               borderTop: "1px solid #FDE68A",
             }}>
               {pendingEntries.map(entry => (
-                <div key={entry.id} style={{
+                <div key={entry.submissionId || entry.id} style={{
                   display: "flex",
                   justifyContent: "space-between",
                   padding: "2px 0",
@@ -4096,7 +4182,7 @@ function MarginDetailUnitCard({ unit }) {
               }}>Sudah Closing ({closedEntries.length})
               </div>
               {closedEntries.map(entry => (
-                <MarginEntryRow key={entry.id} entry={entry} />
+                <MarginEntryRow key={entry.submissionId || entry.id} entry={entry} />
               ))}
             </div>
           )}
@@ -4110,7 +4196,7 @@ function MarginDetailUnitCard({ unit }) {
               }}>Pending Closing ({pendingEntries.length})
               </div>
               {pendingEntries.map(entry => (
-                <MarginEntryRow key={entry.id} entry={entry} isPending />
+                <MarginEntryRow key={entry.submissionId || entry.id} entry={entry} isPending />
               ))}
               <div style={{
                 marginTop: 6, padding: "6px 10px",
@@ -4917,7 +5003,7 @@ function SubmitKPIForm({ user, context, onBack }) {
     );
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!template) {
       alert("Pilih template dulu");
       return;
@@ -4940,34 +5026,19 @@ function SubmitKPIForm({ user, context, onBack }) {
       if (!confirmSubmit) return;
     }
 
-    // Build field weights from template defaults
-    const fieldWeights = {};
-    template.fields.forEach(f => {
-      if (f.defaultWeight && f.defaultWeight > 0) fieldWeights[f.id] = f.defaultWeight;
-    });
-
-    // Create the new submission and write to the store (status: estimated = menunggu approval)
-    const newSubmission = {
-      id: `sub-${Date.now()}`,
-      templateId: template.id,
-      subUnitId: subUnit.id,
-      unitId: subUnit.unitId,
-      status: "estimated",
-      period,
-      estimatedValues: { ...values },
-      actualValues: null,
-      fieldWeights,
-      subUnitWeight: subUnit.id in LIVE.subUnitWeights ? LIVE.subUnitWeights[subUnit.id] : 50,
-      createdBy: user.id,
-      createdAt: new Date().toISOString().slice(0, 10),
-      approvedBy: null,
-      approvedAt: null,
-      closedAt: null,
-      closingNote: null,
-      expectedCloseAt,
-    };
-    if (store) {
-      store.setSubmissions(prev => [...prev, newSubmission]);
+    // Simpan ke database (status: estimated = menunggu approval), lalu segarkan store.
+    try {
+      await createSubmission({
+        templateId: template.id,
+        subUnitId: subUnit.id,
+        period,
+        estimatedValues: { ...values },
+        subUnitWeight: subUnit.id in LIVE.subUnitWeights ? LIVE.subUnitWeights[subUnit.id] : 50,
+      });
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal mengajukan KPI.");
+      return;
     }
 
     alert(
@@ -5260,19 +5331,21 @@ function CloseKPIForm({ user, context, onBack }) {
     );
   }
 
-  const handleClose = () => {
+  const handleClose = async () => {
     if (!closingNote.trim() || closingNote.trim().length < 10) {
       alert("Catatan/alasan WAJIB diisi (minimal 10 karakter).\nJelaskan kondisi closing, kendala, atau hal penting periode ini.");
       return;
     }
-    // Write closing to store: set actualValues, status closed, closedAt, note
-    if (store) {
-      const today = new Date().toISOString().slice(0, 10);
-      store.setSubmissions(prev => prev.map(s =>
-        s.id === submission.id
-          ? { ...s, status: "closed", actualValues: { ...actualValues }, closedAt: today, closingNote: closingNote.trim() }
-          : s
-      ));
+    // Simpan closing ke database (realisasi + catatan), lalu segarkan store.
+    try {
+      await closeSubmission(submission.id, {
+        actualValues: { ...actualValues },
+        closingNote: closingNote.trim(),
+      });
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal menutup KPI.");
+      return;
     }
     alert(
       `KPI berhasil ditutup!\n\n` +
@@ -5531,14 +5604,14 @@ function UpdateMonthlyKPIForm({ user, context, onBack }) {
     );
   }
 
-  const handleUpdate = () => {
-    // Persist updated actual values to the store (keeps status as-is, e.g. approved)
-    if (store) {
-      store.setSubmissions(prev => prev.map(s =>
-        s.id === submission.id
-          ? { ...s, actualValues: { ...actualValues } }
-          : s
-      ));
+  const handleUpdate = async () => {
+    // Simpan realisasi terbaru ke database (status tetap), lalu segarkan store.
+    try {
+      await updateSubmissionActual(submission.id, { actualValues: { ...actualValues } });
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal memperbarui KPI.");
+      return;
     }
     alert(
       `KPI berhasil di-update!\n\n` +
@@ -5831,7 +5904,7 @@ function SubmitProjectForm({ user, context, onBack }) {
     setMilestones(milestones.map(m => m.key === key ? { ...m, [field]: value } : m));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!unitId)      { alert("Pilih unit dulu"); return; }
     if (!name.trim()) { alert("Isi nama project"); return; }
     if (!desc.trim()) { alert("Isi deskripsi project"); return; }
@@ -5854,33 +5927,32 @@ function SubmitProjectForm({ user, context, onBack }) {
       .join("\n");
     const totalAlloc = milestones.reduce((sum, m) => sum + (Number(m.budget) || 0), 0);
 
-    // Write the new project + its milestones to the store
-    const projectId = `pj-${Date.now()}`;
-    const newProject = {
-      id: projectId,
-      name: name.trim(),
-      unitId,
-      subUnitId: subUnitId || null,
-      description: desc.trim(),
-      status: "pending_approval",
-      budgetPlanned: Number(budgetPlanned),
-      budgetSpent: 0,
-      milestonesTotal: milestones.length,
-      milestonesDone: 0,
-      startDate,
-      endDate,
-    };
-    const newMilestones = milestones.map((m, i) => ({
-      id: `${projectId}-ms${i + 1}`,
-      name: m.name.trim(),
-      done: false,
-      date: m.date,
-      pic: m.pic || "",
-      budgetAllocated: Number(m.budget) || 0,
-    }));
-    if (store) {
-      store.setProjects(prev => [...prev, newProject]);
-      store.setMilestones(prev => ({ ...prev, [projectId]: newMilestones }));
+    // Simpan project + milestones ke database (transaksional), lalu segarkan store.
+    try {
+      await createProject({
+        unitId,
+        subUnitId: subUnitId || null,
+        name: name.trim(),
+        desc: desc.trim(),
+        status: "pending_approval",
+        budgetPlanned: Number(budgetPlanned),
+        startDate,
+        endDate,
+        milestones: milestones.map(m => ({
+          name: m.name.trim(),
+          date: m.date,
+          pic: m.pic || "",
+          budgetAllocated: Number(m.budget) || 0,
+        })),
+      });
+      if (store) {
+        const [projects, ms] = await Promise.all([fetchProjects(), fetchMilestones()]);
+        store.setProjects(projects);
+        store.setMilestones(groupByProject(ms));
+      }
+    } catch (e) {
+      alert(e.message || "Gagal mengajukan project.");
+      return;
     }
 
     alert(
@@ -6416,6 +6488,14 @@ function syncLive(next) {
   if (next.subUnitWeights) LIVE.subUnitWeights = next.subUnitWeights;
 }
 
+/**
+ * Ganti binding modul UNITS & USERS dengan data dari API (objek ter-index id).
+ * Dipakai bootstrap loader setelah login. Pembacaan UNITS[id]/USERS[id] di mana
+ * pun akan otomatis melihat data terbaru karena ini binding modul.
+ */
+function setUnitsData(map) { UNITS = map; }
+function setUsersData(map) { USERS = map; }
+
 function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
   const store = useDataStore();
   const project = LIVE.projects.find(p => p.id === projectId);
@@ -6480,14 +6560,18 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
     (user.role === ROLES.LEADER && user.unitId === project.unitId) ||
     (user.role === ROLES.PIC && (user.subUnitId === project.subUnitId || project.subUnitId === null));
 
-  const toggleMilestone = (msId) => {
+  const toggleMilestone = async (msId) => {
     if (!canEdit) {
       alert("Anda tidak punya akses untuk update milestone ini");
       return;
     }
-    setMilestones(prev => prev.map(m =>
-      m.id === msId ? { ...m, done: !m.done } : m
-    ));
+    const cur = milestones.find(m => m.id === msId);
+    try {
+      await updateMilestone(msId, { done: !cur.done });
+      setMilestones(prev => prev.map(m => m.id === msId ? { ...m, done: !m.done } : m));
+    } catch (e) {
+      alert(e.message || "Gagal memperbarui milestone.");
+    }
   };
 
   // ─── Milestone CRUD (Level A: local state only) ───
@@ -6515,38 +6599,38 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
     setShowMsForm(true);
   };
 
-  const saveMilestone = () => {
+  const saveMilestone = async () => {
     if (!msFormName.trim()) { alert("Isi nama milestone"); return; }
     if (!msFormDate)        { alert("Isi tanggal target"); return; }
 
-    if (editingMsId === null) {
-      // Add new
-      const newMs = {
-        id: `ms-new-${Date.now()}`,
-        name: msFormName.trim(),
-        date: msFormDate,
-        pic: msFormPic.trim(),
-        budgetAllocated: Number(msFormBudget) || 0,
-        done: false,
-      };
-      setMilestones(prev => [...prev, newMs]);
-      alert(`Milestone "${newMs.name}" ditambahkan.`);
-    } else {
-      // Edit existing
-      setMilestones(prev => prev.map(m =>
-        m.id === editingMsId
-          ? { ...m, name: msFormName.trim(), date: msFormDate, pic: msFormPic.trim(), budgetAllocated: Number(msFormBudget) || 0 }
-          : m
-      ));
-      alert(`Milestone "${msFormName}" diperbarui.`);
+    const payload = {
+      name: msFormName.trim(), date: msFormDate,
+      pic: msFormPic.trim(), budgetAllocated: Number(msFormBudget) || 0,
+    };
+    try {
+      if (editingMsId === null) {
+        const created = await createMilestone({ projectId, ...payload });
+        setMilestones(prev => [...prev, created]);
+      } else {
+        const updated = await updateMilestone(editingMsId, payload);
+        setMilestones(prev => prev.map(m => m.id === editingMsId ? updated : m));
+      }
+    } catch (e) {
+      alert(e.message || "Gagal menyimpan milestone.");
+      return;
     }
     setShowMsForm(false);
   };
 
-  const deleteMilestone = (ms) => {
+  const deleteMilestone = async (ms) => {
     if (!canEdit) { alert("Anda tidak punya akses untuk hapus milestone"); return; }
     if (!confirm(`Hapus milestone "${ms.name}"?\n\nExpense yang terkait milestone ini akan kehilangan referensinya.`)) return;
-    setMilestones(prev => prev.filter(m => m.id !== ms.id));
+    try {
+      await apiDeleteMilestone(ms.id);
+      setMilestones(prev => prev.filter(m => m.id !== ms.id));
+    } catch (e) {
+      alert(e.message || "Gagal menghapus milestone.");
+    }
   };
 
   // ─── Expense / Realisasi rinci (inline, Level A in-session) ───
@@ -6563,21 +6647,27 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
     setShowExpenseForm(true);
   };
 
-  const saveExpense = () => {
+  const saveExpense = async () => {
     if (!exName.trim())  { alert("Isi keterangan realisasi"); return; }
     if (!exAmount)       { alert("Isi jumlah realisasi"); return; }
     if (!exDate)         { alert("Isi tanggal"); return; }
     if (!exHasReceipt)   { alert("Bukti/nota wajib dikonfirmasi (centang 'Bukti terlampir')"); return; }
-    const newEx = {
-      id: `ex-new-${Date.now()}`,
-      name: exName.trim(),
-      amount: Number(exAmount),
-      date: exDate,
-      milestoneId: exMilestoneId || null,
-      hasReceipt: true,
-    };
-    setExpenses(prev => [...prev, newEx]);
-    alert(`Realisasi "${newEx.name}" sebesar ${formatRupiahFull(newEx.amount)} dicatat.`);
+    let created;
+    try {
+      created = await createExpense({
+        projectId,
+        milestoneId: exMilestoneId || null,
+        name: exName.trim(),
+        amount: Number(exAmount),
+        date: exDate,
+        hasReceipt: true,
+      });
+    } catch (e) {
+      alert(e.message || "Gagal mencatat realisasi.");
+      return;
+    }
+    setExpenses(prev => [...prev, created]);
+    alert(`Realisasi "${created.name}" sebesar ${formatRupiahFull(created.amount)} dicatat.`);
     setShowExpenseForm(false);
   };
 
@@ -7721,36 +7811,35 @@ function ApprovalDetail({ submission, onProcessed }) {
   const totalWeight = Object.values(weights).reduce((sum, w) => sum + Number(w || 0), 0);
   const weightValid = totalWeight === 100;
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!weightValid) {
       alert(`Total bobot KPI harus = 100% (saat ini ${totalWeight}%)`);
       return;
     }
-    // Write to store: status approved + final field weights + sub-unit weight
-    if (store) {
-      const today = new Date().toISOString().slice(0, 10);
-      store.setSubmissions(prev => prev.map(s =>
-        s.id === submission.id
-          ? { ...s, status: "approved", fieldWeights: { ...weights }, subUnitWeight, approvedAt: today }
-          : s
-      ));
+    // Simpan approval ke database: status approved + bobot final, lalu segarkan.
+    try {
+      await approveSubmission(submission.id, { fieldWeights: { ...weights }, subUnitWeight });
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal menyetujui KPI.");
+      return;
     }
     alert(`KPI "${template?.name}" untuk ${subUnit?.name} telah disetujui.\n\nStatus berubah ke "approved", bobot tersimpan, dan KPI keluar dari antrian.`);
     if (onProcessed) onProcessed(submission.id);
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!feedback.trim()) {
       alert("Mohon isi catatan/koreksi sebelum reject");
       return;
     }
-    // Write to store: mark as rejected (kept in data with note, removed from queue)
-    if (store) {
-      store.setSubmissions(prev => prev.map(s =>
-        s.id === submission.id
-          ? { ...s, status: "rejected", closingNote: feedback.trim() }
-          : s
-      ));
+    // Simpan penolakan ke database (status rejected + catatan), lalu segarkan.
+    try {
+      await rejectSubmission(submission.id, { note: feedback.trim() });
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal menolak KPI.");
+      return;
     }
     alert(`KPI ditolak & dikembalikan ke pengaju.\n\nCatatan ke PIC:\n"${feedback}"\n\nKPI keluar dari antrian approval.`);
     if (onProcessed) onProcessed(submission.id);
@@ -9655,9 +9744,19 @@ function SubUnitManager() {
   // PIC candidates: users with PIC role
   const picCandidates = Object.values(USERS).filter(u => u.role === ROLES.PIC);
 
+  const [busy, setBusy] = useState(false);
+
   // Count KPI submissions for a sub unit (for delete-safety)
   const kpiCountFor = (subUnitId) =>
     LIVE.submissions.filter(s => s.subUnitId === subUnitId).length;
+
+  // Muat ulang sub-unit dari API ke store (sumber tampilan).
+  const reloadSubUnits = async () => {
+    const list = await fetchSubUnits();
+    if (store) store.setSubUnits(list);
+  };
+
+  const slugify = (s) => (s || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
   const openAdd = () => {
     setEditingId(null);
@@ -9673,7 +9772,7 @@ function SubUnitManager() {
     setShowForm(true);
   };
 
-  const handleDeleteSub = (su) => {
+  const handleDeleteSub = async (su) => {
     const kpiCount = kpiCountFor(su.id);
     if (kpiCount > 0) {
       alert(
@@ -9682,49 +9781,46 @@ function SubUnitManager() {
       );
       return;
     }
-    if (confirm(`Hapus sub unit "${su.name}"?\n\nSub unit ini belum punya KPI, jadi aman dihapus.`)) {
-      if (store) store.setSubUnits(prev => prev.filter(s => s.id !== su.id));
-      alert(`Sub unit "${su.name}" dihapus.`);
+    if (!confirm(`Hapus sub unit "${su.name}"?\n\nSub unit ini belum punya KPI, jadi aman dihapus.`)) return;
+    try {
+      await deleteSubUnit(su.id);
+      await reloadSubUnits();
+    } catch (e) {
+      alert(e.message || "Gagal menghapus sub unit.");
     }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
+    if (busy) return;
     if (!formName.trim()) { alert("Isi nama sub unit"); return; }
     if (!formParentId)    { alert("Pilih parent unit"); return; }
-    const parentName = UNITS[formParentId]?.name;
-    if (editingId === null) {
-      // Create new sub-unit in the store
-      const newSub = {
-        id: `su-${Date.now()}`,
-        unitId: formParentId,
-        name: formName.trim(),
-        picId: formPicId || null,
-        icon: UNITS[formParentId]?.icon || "store",
-        status: "active",
-        createdAt: new Date().toISOString().slice(0, 10),
-      };
-      if (store) store.setSubUnits(prev => [...prev, newSub]);
-      alert(
-        "Sub unit berhasil ditambahkan.\n\n" +
-        `Parent Unit: ${parentName}\n` +
-        `Nama: ${formName}\n` +
-        `PIC: ${formPicId ? getUser(formPicId)?.name : "Belum di-assign"}`
-      );
-    } else {
-      // Update existing sub-unit (name, PIC, and parent if movable)
-      if (store) store.setSubUnits(prev => prev.map(s =>
-        s.id === editingId
-          ? { ...s, name: formName.trim(), picId: formPicId || null, unitId: formParentId }
-          : s
-      ));
-      alert(
-        "Sub unit diperbarui.\n\n" +
-        `Parent Unit: ${parentName}\n` +
-        `Nama: ${formName}\n` +
-        `PIC: ${formPicId ? getUser(formPicId)?.name : "Belum di-assign"}`
-      );
+    setBusy(true);
+    try {
+      if (editingId === null) {
+        const id = `${formParentId}-${slugify(formName)}-${Date.now().toString(36).slice(-4)}`;
+        await createSubUnit({
+          id,
+          unitId: formParentId,
+          name: formName.trim(),
+          picId: formPicId || null,
+          icon: UNITS[formParentId]?.icon || "store",
+          status: "active",
+        });
+      } else {
+        // Ubah nama, PIC, dan parent unit.
+        await updateSubUnit(editingId, {
+          name: formName.trim(),
+          picId: formPicId || null,
+          unitId: formParentId,
+        });
+      }
+      await reloadSubUnits();
+      setFormName(""); setFormPicId(""); setEditingId(null); setShowForm(false);
+    } catch (e) {
+      alert(e.message || "Gagal menyimpan sub unit.");
+    } finally {
+      setBusy(false);
     }
-    setFormName(""); setFormPicId(""); setEditingId(null); setShowForm(false);
   };
 
   return (
@@ -9973,33 +10069,85 @@ function SubUnitManagerRow({ subUnit, parentUnit, isLast, kpiCount = 0, onEdit, 
 }
 
 function UserManager() {
+  const [users, setUsers] = useState(() => Object.values(USERS));
   const [filterRole, setFilterRole] = useState("all");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null); // null = mode tambah
   const [fName, setFName] = useState("");
   const [fEmail, setFEmail] = useState("");
+  const [fPassword, setFPassword] = useState("");
   const [fRole, setFRole] = useState(ROLES.PIC);
   const [fUnitId, setFUnitId] = useState("");
   const [fSubUnitId, setFSubUnitId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  const allUsers = Object.values(USERS);
+  const allUsers = users;
   const filtered = filterRole === "all" ? allUsers : allUsers.filter(u => u.role === filterRole);
 
-  const handleAddUser = () => {
-    if (!fName.trim()) { alert("Isi nama user"); return; }
-    if (!fEmail.trim()) { alert("Isi email user"); return; }
-    if (fRole === ROLES.LEADER && !fUnitId) { alert("Leader harus punya unit"); return; }
-    if (fRole === ROLES.PIC && !fSubUnitId) { alert("PIC harus punya sub unit"); return; }
-    alert(
-      "Data user:\n\n" +
-      `Nama: ${fName}\n` +
-      `Email: ${fEmail}\n` +
-      `Role: ${ROLE_LABELS[fRole]}\n` +
-      (fRole === ROLES.LEADER ? `Unit: ${UNITS[fUnitId]?.name}\n` : "") +
-      (fRole === ROLES.PIC ? `Sub Unit: ${getSubUnitName(fSubUnitId)}\n` : "") +
-      "\nCatatan: manajemen user & login diaktifkan di Fase 3 (butuh autentikasi/OAuth). " +
-      "Untuk prototype, gunakan user yang sudah ada untuk uji peran."
-    );
-    setFName(""); setFEmail(""); setFRole(ROLES.PIC); setFUnitId(""); setFSubUnitId(""); setShowForm(false);
+  // Muat ulang dari API + perbarui binding modul USERS agar seluruh app ikut segar.
+  const reload = async () => {
+    const list = await fetchUsers();
+    setUsersData(indexById(list));
+    setUsers(list);
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setFName(""); setFEmail(""); setFPassword("");
+    setFRole(ROLES.PIC); setFUnitId(""); setFSubUnitId(""); setError("");
+  };
+  const openCreate = () => { resetForm(); setShowForm(true); };
+  const openEdit = (u) => {
+    setEditingId(u.id);
+    setFName(u.name); setFEmail(u.email); setFPassword("");
+    setFRole(u.role); setFUnitId(u.unitId || ""); setFSubUnitId(u.subUnitId || "");
+    setError(""); setShowForm(true);
+  };
+
+  const slugify = (s) => (s || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+  const handleSave = async () => {
+    setError("");
+    if (!fName.trim()) return setError("Nama wajib diisi.");
+    if (!fEmail.trim()) return setError("Email wajib diisi.");
+    if (!editingId && !fPassword.trim()) return setError("Password wajib diisi untuk user baru.");
+    if (fRole === ROLES.LEADER && !fUnitId) return setError("Leader harus punya unit.");
+    if (fRole === ROLES.PIC && !fSubUnitId) return setError("PIC harus punya sub unit.");
+
+    // unitId untuk PIC diturunkan dari sub-unit yang dipilih.
+    const unitId = fRole === ROLES.LEADER
+      ? fUnitId
+      : (fRole === ROLES.PIC ? (LIVE.subUnits.find(s => s.id === fSubUnitId)?.unitId || null) : null);
+    const subUnitId = fRole === ROLES.PIC ? fSubUnitId : null;
+
+    setBusy(true);
+    try {
+      if (editingId) {
+        const body = { name: fName.trim(), email: fEmail.trim(), role: fRole, unitId, subUnitId };
+        if (fPassword.trim()) body.password = fPassword.trim();
+        await updateUser(editingId, body);
+      } else {
+        const id = slugify(fEmail.split("@")[0]) || slugify(fName) || `user-${Date.now()}`;
+        await createUser({ id, name: fName.trim(), email: fEmail.trim(), password: fPassword.trim(), role: fRole, unitId, subUnitId });
+      }
+      await reload();
+      setShowForm(false); resetForm();
+    } catch (e) {
+      setError(e.message || "Gagal menyimpan user.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDelete = async (u) => {
+    if (!confirm(`Hapus user "${u.name}"?\n\nTindakan ini permanen dan tidak bisa dibatalkan.`)) return;
+    try {
+      await deleteUser(u.id);
+      await reload();
+    } catch (e) {
+      alert(e.message || "Gagal menghapus user.");
+    }
   };
 
   const counts = {
@@ -10029,7 +10177,7 @@ function UserManager() {
           </p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => { if (showForm) { setShowForm(false); resetForm(); } else { openCreate(); } }}
           type="button"
           style={{
             padding: "8px 14px",
@@ -10059,8 +10207,13 @@ function UserManager() {
           borderBottom: `1px solid ${COLORS.border}`,
         }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 12 }}>
-            User Baru
+            {editingId ? "Ubah User" : "User Baru"}
           </div>
+          {error && (
+            <div style={{ fontSize: 11, color: COLORS.danger, background: COLORS.dangerBg, padding: "8px 10px", borderRadius: 8, marginBottom: 12 }}>
+              {error}
+            </div>
+          )}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={labelStyle}>Nama <span style={{ color: COLORS.danger }}>*</span></label>
@@ -10070,6 +10223,21 @@ function UserManager() {
               <label style={labelStyle}>Email <span style={{ color: COLORS.danger }}>*</span></label>
               <input type="email" value={fEmail} onChange={e => setFEmail(e.target.value)} placeholder="email@gdn.co.id" style={inputStyle} />
             </div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={labelStyle}>
+              Password {editingId
+                ? <span style={{ color: COLORS.textLight, fontWeight: 400 }}>(kosongkan jika tidak diubah)</span>
+                : <span style={{ color: COLORS.danger }}>*</span>}
+            </label>
+            <input
+              type="password"
+              value={fPassword}
+              onChange={e => setFPassword(e.target.value)}
+              placeholder={editingId ? "••••••" : "Password awal"}
+              autoComplete="new-password"
+              style={inputStyle}
+            />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
@@ -10102,8 +10270,15 @@ function UserManager() {
             )}
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-            <button onClick={() => setShowForm(false)} type="button" style={adminBtnStyle}>Batal</button>
-            <button onClick={handleAddUser} type="button" style={{ padding: "8px 18px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan User</button>
+            <button onClick={() => { setShowForm(false); resetForm(); }} type="button" style={adminBtnStyle}>Batal</button>
+            <button
+              onClick={handleSave}
+              type="button"
+              disabled={busy}
+              style={{ padding: "8px 18px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1, fontFamily: "inherit" }}
+            >
+              {busy ? "Menyimpan…" : (editingId ? "Simpan Perubahan" : "Simpan User")}
+            </button>
           </div>
         </div>
       )}
@@ -10163,7 +10338,7 @@ function UserManager() {
           </thead>
           <tbody>
             {filtered.map(u => (
-              <UserManagerRow key={u.id} user={u} />
+              <UserManagerRow key={u.id} user={u} onEdit={openEdit} onDelete={handleDelete} />
             ))}
           </tbody>
         </table>
@@ -10181,7 +10356,7 @@ function UserManager() {
   );
 }
 
-function UserManagerRow({ user }) {
+function UserManagerRow({ user, onEdit, onDelete }) {
   const unit = user.unitId ? UNITS[user.unitId] : null;
   const subUnit = user.subUnitId ? LIVE.subUnits.find(su => su.id === user.subUnitId) : null;
 
@@ -10210,8 +10385,8 @@ function UserManagerRow({ user }) {
       <td style={{ padding: "10px 12px", color: COLORS.textMuted, fontSize: 11 }}>{location}</td>
       <td style={{ padding: "10px 12px" }}>
         <div style={{ display: "flex", gap: 4 }}>
-          <button onClick={() => alert(`Edit "${user.name}"\n\nUbah role, unit, atau sub unit user ini.`)} style={adminBtnStyle}>Edit</button>
-          <button onClick={() => { if (confirm(`Nonaktifkan "${user.name}"?\n\nUser tidak bisa login lagi sampai diaktifkan kembali.`)) alert("User dinonaktifkan."); }} style={adminBtnDanger}>Nonaktif</button>
+          <button onClick={() => onEdit(user)} style={adminBtnStyle}>Edit</button>
+          <button onClick={() => onDelete(user)} style={adminBtnDanger}>Hapus</button>
         </div>
       </td>
     </tr>
@@ -10973,8 +11148,10 @@ function DataStoreProvider({ children }) {
 // ════════════════════════════════════════════════════════════════════════════
 
 function AppInner() {
+  const store = useDataStore();
   const [activeUserId, setActiveUserId] = useState(null);
   const [page, setPage] = useState(null);
+  const [restoring, setRestoring] = useState(true); // sedang memulihkan sesi saat reload
 
   // Detail page context (which entity we're viewing)
   const [selectedUnitId, setSelectedUnitId] = useState(null);
@@ -10997,18 +11174,56 @@ function AppInner() {
     document.head.appendChild(link);
   }, []);
 
-  const handleLogin = (userId) => {
-    const user = USERS[userId];
-    if (!user) return;
-    setActiveUserId(userId);
-    if ([ROLES.OWNER, ROLES.FINANCE, ROLES.HR].includes(user.role)) {
-      setPage("dashboard");
-    } else {
-      setPage("workspace");
-    }
+  // Arahkan halaman awal sesuai peran setelah login berhasil.
+  const routeForRole = (role) => {
+    if ([ROLES.OWNER, ROLES.FINANCE, ROLES.HR].includes(role)) return "dashboard";
+    return "workspace";
   };
 
+  // Bootstrap: muat seluruh data inti dari API ke binding LIVE/UNITS/USERS.
+  // Setelah ini selesai, seluruh aplikasi membaca data asli secara konsisten.
+  const loadAllData = async () => {
+    const [{ units, users, subUnits, projects, templates, submissions }, milestones, expenses] =
+      await Promise.all([fetchAllCoreData(), fetchMilestones(), fetchExpenses()]);
+    setUnitsData(indexById(units));
+    setUsersData(indexById(users));
+    store.setSubUnits(subUnits);
+    store.setProjects(projects);
+    store.setTemplates(templates);
+    store.setSubmissions(submissions);
+    store.setMilestones(groupByProject(milestones));
+    store.setExpenses(groupByProject(expenses));
+  };
+
+  // Login sungguhan: kirim email+password ke API, lalu muat data sebelum masuk.
+  // Melempar error bila gagal (ditangkap & ditampilkan oleh LoginScreen).
+  const handleLogin = async (email, password) => {
+    const user = await apiLogin(email, password);
+    await loadAllData();
+    setActiveUserId(user.id);
+    setPage(routeForRole(user.role));
+  };
+
+  // Pulihkan sesi saat halaman dimuat ulang jika token masih tersimpan & valid.
+  useEffect(() => {
+    if (!getToken()) { setRestoring(false); return; }
+    fetchMe()
+      .then(async (user) => {
+        await loadAllData();
+        setActiveUserId(user.id);
+        setPage((p) => p || routeForRole(user.role));
+      })
+      .catch(() => {
+        apiLogout();
+        setActiveUserId(null);
+        setPage(null);
+      })
+      .finally(() => setRestoring(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleLogout = () => {
+    apiLogout();
     setActiveUserId(null);
     setPage(null);
     setSelectedUnitId(null);
@@ -11053,8 +11268,22 @@ function AppInner() {
     setPage(formContext?.returnTo || "workspace");
   };
 
+  // Saat memulihkan sesi (reload dengan token tersimpan): tampilkan layar muat.
+  if (restoring && !activeUserId) {
+    return (
+      <div style={{
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        background: `linear-gradient(135deg, ${COLORS.dark}, #1E1B4B)`, color: COLORS.white,
+        fontFamily: FONTS.body, fontSize: 14, gap: 10, flexDirection: "column",
+      }}>
+        <img src={GDN_LOGO} alt="GDN" style={{ height: 48, opacity: 0.9 }} />
+        <div>Memuat data…</div>
+      </div>
+    );
+  }
+
   if (!activeUserId) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return <LoginScreen onAuthenticate={handleLogin} />;
   }
 
   const user = USERS[activeUserId];

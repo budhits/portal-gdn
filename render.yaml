@@ -1,0 +1,31 @@
+# Blueprint deploy Render — satu web service (backend + frontend) + PostgreSQL.
+# Cara pakai: push repo ke GitHub, lalu di Render: New > Blueprint > pilih repo ini.
+# Render akan membuat database & service sesuai berkas ini.
+services:
+  - type: web
+    name: portal-gdn
+    runtime: node
+    plan: free
+    # Install deps frontend & backend, lalu build frontend (hasil di /dist).
+    buildCommand: npm install && npm run build && npm install --prefix server
+    # Server Express menyajikan /dist (frontend) + /api (backend) dalam satu service.
+    startCommand: node server/src/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_SSL
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true          # Render membuat string acak aman
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: DATABASE_URL
+        fromDatabase:
+          name: portal-gdn-db
+          property: connectionString
+
+databases:
+  - name: portal-gdn-db
+    plan: free
+    databaseName: portal_gdn

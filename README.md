@@ -1,35 +1,65 @@
-# Portal GDN — Siap Deploy ke Vercel
+# Portal GDN — Sistem Planning & Monitoring Bisnis
 
-Proyek React (Vite) ini sudah berisi file `portal gdn versi dummy final.jsx` Anda
-(ada di `src/App.jsx`). Sudah dites build dan jalan normal.
+Aplikasi web monitoring KPI, margin, dan project lintas unit bisnis
+(Gerbang Digital Nusantara). **Frontend + Backend + Database** yang berfungsi penuh.
 
-## Cara deploy lewat browser (tanpa install apa pun)
+- **Frontend:** React + Vite (`src/`)
+- **Backend:** Node.js + Express (`server/`)
+- **Database:** PostgreSQL (`server/db/schema.sql`)
+- **Auth:** login email + password (JWT)
 
-### 1. Buat repo baru di GitHub
-- Buka https://github.com/new
-- Beri nama, misal `portal-gdn`
-- Pilih **Public** (atau Private, sama saja untuk Vercel)
-- Klik **Create repository**
+Peran: **Owner, Finance, HR, Leader, PIC** — dengan hak akses berbeda.
+Fitur inti: dashboard skor & margin per unit (dihitung otomatis dari KPI),
+alur KPI (ajukan → approve → closing), kelola user & sub-unit, dan
+project dengan milestone & expense.
 
-### 2. Upload semua file proyek ini
-- Di halaman repo baru, klik **"uploading an existing file"**
-  (atau tab **Add file > Upload files**)
-- Drag SEMUA isi folder ini ke sana, TERMASUK folder `src`
-  (JANGAN upload folder `node_modules` atau `dist` — keduanya tidak ada di zip ini)
-- Klik **Commit changes**
+## Menjalankan di lokal
 
-### 3. Deploy di Vercel
-- Buka https://vercel.com/new
-- Klik **Continue with GitHub** → pilih repo `portal-gdn`
-- Vercel otomatis mendeteksi Vite. Biarkan setelan default.
-- Klik **Deploy**
-- Tunggu ~1 menit → dapat URL seperti `portal-gdn.vercel.app`
+Prasyarat: **Node.js 18+** dan **PostgreSQL**.
 
-Link itu bisa langsung Anda bagikan ke siapa saja lewat WA. 🎉
-
-## Kalau pakai laptop dengan Node.js terpasang
-```
+```bash
+# 1. Backend
+cd server
 npm install
-npm run dev      # tes di localhost
-npm run build    # build produksi
+cp .env.example .env          # set DATABASE_URL ke PostgreSQL Anda
+npm run db:reset              # buat tabel + isi data contoh
+npm run dev                  # API di http://localhost:4000
+
+# 2. Frontend (terminal lain, dari root repo)
+npm install
+npm run dev                  # buka http://localhost:5173
+```
+
+Login contoh (password = `<id>123`):
+
+| Peran | Email | Password |
+|-------|-------|----------|
+| Owner | budhi@email.com | budhi123 |
+| Leader | satya@email.com | satya123 |
+| PIC | rafli@email.com | rafli123 |
+
+> Saat dev, frontend (5173) otomatis mem-proxy `/api` ke backend (4000).
+
+## Deploy online
+
+Lihat **[DEPLOY.md](./DEPLOY.md)** — panduan lengkap (Render/Railway). Saat
+produksi, server Express menyajikan frontend hasil build sekaligus API dalam
+satu layanan.
+
+## Struktur
+
+```
+portal-gdn/
+├── src/              # Frontend React (App.jsx + api/)
+├── server/           # Backend Express
+│   ├── db/           # schema.sql, seed, migrasi
+│   └── src/          # app, routes, lib (scoring engine), middleware
+├── render.yaml       # Blueprint deploy Render
+└── DEPLOY.md         # Panduan deploy
+```
+
+## Pengujian
+
+```bash
+cd server && npm test      # test regresi scoring engine
 ```
