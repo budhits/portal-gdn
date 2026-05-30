@@ -3379,7 +3379,8 @@ function MarginCardSubRow({ entry }) {
 }
 
 // Kartu total semua unit (sum all unit) untuk resume margin.
-function MarginGrandTotalCard({ total, periodLabel }) {
+// `gap` (opsional) menampilkan selisih realisasi−target (dipakai di halaman Margin).
+function MarginGrandTotalCard({ total, periodLabel, gap, label = "Total Semua Unit" }) {
   // Gradient cerah berdasarkan capaian keseluruhan.
   const grad = total.target === 0
     ? "linear-gradient(135deg, #64748B, #475569)"
@@ -3399,12 +3400,15 @@ function MarginGrandTotalCard({ total, periodLabel }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "rgba(255,255,255,0.7)" }}>
-            Total Semua Unit · {periodLabel}
+            {label} · {periodLabel}
           </div>
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>
             Target: {formatRupiah(total.target)}
             {" • "}
             Realisasi: {formatRupiah(total.actual)}
+            {gap !== undefined && (
+              <> • Selisih: {gap >= 0 ? "+" : "−"}{formatRupiah(Math.abs(gap))}</>
+            )}
             {total.pendingTotal > 0 && (
               <> • Pending: {formatRupiah(total.pendingTotal)}</>
             )}
@@ -4193,26 +4197,42 @@ function MarginDetailPage({ user }) {
     return Object.values(UNITS);
   }, [user]);
 
+  const [filterUnitId, setFilterUnitId] = useState("all");
+  const showAggregate = isOwnerLevel(user.role) || user.role === ROLES.FINANCE || user.role === ROLES.HR;
+
+  const filteredUnits = filterUnitId === "all" ? visibleUnits : visibleUnits.filter(u => u.id === filterUnitId);
+
   const unitsWithMargin = useMemo(() =>
-    visibleUnits.map(u => ({
+    filteredUnits.map(u => ({
       ...u,
       margin: calculateUnitMarginForPeriod(u.id, selectedPeriod),
     })),
-    [selectedPeriodKey, visibleUnits, store?.submissions]
+    [selectedPeriodKey, filterUnitId, visibleUnits, store?.submissions]
   );
 
-  const grandTotal = useMemo(
-    () => calculateGrandTotalMarginForPeriod(selectedPeriod),
-    [selectedPeriodKey, store?.submissions]
-  );
+  // Agregat dihitung dari unit yang tampil (mengikuti filter).
+  const agg = useMemo(() => {
+    let target = 0, actual = 0, pendingTotal = 0, over = 0, below = 0, pendingSubs = 0, closingUnits = 0;
+    unitsWithMargin.forEach(u => {
+      const m = u.margin;
+      target += m.target; actual += m.actual; pendingTotal += m.pendingTotal;
+      pendingSubs += m.pendingEntries.length;
+      if (m.target > 0) { closingUnits++; if (m.percentage >= 100) over++; else below++; }
+    });
+    return {
+      target, actual, pendingTotal, over, below, pendingSubs, closingUnits,
+      percentage: target > 0 ? Math.round((actual / target) * 100) : 0,
+      gap: actual - target,
+    };
+  }, [unitsWithMargin]);
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: "20px 14px" }}>
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px" }}>
       <div style={{ marginBottom: 18 }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Detail Margin
+        <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Margin · {selectedPeriod.label}
         </h1>
         <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
-          Drill-down per unit dan per entry submission
+          Target dari estimasi · realisasi dari closing · drill-down per sub-unit
         </p>
       </div>
 
@@ -4246,55 +4266,68 @@ function MarginDetailPage({ user }) {
               ))}
             </optgroup>
           </select>
+          {showAggregate && (
+            <select
+              value={filterUnitId}
+              onChange={e => setFilterUnitId(e.target.value)}
+              style={{
+                padding: "7px 12px",
+                border: `1px solid ${COLORS.border}`,
+                borderRadius: 8,
+                background: COLORS.white,
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: "inherit",
+                cursor: "pointer",
+              }}
+            >
+              <option value="all">Semua Unit</option>
+              {Object.values(UNITS).map(u => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+          )}
         </div>
       </Card>
 
-      {/* Per-unit breakdown */}
-      {unitsWithMargin.map(unit => (
-        <MarginDetailUnitCard key={unit.id} unit={unit} />
-      ))}
-
-      {/* Grand total (only Owner / Finance / HR) */}
-      {(isOwnerLevel(user.role) || user.role === ROLES.FINANCE || user.role === ROLES.HR) && (
-        <Card style={{
-          marginTop: 12,
-          padding: "18px 22px",
-          background: `linear-gradient(135deg, ${COLORS.dark}, #1E293B)`,
-          color: COLORS.white,
-          border: "none",
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <div>
-              <div style={{
-                fontSize: 10, fontWeight: 700,
-                textTransform: "uppercase", letterSpacing: 0.6,
-                color: "rgba(255,255,255,0.7)",
-              }}>Total Semua Unit · {selectedPeriod.label}</div>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>
-                Target: <strong>{formatRupiah(grandTotal.target)}</strong>
-                {" • "}
-                Realisasi: <strong>{formatRupiah(grandTotal.actual)}</strong>
-                {grandTotal.pendingTotal > 0 && (
-                  <> • Pending: <strong>{formatRupiah(grandTotal.pendingTotal)}</strong></>
-                )}
-              </div>
-            </div>
-            <div style={{
-              fontSize: 28, fontWeight: 800,
-              color: grandTotal.percentage >= 100 ? "#86EFAC" : "#FCD34D",
-            }}>
-              {grandTotal.target > 0 ? `${grandTotal.percentage}%` : "—"}
-            </div>
+      {/* RESUME: total cerah + strip statistik (owner-level / finance / hr) */}
+      {showAggregate && (
+        <>
+          <MarginGrandTotalCard
+            total={agg}
+            periodLabel={selectedPeriod.label}
+            gap={agg.gap}
+            label={filterUnitId === "all" ? "Total Semua Unit" : "Total Unit"}
+          />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, margin: "12px 0 22px" }}>
+            <MarginStat k="Capaian Keseluruhan" v={agg.target > 0 ? `${agg.percentage}%` : "—"} s={`${agg.closingUnits} unit ada closing`} accent={COLORS.primary} />
+            <MarginStat k="Unit ≥ Target" v={agg.over} s="mencapai / lewati target" accent={COLORS.success} />
+            <MarginStat k="Unit < Target" v={agg.below} s="perlu perhatian" accent={COLORS.danger} />
+            <MarginStat k="Total Pending" v={formatRupiah(agg.pendingTotal)} s={`${agg.pendingSubs} sub-unit belum closing`} accent={COLORS.warning} small />
           </div>
-          {grandTotal.target > 0 && (
-            <ProgressBar
-              value={Math.min(grandTotal.percentage, 100)}
-              color={grandTotal.percentage >= 100 ? COLORS.success : COLORS.warning}
-              height={8}
-            />
-          )}
-        </Card>
+        </>
       )}
+
+      {/* DETAIL per unit (2 kolom) */}
+      <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "0 0 8px" }}>
+        Detail per Unit
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 12 }}>
+        {unitsWithMargin.map(unit => (
+          <MarginDetailUnitCard key={unit.id} unit={unit} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Kotak statistik kecil untuk strip ringkasan halaman Margin.
+function MarginStat({ k, v, s, accent, small }) {
+  return (
+    <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "13px 15px", borderLeft: `4px solid ${accent}` }}>
+      <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 0.4, color: COLORS.textMuted }}>{k}</div>
+      <div style={{ fontSize: small ? 15 : 21, fontWeight: 800, color: accent, marginTop: 4 }}>{v}</div>
+      <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 2 }}>{s}</div>
     </div>
   );
 }
@@ -4304,47 +4337,37 @@ function MarginDetailUnitCard({ unit }) {
   const [expanded, setExpanded] = useState(true);
 
   const hasClosing = target > 0;
-  const status = !hasClosing
-    ? { color: COLORS.textLight, bg: COLORS.bgMuted, label: "Belum closing" }
-    : percentage >= 100
-    ? { color: COLORS.success, bg: COLORS.successBg, label: "Over target" }
-    : percentage >= 80
-    ? { color: COLORS.warning, bg: COLORS.warningBg, label: "Mendekati" }
-    : { color: COLORS.danger, bg: COLORS.dangerBg, label: "Di bawah" };
+  const status = getMarginStatus(percentage, hasClosing, pendingEntries.length > 0);
+  const gap = actual - target;
 
   return (
-    <Card style={{ padding: 0, marginBottom: 10 }}>
-      {/* Header (clickable) */}
+    <Card style={{ padding: 0 }}>
+      {/* Header cerah (clickable) */}
       <div
         onClick={() => setExpanded(!expanded)}
         style={{
-          padding: "14px 18px",
-          borderBottom: expanded ? `1px solid ${COLORS.bgMuted}` : "none",
+          padding: "12px 16px",
+          background: `linear-gradient(135deg, ${unit.color}, ${unit.colorDark})`,
+          color: COLORS.white,
           display: "flex",
           alignItems: "center",
-          gap: 12,
+          gap: 10,
           cursor: "pointer",
         }}
       >
-        <span style={{ display: "inline-flex", color: COLORS.textLight, transform: expanded ? "rotate(90deg)" : "none", transition: "transform 0.15s" }}><Icon name="arrowRight" size={13} /></span>
-        <div style={{
-          width: 38, height: 38, borderRadius: 10,
-          background: unit.colorLight,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}><Icon name={unit.icon} size={19} color={unit.color} /></div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>{unit.name}</div>
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
-            {closedEntries.length} closing{pendingEntries.length > 0 && ` · ${pendingEntries.length} pending`}
+        <span style={{ display: "inline-flex", color: "rgba(255,255,255,0.85)", transform: expanded ? "rotate(90deg)" : "none", transition: "transform 0.15s" }}><Icon name="arrowRight" size={13} color="rgba(255,255,255,0.85)" /></span>
+        <Icon name={unit.icon} size={20} color={COLORS.white} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 800 }}>{unit.name}</div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
+            {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name} · ` : ""}{closedEntries.length} closing{pendingEntries.length > 0 && ` · ${pendingEntries.length} pending`}
+          </div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.92)", marginTop: 3 }}>
+            Target {formatRupiah(target)} · Real. {formatRupiah(actual)} · Selisih {gap >= 0 ? "+" : "−"}{formatRupiah(Math.abs(gap))}
           </div>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 2 }}>
-            {formatRupiah(actual)} / {formatRupiah(target)}
-          </div>
-          <Pill color={status.color} bg={status.bg}>
-            {hasClosing ? `${percentage}%` : "—"} {status.label}
-          </Pill>
+        <div style={{ fontSize: 20, fontWeight: 800, background: "rgba(255,255,255,0.22)", borderRadius: 9, padding: "5px 11px", whiteSpace: "nowrap" }}>
+          {hasClosing ? `${percentage}%` : "—"}
         </div>
       </div>
 
@@ -4413,47 +4436,51 @@ function MarginEntryRow({ entry, isPending }) {
   const achieved = entry.targetMargin > 0
     ? Math.round((entry.actualMargin / entry.targetMargin) * 100)
     : 0;
+  const gap = entry.actualMargin - entry.targetMargin;
+  const achColor = achieved >= 100 ? COLORS.success : achieved >= 80 ? COLORS.warning : COLORS.danger;
 
   return (
     <div style={{
       padding: "8px 10px",
-      background: "#FAFBFC",
+      background: isPending ? "#FEF6E7" : "#FAFBFC",
       borderRadius: 7,
       marginBottom: 5,
       display: "grid",
-      gridTemplateColumns: "1fr auto auto",
-      gap: 10,
+      gridTemplateColumns: "1.3fr 0.9fr 0.9fr 0.7fr",
+      gap: 8,
       alignItems: "center",
       fontSize: 11,
     }}>
-      <div>
+      <div style={{ minWidth: 0 }}>
         <div style={{ fontWeight: 700, color: COLORS.dark }}>{subUnitName}</div>
-        <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 1 }}>
+        <div style={{ fontSize: 9, color: COLORS.textMuted, marginTop: 1 }}>
           {entry.period}
-          {isPending && entry.expectedCloseAt && (
-            <> • closing: {formatDate(entry.expectedCloseAt)}</>
-          )}
+          {!isPending && entry.closedAt && <> · closed {formatDate(entry.closedAt)}</>}
+          {isPending && <> · belum closing</>}
         </div>
       </div>
       <div style={{ textAlign: "right" }}>
-        <div style={{ fontSize: 10, color: COLORS.textLight }}>Target</div>
+        <div style={{ fontSize: 9, color: COLORS.textLight }}>Target</div>
         <div style={{ fontWeight: 600, color: COLORS.text }}>{formatRupiah(entry.targetMargin)}</div>
       </div>
-      {isPending ? (
-        <div style={{ minWidth: 60, textAlign: "right", color: COLORS.warning, fontStyle: "italic", fontSize: 11 }}>
-          Pending
+      <div style={{ textAlign: "right" }}>
+        <div style={{ fontSize: 9, color: COLORS.textLight }}>Realisasi</div>
+        <div style={{ fontWeight: 700, color: isPending ? COLORS.textLight : achColor }}>
+          {isPending ? "—" : formatRupiah(entry.actualMargin)}
         </div>
-      ) : (
-        <div style={{ minWidth: 60, textAlign: "right" }}>
-          <div style={{ fontSize: 10, color: COLORS.textLight }}>Aktual</div>
-          <div style={{
-            fontWeight: 700,
-            color: achieved >= 100 ? COLORS.success : achieved >= 80 ? COLORS.warning : COLORS.danger,
-          }}>
-            {formatRupiah(entry.actualMargin)} <span style={{ fontSize: 10, opacity: 0.7 }}>({achieved}%)</span>
-          </div>
-        </div>
-      )}
+      </div>
+      <div style={{ textAlign: "right" }}>
+        {isPending ? (
+          <span style={{ color: COLORS.warning, fontStyle: "italic", fontWeight: 700 }}>pending</span>
+        ) : (
+          <>
+            <div style={{ fontWeight: 800, color: achColor }}>{achieved}%</div>
+            <div style={{ fontSize: 9, color: gap >= 0 ? COLORS.success : COLORS.danger }}>
+              {gap >= 0 ? "+" : "−"}{formatRupiah(Math.abs(gap))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
