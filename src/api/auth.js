@@ -43,6 +43,14 @@ export async function fetchMe() {
   return data.user;
 }
 
+/** Ubah password sendiri (user yang sedang login). */
+export async function changePassword(currentPassword, newPassword) {
+  return apiFetch("/auth/change-password", {
+    method: "POST",
+    body: { currentPassword, newPassword },
+  });
+}
+
 export function logout() {
   clearSession();
 }

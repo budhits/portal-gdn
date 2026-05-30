@@ -35,7 +35,7 @@
 
 import { useState, useMemo, useEffect, useRef, createContext, useContext } from "react";
 import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser,
-  loginWithGoogle as apiGoogleLogin, fetchConfig } from "./api/auth.js";
+  loginWithGoogle as apiGoogleLogin, fetchConfig, changePassword as apiChangePassword } from "./api/auth.js";
 import { getToken } from "./api/client.js";
 import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser,
   fetchUnits, createUnit, updateUnit, deleteUnit,
@@ -2401,6 +2401,8 @@ function getNavItems(role) {
 function TopNav({ user, currentPage, onNavigate, onLogout }) {
   const navItems = getNavItems(user.role);
   const inboxCount = getInboxCount(user);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showChangePw, setShowChangePw] = useState(false);
 
   return (
     <div style={{
@@ -2482,24 +2484,69 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "4px 12px 4px 8px",
-          background: "rgba(255,255,255,0.08)",
-          borderRadius: 99,
-        }}>
-          <div style={{
-            width: 26, height: 26, borderRadius: 99,
-            background: COLORS.gold,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: COLORS.dark, fontSize: 11, fontWeight: 800,
-          }}>{user.name.charAt(0)}</div>
-          <div style={{ lineHeight: 1.1 }}>
-            <div style={{ color: COLORS.white, fontSize: 10, fontWeight: 700 }}>{user.name}</div>
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}>{ROLE_LABELS[user.role]}</div>
-          </div>
+        <div style={{ position: "relative" }}>
+          {/* Klik nama user untuk membuka menu akun (Ubah Password) */}
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            title="Menu akun"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "4px 10px 4px 8px",
+              background: "rgba(255,255,255,0.08)",
+              borderRadius: 99,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            <div style={{
+              width: 26, height: 26, borderRadius: 99,
+              background: COLORS.gold,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: COLORS.dark, fontSize: 11, fontWeight: 800, overflow: "hidden",
+            }}>
+              {user.avatar
+                ? <img src={user.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : user.name.charAt(0)}
+            </div>
+            <div style={{ lineHeight: 1.1, textAlign: "left" }}>
+              <div style={{ color: COLORS.white, fontSize: 10, fontWeight: 700 }}>{user.name}</div>
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}>{ROLE_LABELS[user.role]}</div>
+            </div>
+          </button>
+
+          {menuOpen && (
+            <>
+              <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200 }} />
+              <div style={{
+                position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 201,
+                background: COLORS.white, borderRadius: 10, minWidth: 210,
+                boxShadow: "0 12px 30px rgba(0,0,0,0.25)", overflow: "hidden",
+                border: `1px solid ${COLORS.border}`,
+              }}>
+                <div style={{ padding: "10px 14px", borderBottom: `1px solid ${COLORS.bgMuted}` }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.dark }}>{user.name}</div>
+                  <div style={{ fontSize: 10, color: COLORS.textMuted }}>{user.email}</div>
+                </div>
+                <button
+                  onClick={() => { setMenuOpen(false); setShowChangePw(true); }}
+                  type="button"
+                  style={{
+                    width: "100%", textAlign: "left", padding: "10px 14px",
+                    background: "transparent", border: "none", cursor: "pointer",
+                    fontFamily: "inherit", fontSize: 12, color: COLORS.text,
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = COLORS.bgMuted}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  <Icon name="lock" size={14} color={COLORS.textMuted} /> Ubah Password
+                </button>
+              </div>
+            </>
+          )}
         </div>
         <button
           onClick={onLogout}
@@ -2520,6 +2567,97 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
           <Icon name="logout" size={13} color="rgba(255,255,255,0.7)" />
           Keluar
         </button>
+      </div>
+      {showChangePw && <ChangePasswordModal onClose={() => setShowChangePw(false)} />}
+    </div>
+  );
+}
+
+// Modal ubah password untuk user yang sedang login.
+function ChangePasswordModal({ onClose }) {
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (newPw.length < 6) { setError("Password baru minimal 6 karakter."); return; }
+    if (newPw !== confirmPw) { setError("Konfirmasi password baru tidak cocok."); return; }
+    setBusy(true);
+    try {
+      await apiChangePassword(currentPw, newPw);
+      setDone(true);
+    } catch (err) {
+      setError(err.message || "Gagal mengubah password.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const inputStyle = {
+    width: "100%", padding: "10px 12px", borderRadius: 8, fontSize: 13,
+    border: `1px solid ${COLORS.border}`, outline: "none", fontFamily: "inherit",
+    boxSizing: "border-box",
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000,
+      display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "60px 16px",
+    }}>
+      <div style={{ background: COLORS.white, borderRadius: 14, width: "100%", maxWidth: 380,
+        boxShadow: "0 20px 60px rgba(0,0,0,0.3)", overflow: "hidden" }}>
+        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${COLORS.bgMuted}`,
+          display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>Ubah Password</div>
+          <button onClick={onClose} type="button" style={{ background: "transparent", border: "none",
+            cursor: "pointer" }}><Icon name="x" size={16} color={COLORS.textMuted} /></button>
+        </div>
+
+        {done ? (
+          <div style={{ padding: "24px 18px", textAlign: "center" }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+              <Icon name="check" size={36} color={COLORS.success} />
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>Password berhasil diubah</div>
+            <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 4 }}>
+              Gunakan password baru saat login berikutnya.
+            </div>
+            <button onClick={onClose} type="button" style={{ marginTop: 16, padding: "9px 18px",
+              background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8,
+              fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Tutup</button>
+          </div>
+        ) : (
+          <form onSubmit={submit} style={{ padding: "16px 18px", display: "grid", gap: 10 }}>
+            <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)}
+              placeholder="Password lama" autoComplete="current-password" style={inputStyle} />
+            <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
+              placeholder="Password baru (min. 6 karakter)" autoComplete="new-password" style={inputStyle} />
+            <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
+              placeholder="Ulangi password baru" autoComplete="new-password" style={inputStyle} />
+            {error && (
+              <div style={{ fontSize: 12, color: COLORS.danger, background: COLORS.dangerBg,
+                padding: "8px 10px", borderRadius: 8 }}>{error}</div>
+            )}
+            <div style={{ fontSize: 10, color: COLORS.textLight }}>
+              Catatan: jika akun Anda hanya pernah login via Google, kosongkan password lama.
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 2 }}>
+              <button type="button" onClick={onClose} style={{ padding: "9px 16px", background: COLORS.white,
+                color: COLORS.text, border: `1px solid ${COLORS.border}`, borderRadius: 8, fontSize: 12,
+                fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Batal</button>
+              <button type="submit" disabled={busy} style={{ padding: "9px 18px", background: COLORS.primary,
+                color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                cursor: busy ? "not-allowed" : "pointer", opacity: busy ? 0.6 : 1, fontFamily: "inherit" }}>
+                {busy ? "Menyimpan..." : "Simpan"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

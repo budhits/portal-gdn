@@ -1,6 +1,7 @@
 // Rute autentikasi: login (email/password & Google) & profil user.
 
 import { Router } from "express";
+import bcrypt from "bcryptjs";
 import { OAuth2Client } from "google-auth-library";
 import { query } from "../db.js";
 import { signToken, checkPassword } from "../lib/auth.js";
@@ -101,6 +102,32 @@ router.get("/me", authenticate, async (req, res, next) => {
     const { rows } = await query("SELECT * FROM users WHERE id = $1", [req.user.id]);
     if (!rows[0]) return res.status(404).json({ error: "User tidak ditemukan." });
     res.json({ user: publicUser(rows[0]) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/auth/change-password  (butuh token) — ubah password sendiri.
+router.post("/change-password", authenticate, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body || {};
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "Password baru minimal 6 karakter." });
+    }
+    const { rows } = await query("SELECT * FROM users WHERE id = $1", [req.user.id]);
+    const user = rows[0];
+    if (!user) return res.status(404).json({ error: "User tidak ditemukan." });
+
+    // Bila user sudah punya password, wajib verifikasi password lama.
+    // (Akun yang dibuat & hanya login via Google bisa menetapkan password pertama.)
+    if (user.password_hash) {
+      const ok = await checkPassword(currentPassword || "", user.password_hash);
+      if (!ok) return res.status(401).json({ error: "Password lama salah." });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await query("UPDATE users SET password_hash = $1 WHERE id = $2", [hash, user.id]);
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }
