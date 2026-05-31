@@ -2,6 +2,8 @@
 
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,10 +22,16 @@ import dashboardRoutes from "./routes/dashboard.js";
 export function createApp() {
   const app = express();
 
+  // Di belakang proxy hosting (mis. Render) agar IP asli & rate-limit benar.
+  app.set("trust proxy", 1);
+
   const origins = (process.env.CORS_ORIGIN || "http://localhost:5173")
     .split(",")
     .map((s) => s.trim());
 
+  // Security headers. CSP dimatikan karena tidak relevan untuk API JSON & dapat
+  // memblokir Google Sign-In; header proteksi lain (anti-clickjacking, dll.) aktif.
+  app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
   app.use(cors({ origin: origins, credentials: true }));
   app.use(express.json({ limit: "1mb" }));
 
@@ -37,8 +45,19 @@ export function createApp() {
     res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID || "" });
   });
 
+  // Rate limit untuk endpoint autentikasi (cegah brute-force password):
+  // maks 10 percobaan per IP tiap 15 menit. Tidak menghitung request sukses.
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    message: { error: "Terlalu banyak percobaan. Coba lagi dalam beberapa menit." },
+  });
+
   // Rute domain
-  app.use("/api/auth", authRoutes);
+  app.use("/api/auth", authLimiter, authRoutes);
   app.use("/api/users", usersRoutes);
   app.use("/api/units", unitsRoutes);
   app.use("/api/sub-units", subUnitsRoutes);

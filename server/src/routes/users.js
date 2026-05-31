@@ -43,6 +43,9 @@ router.post("/", requireRole("owner", "hr"), async (req, res, next) => {
     if (!id || !name || !email || !password || !role) {
       return res.status(400).json({ error: "id, name, email, password, dan role wajib diisi." });
     }
+    if (password.length < 8) {
+      return res.status(400).json({ error: "Password minimal 8 karakter." });
+    }
     if (!ROLES.includes(role)) {
       return res.status(400).json({ error: `Role tidak valid. Pilih: ${ROLES.join(", ")}` });
     }
@@ -67,6 +70,9 @@ router.patch("/:id", requireRole("owner", "hr"), async (req, res, next) => {
     const b = req.body || {};
     if (b.role && !ROLES.includes(b.role)) {
       return res.status(400).json({ error: `Role tidak valid. Pilih: ${ROLES.join(", ")}` });
+    }
+    if (b.password && b.password.length < 8) {
+      return res.status(400).json({ error: "Password minimal 8 karakter." });
     }
     const sets = [];
     const params = [];

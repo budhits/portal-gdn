@@ -2127,7 +2127,7 @@ function ChangePasswordModal({ onClose }) {
   const submit = async (e) => {
     e.preventDefault();
     setError("");
-    if (newPw.length < 6) { setError("Password baru minimal 6 karakter."); return; }
+    if (newPw.length < 8) { setError("Password baru minimal 8 karakter."); return; }
     if (newPw !== confirmPw) { setError("Konfirmasi password baru tidak cocok."); return; }
     setBusy(true);
     try {
@@ -2178,7 +2178,7 @@ function ChangePasswordModal({ onClose }) {
             <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)}
               placeholder="Password lama" autoComplete="current-password" style={inputStyle} />
             <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
-              placeholder="Password baru (min. 6 karakter)" autoComplete="new-password" style={inputStyle} />
+              placeholder="Password baru (min. 8 karakter)" autoComplete="new-password" style={inputStyle} />
             <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
               placeholder="Ulangi password baru" autoComplete="new-password" style={inputStyle} />
             {error && (

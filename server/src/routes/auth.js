@@ -111,8 +111,8 @@ router.get("/me", authenticate, async (req, res, next) => {
 router.post("/change-password", authenticate, async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body || {};
-    if (!newPassword || newPassword.length < 6) {
-      return res.status(400).json({ error: "Password baru minimal 6 karakter." });
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ error: "Password baru minimal 8 karakter." });
     }
     const { rows } = await query("SELECT * FROM users WHERE id = $1", [req.user.id]);
     const user = rows[0];
