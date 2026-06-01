@@ -8,6 +8,7 @@
 // awal bila tabel users masih kosong. Jika sudah ada data, TIDAK menyentuh
 // apa pun (tidak menghapus / menimpa). Diaktifkan via env AUTO_MIGRATE=true.
 
+import bcrypt from "bcryptjs";
 import { pool } from "./db.js";
 import { applySchema } from "../db/run-schema.js";
 import { seed } from "../db/seed.js";
@@ -65,6 +66,26 @@ async function runMigrations() {
   await pool.query(
     "CREATE TABLE IF NOT EXISTS app_meta (key TEXT PRIMARY KEY, value TEXT, created_at TIMESTAMPTZ DEFAULT now())"
   );
+
+  // 6b. Reset password darurat bila lupa: set env RESET_PASSWORD="email:passwordbaru"
+  //     (mis. "budhi.ts@gmail.com:RahasiaBaru123"). Dijalankan tiap start selama
+  //     env ada — HAPUS env setelah berhasil agar password tak ter-reset lagi.
+  if (process.env.RESET_PASSWORD) {
+    const idx = process.env.RESET_PASSWORD.indexOf(":");
+    const email = process.env.RESET_PASSWORD.slice(0, idx).toLowerCase().trim();
+    const newPass = process.env.RESET_PASSWORD.slice(idx + 1);
+    if (email && newPass && newPass.length >= 8) {
+      const hash = await bcrypt.hash(newPass, 10);
+      const { rowCount } = await pool.query(
+        "UPDATE users SET password_hash = $1 WHERE email = $2", [hash, email]
+      );
+      console.log(rowCount > 0
+        ? `🔑 Password untuk ${email} berhasil di-reset. HAPUS env RESET_PASSWORD sekarang.`
+        : `⚠️  RESET_PASSWORD: email ${email} tidak ditemukan.`);
+    } else {
+      console.log("⚠️  RESET_PASSWORD format salah. Pakai: email:passwordbaru (min 8 char).");
+    }
+  }
 
   // 7. Pembersihan data trial SEKALI JALAN bila CLEAR_TRIAL_DATA=true.
   //    Penanda 'trial_cleared' mencegah pengulangan (aman di free-tier yang
