@@ -29,9 +29,15 @@ export function createApp() {
     .split(",")
     .map((s) => s.trim());
 
-  // Security headers. CSP dimatikan karena tidak relevan untuk API JSON & dapat
-  // memblokir Google Sign-In; header proteksi lain (anti-clickjacking, dll.) aktif.
-  app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+  // Security headers. CSP dimatikan (tak relevan untuk API JSON). COOP &
+  // COEP dimatikan karena Cross-Origin-Opener-Policy default "same-origin"
+  // memblokir popup Google Sign-In (popup jadi blank/macet). Header proteksi
+  // lain (anti-clickjacking, nosniff, HSTS, dll.) tetap aktif.
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+  }));
   app.use(cors({ origin: origins, credentials: true }));
   app.use(express.json({ limit: "1mb" }));
 
