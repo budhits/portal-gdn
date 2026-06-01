@@ -45,19 +45,23 @@ export function createApp() {
     res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID || "" });
   });
 
-  // Rate limit untuk endpoint autentikasi (cegah brute-force password):
-  // maks 10 percobaan per IP tiap 15 menit. Tidak menghitung request sukses.
-  const authLimiter = rateLimit({
+  // Rate limit HANYA untuk endpoint login (cegah brute-force password):
+  // maks 20 percobaan per IP tiap 15 menit, login sukses tidak dihitung.
+  // PENTING: jangan pasang ke seluruh /api/auth — /auth/me dipanggil tiap
+  // halaman dibuka (cek sesi) dan akan menghabiskan kuota lalu memblokir login.
+  const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10,
+    max: 20,
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true,
-    message: { error: "Terlalu banyak percobaan. Coba lagi dalam beberapa menit." },
+    message: { error: "Terlalu banyak percobaan login. Coba lagi dalam beberapa menit." },
   });
+  app.use("/api/auth/login", loginLimiter);
+  app.use("/api/auth/google", loginLimiter);
 
   // Rute domain
-  app.use("/api/auth", authLimiter, authRoutes);
+  app.use("/api/auth", authRoutes);
   app.use("/api/users", usersRoutes);
   app.use("/api/units", unitsRoutes);
   app.use("/api/sub-units", subUnitsRoutes);
