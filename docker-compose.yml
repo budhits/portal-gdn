@@ -10,3 +10,13 @@ services:
       - .env
 
     restart: unless-stopped
+
+    networks:
+      - backend
+      - frontend
+
+networks:
+  backend:
+    external: true
+  frontend:
+    external: true
