@@ -55,10 +55,13 @@ jobs:
           envs: ENV
           script: |
             cd /opt/apps/portal-gdn/
-            echo "${{ secrets.PACKAGE_TOKEN }}" | sudo docker login ghcr.io -u ${{ secrets.PACKAGE_USERNAME }} --password-stdin 
-            mkdir -p server
-            echo "$ENV" > server/.env
-            sudo docker compose stop
-            sudo docker compose rm -f
+
+            echo "${{ secrets.PACKAGE_TOKEN }}" | sudo docker login ghcr.io \
+              -u ${{ secrets.PACKAGE_USERNAME }} \
+              --password-stdin
+
+            echo "$ENV" > .env
+
+            sudo docker compose down --remove-orphans
             sudo docker compose pull
-            sudo docker compose up -d
+            sudo docker compose up -d --force-recreate
