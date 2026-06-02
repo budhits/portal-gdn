@@ -56,7 +56,8 @@ jobs:
           script: |
             cd /opt/apps/portal-gdn/
             echo "${{ secrets.PACKAGE_TOKEN }}" | sudo docker login ghcr.io -u ${{ secrets.PACKAGE_USERNAME }} --password-stdin 
-            echo "$ENV" > .env
+            mkdir -p server
+            echo "$ENV" > server/.env
             sudo docker compose stop
             sudo docker compose rm -f
             sudo docker compose pull
