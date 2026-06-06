@@ -1,0 +1,23 @@
+services:
+  portal-gdn:
+    image: ghcr.io/gerbang-digital-nusantara/portal-gdn:latest
+    container_name: portal-gdn-container
+
+    ports:
+      - "4000:4000"
+
+    env_file:
+      - .env
+
+    restart: unless-stopped
+
+    networks:
+      - backend
+      - frontend
+
+networks:
+  backend:
+    external: true
+
+  frontend:
+    external: true
