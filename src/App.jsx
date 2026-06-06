@@ -1878,7 +1878,6 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
           color: COLORS.textLight,
           lineHeight: 1.5,
         }}>Akses terbatas untuk pengguna terdaftar. Hubungi Administrator untuk mendapatkan akun.
-          <br /><span style={{ opacity: 0.6 }}>v2.0 · build 2026-05-31</span>
         </div>
       </div>
     </div>
