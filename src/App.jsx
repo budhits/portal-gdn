@@ -7508,10 +7508,16 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
       {(canClose || canUpdate) && (
         <Card style={{ padding: "14px 16px", marginBottom: 14, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-            <div style={{ fontSize: 12, color: "#92400E" }}>
+            <div style={{ fontSize: 12, color: "#92400E", maxWidth: 520 }}>
               {canClose
                 ? "Siklus/event sudah berakhir? Klik tombol untuk closing KPI."
-                : "Update nilai realisasi sepanjang bulan kapan saja."}
+                : (<>
+                    <strong>Pilih SATU cara input realisasi margin bulan ini:</strong><br />
+                    <b>Margin Harian</b> — isi per hari, total otomatis jadi realisasi.
+                    {"  •  "}
+                    <b>Update Realisasi</b> — isi angka total bulan langsung.
+                    <br /><span style={{ opacity: 0.85 }}>Cukup pakai salah satu; cara terakhir yang disimpan menjadi nilai final.</span>
+                  </>)}
             </div>
             {canClose && (
               <button
@@ -7521,19 +7527,26 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
               >Tutup KPI Sekarang</button>
             )}
             {canUpdate && (
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={() => setShowDailyMargin(true)}
-                  type="button"
-                  style={{ padding: "8px 16px", background: COLORS.secondary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}
-                >
-                  <Icon name="calendar" size={13} color={COLORS.white} style={{ pointerEvents: "none" }} /> Margin Harian
-                </button>
-                <button
-                  onClick={() => onUpdate(submission.id)}
-                  type="button"
-                  style={{ padding: "8px 16px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
-                >Update Realisasi</button>
+              <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: "#92400E", textTransform: "uppercase", letterSpacing: 0.4 }}>Cara A</span>
+                  <button
+                    onClick={() => setShowDailyMargin(true)}
+                    type="button"
+                    style={{ padding: "8px 16px", background: COLORS.secondary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    <Icon name="calendar" size={13} color={COLORS.white} style={{ pointerEvents: "none" }} /> Margin Harian
+                  </button>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", color: "#92400E", fontSize: 11, fontWeight: 700, paddingTop: 14 }}>atau</div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: "#92400E", textTransform: "uppercase", letterSpacing: 0.4 }}>Cara B</span>
+                  <button
+                    onClick={() => onUpdate(submission.id)}
+                    type="button"
+                    style={{ padding: "8px 16px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+                  >Update Realisasi</button>
+                </div>
               </div>
             )}
           </div>
