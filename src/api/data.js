@@ -58,6 +58,9 @@ export const rejectSubmission       = (id, body) => apiFetch(`/submissions/${id}
 export const closeSubmission        = (id, body) => apiFetch(`/submissions/${id}/close`, { method: "POST", body });
 export const updateSubmissionActual = (id, body) => apiFetch(`/submissions/${id}`, { method: "PATCH", body });
 export const saveDailyMargin        = (id, dailyMargin) => apiFetch(`/submissions/${id}`, { method: "PATCH", body: { dailyMargin } });
+// PATCH gabungan: simpan dailyMargin sekaligus perbarui actualValues (mis. total margin harian → realisasi field margin).
+export const saveDailyMarginAndActual = (id, dailyMargin, actualValues) =>
+  apiFetch(`/submissions/${id}`, { method: "PATCH", body: { dailyMargin, actualValues } });
 
 /** Ubah array ber-`id` menjadi objek ter-index berdasarkan id (mis. UNITS[id]). */
 export function indexById(arr) {

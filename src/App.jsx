@@ -50,7 +50,7 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
   fetchTemplates, createTemplate, updateTemplate, deleteTemplate,
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
-  closeSubmission, updateSubmissionActual, saveDailyMargin, fetchAudit,
+  closeSubmission, updateSubmissionActual, saveDailyMargin, saveDailyMarginAndActual, fetchAudit,
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
   createProject, updateProject, deleteProject,
   createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
@@ -10780,7 +10780,17 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
     }
     setBusy(true);
     try {
-      await saveDailyMargin(submission.id, clean);
+      // Total margin harian otomatis menjadi REALISASI field margin (actualValues),
+      // sehingga mengalir ke tampilan & skor — sama efeknya dgn Update Realisasi.
+      // Mengisi margin harian = pengganti update realisasi margin bulanan.
+      const template = getFormTemplate(submission.templateId);
+      const marginField = template?.fields.find(f => f.isMargin);
+      if (marginField) {
+        const nextActual = { ...(submission.actualValues || {}), [marginField.id]: totalMargin };
+        await saveDailyMarginAndActual(submission.id, clean, nextActual);
+      } else {
+        await saveDailyMargin(submission.id, clean);
+      }
       if (store) store.setSubmissions(await fetchSubmissions());
     } catch (e) {
       setBusy(false);
@@ -10789,13 +10799,13 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
     }
     setBusy(false);
     alert(
-      "Margin harian tersimpan ke database. ✅\n\n" +
+      "Margin harian tersimpan & jadi realisasi margin bulan. ✅\n\n" +
       `Sub Unit: ${subUnitName}\n` +
       `Periode: ${MONTH_NAMES_ID[monthIdx]} ${year}\n` +
       `Hari terisi: ${filledDays} dari ${totalDays}\n` +
       `Total margin bulan: ${formatRupiahFull(totalMargin)}\n` +
       (pctOfTarget !== null ? `Capaian vs target: ${pctOfTarget}%\n` : "") +
-      "\nData ini permanen dan akan muncul lagi saat dibuka kembali."
+      "\nTotal ini otomatis menjadi realisasi margin & tampil di Dashboard/Margin/KPI."
     );
     onClose();
   };
