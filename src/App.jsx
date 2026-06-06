@@ -7579,9 +7579,10 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
 
                 const weight = submission.fieldWeights[field.id] || field.defaultWeight || 0;
 
+                // Pencapaian menghormati arah (Min/Maks) + cap/floor field.
                 let achievement = null;
                 if (actVal !== null && estVal && estVal !== 0) {
-                  achievement = Math.round((actVal / estVal) * 100);
+                  achievement = Math.round(computeFieldAchievement(field, estVal, actVal));
                 }
 
                 return (
@@ -8166,6 +8167,9 @@ function templateToBuilderData(template) {
       source: isFormula ? "Formula" : "Manual",
       weight: f.defaultWeight || 0,
       isMargin: !!f.isMargin,
+      direction: f.direction || "higher_better",
+      capPct: f.capPct ?? 120,
+      floorPct: f.floorPct ?? 0,
       formulaMode: isFormula ? "advanced" : "easy",
       formulaSteps: [{ operand: "", operandType: "field", operator: "+" }],
       formulaText,
@@ -8196,12 +8200,12 @@ function FormBuilder({ onClose, initialData }) {
   const [fields, setFields] = useState(
     initialData?.fields && initialData.fields.length > 0
       ? initialData.fields
-      : [{ key: 1, name: "", satuan: "", source: "Manual", weight: 0, isMargin: false, formulaMode: "easy", formulaSteps: [{ operand: "", operandType: "field", operator: "+" }], formulaText: "" }]
+      : [{ key: 1, name: "", satuan: "", source: "Manual", weight: 0, isMargin: false, direction: "higher_better", capPct: 120, floorPct: 0, formulaMode: "easy", formulaSteps: [{ operand: "", operandType: "field", operator: "+" }], formulaText: "" }]
   );
   const [keyCounter, setKeyCounter] = useState(initialData?.keyCounter || 2);
 
   const addField = () => {
-    setFields([...fields, { key: keyCounter, name: "", satuan: "", source: "Manual", weight: 0, isMargin: false, formulaMode: "easy", formulaSteps: [{ operand: "", operandType: "field", operator: "+" }], formulaText: "" }]);
+    setFields([...fields, { key: keyCounter, name: "", satuan: "", source: "Manual", weight: 0, isMargin: false, direction: "higher_better", capPct: 120, floorPct: 0, formulaMode: "easy", formulaSteps: [{ operand: "", operandType: "field", operator: "+" }], formulaText: "" }]);
     setKeyCounter(keyCounter + 1);
   };
 
@@ -8388,6 +8392,9 @@ function FormBuilder({ onClose, initialData }) {
         formulaExpr: isFormula ? exprForField(f) : null,
         defaultWeight: Number(f.weight) || 0,
         isMargin: !!f.isMargin,
+        direction: f.direction === "lower_better" ? "lower_better" : "higher_better",
+        capPct: Number.isFinite(Number(f.capPct)) ? Number(f.capPct) : 120,
+        floorPct: Number.isFinite(Number(f.floorPct)) ? Number(f.floorPct) : 0,
       };
     });
 
@@ -8540,8 +8547,8 @@ function FormBuilder({ onClose, initialData }) {
           {/* Column headers */}
           <div style={{
             display: "grid",
-            gridTemplateColumns: "44px 1fr 90px 110px 70px 70px 30px",
-            gap: 6,
+            gridTemplateColumns: "40px 1fr 70px 92px 54px 84px 54px 54px 56px 28px",
+            gap: 5,
             padding: "0 2px 6px",
             fontSize: 9,
             fontWeight: 700,
@@ -8553,7 +8560,10 @@ function FormBuilder({ onClose, initialData }) {
             <div>Nama Variabel</div>
             <div>Satuan</div>
             <div>Sumber</div>
-            <div>Bobot %</div>
+            <div>Bobot%</div>
+            <div title="Min = capai ≥ target (tinggi lebih baik). Maks = jaga ≤ target (rendah lebih baik).">Target</div>
+            <div title="Batas atas pencapaian (%). Pencapaian di atas ini dihitung tetap sebesar nilai ini.">Cap%</div>
+            <div title="Batas bawah pencapaian (%). Pencapaian di bawah ini dihitung tetap sebesar nilai ini.">Floor%</div>
             <div>Margin</div>
             <div></div>
           </div>
@@ -8564,8 +8574,8 @@ function FormBuilder({ onClose, initialData }) {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "44px 1fr 90px 110px 70px 70px 30px",
-                gap: 6,
+                gridTemplateColumns: "40px 1fr 70px 92px 54px 84px 54px 54px 56px 28px",
+                gap: 5,
                 padding: "5px 2px",
                 alignItems: "center",
                 background: f.source === "Formula" ? COLORS.infoBg : "transparent",
@@ -8647,7 +8657,38 @@ function FormBuilder({ onClose, initialData }) {
                 onChange={e => updateField(f.key, "weight", e.target.value === "" ? 0 : Number(e.target.value))}
                 min={0}
                 max={100}
-                style={{ ...inputStyle, padding: "7px 8px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 6px", fontSize: 12 }}
+              />
+
+              {/* Target: arah Min/Maks */}
+              <select
+                value={f.direction || "higher_better"}
+                onChange={e => updateField(f.key, "direction", e.target.value)}
+                title="Min = capai ≥ target (tinggi lebih baik). Maks = jaga ≤ target (rendah lebih baik)."
+                style={{ ...inputStyle, padding: "7px 4px", fontSize: 12 }}
+              >
+                <option value="higher_better">Min</option>
+                <option value="lower_better">Maks</option>
+              </select>
+
+              {/* Cap % (batas atas) */}
+              <input
+                type="number"
+                value={f.capPct ?? 120}
+                onChange={e => updateField(f.key, "capPct", e.target.value === "" ? 0 : Number(e.target.value))}
+                min={0}
+                title="Batas atas pencapaian (%)"
+                style={{ ...inputStyle, padding: "7px 5px", fontSize: 12 }}
+              />
+
+              {/* Floor % (batas bawah) */}
+              <input
+                type="number"
+                value={f.floorPct ?? 0}
+                onChange={e => updateField(f.key, "floorPct", e.target.value === "" ? 0 : Number(e.target.value))}
+                min={0}
+                title="Batas bawah pencapaian (%)"
+                style={{ ...inputStyle, padding: "7px 5px", fontSize: 12 }}
               />
 
               {/* Margin */}

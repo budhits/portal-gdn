@@ -62,6 +62,11 @@ async function runMigrations() {
   // 5. Kolom weight untuk bobot sub-unit yang persisten.
   await pool.query("ALTER TABLE sub_units ADD COLUMN IF NOT EXISTS weight INTEGER");
 
+  // 5b. Kontrol KPI per field: arah (Min/Maks) + cap & floor pencapaian.
+  await pool.query("ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS direction TEXT NOT NULL DEFAULT 'higher_better'");
+  await pool.query("ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS cap_pct INTEGER NOT NULL DEFAULT 120");
+  await pool.query("ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS floor_pct INTEGER NOT NULL DEFAULT 0");
+
   // 6. Tabel meta untuk penanda operasi sekali-jalan.
   await pool.query(
     "CREATE TABLE IF NOT EXISTS app_meta (key TEXT PRIMARY KEY, value TEXT, created_at TIMESTAMPTZ DEFAULT now())"

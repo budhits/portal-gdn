@@ -181,8 +181,12 @@ export function evalFormula(expr, vars) {
   return { ok: true, value: stack[0] };
 }
 
+// Arah penilaian: hormati field.direction eksplisit (Form Builder), lalu fallback tebak nama.
 export function getFieldDirection(field) {
-  const name = (field.name || "").toLowerCase();
+  if (field?.direction === "lower_better" || field?.direction === "higher_better") {
+    return field.direction;
+  }
+  const name = (field?.name || "").toLowerCase();
   // Lower-is-better: costs, cost-of-goods, feed-conversion, losses
   const lowerBetterKeywords = ["biaya", "hpp", "fcr", "stock loss", "loss", "kerugian"];
   if (lowerBetterKeywords.some(k => name.includes(k))) return "lower_better";
@@ -190,17 +194,20 @@ export function getFieldDirection(field) {
   return "higher_better";
 }
 
+// Pencapaian per field: hitung mentah sesuai arah, lalu batasi ke [floor, cap].
 export function computeFieldAchievement(field, target, actual) {
   const dir = getFieldDirection(field);
   const t = Number(target) || 0;
   const a = Number(actual) || 0;
+  let raw;
   if (dir === "lower_better") {
-    if (a <= 0) return 0;
-    return (t / a) * 100;
+    raw = a <= 0 ? 0 : (t / a) * 100;
+  } else {
+    raw = t <= 0 ? 0 : (a / t) * 100;
   }
-  // higher_better
-  if (t <= 0) return 0;
-  return (a / t) * 100;
+  const cap = Number.isFinite(Number(field?.capPct)) ? Number(field.capPct) : 120;
+  const floor = Number.isFinite(Number(field?.floorPct)) ? Number(field.floorPct) : 0;
+  return Math.min(cap, Math.max(floor, raw));
 }
 
 export function formatFieldValue(value, satuan, type) {

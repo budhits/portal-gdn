@@ -160,6 +160,9 @@ CREATE TABLE form_fields (
   formula_expr   TEXT,                      -- ekspresi formula template buatan user (mis. "Omset - Total_Biaya")
   default_weight INTEGER NOT NULL DEFAULT 0,
   is_margin      BOOLEAN NOT NULL DEFAULT false,
+  direction      TEXT NOT NULL DEFAULT 'higher_better',  -- 'higher_better' (Min/tinggi=baik) | 'lower_better' (Maks/rendah=baik)
+  cap_pct        INTEGER NOT NULL DEFAULT 120,           -- batas atas pencapaian (%)
+  floor_pct      INTEGER NOT NULL DEFAULT 0,             -- batas bawah pencapaian (%)
   sort_order     INTEGER NOT NULL DEFAULT 0,
   UNIQUE (template_id, field_key)
 );

@@ -127,23 +127,31 @@ export function computeFieldValues(template, valuesByFieldId) {
 }
 
 // ── Arah penilaian field ─────────────────────────────────────────────────────
+// Hormati field.direction eksplisit (dari Form Builder); fallback tebak dari nama.
 export function getFieldDirection(field) {
-  const name = (field.name || "").toLowerCase();
+  if (field?.direction === "lower_better" || field?.direction === "higher_better") {
+    return field.direction;
+  }
+  const name = (field?.name || "").toLowerCase();
   const lowerBetter = ["biaya", "hpp", "fcr", "stock loss", "loss", "kerugian"];
   if (lowerBetter.some((k) => name.includes(k))) return "lower_better";
   return "higher_better";
 }
 
+// Pencapaian per field: hitung mentah sesuai arah, lalu batasi ke [floor, cap].
 export function computeFieldAchievement(field, target, actual) {
   const dir = getFieldDirection(field);
   const t = Number(target) || 0;
   const a = Number(actual) || 0;
+  let raw;
   if (dir === "lower_better") {
-    if (a <= 0) return 0;
-    return (t / a) * 100;
+    raw = a <= 0 ? 0 : (t / a) * 100;
+  } else {
+    raw = t <= 0 ? 0 : (a / t) * 100;
   }
-  if (t <= 0) return 0;
-  return (a / t) * 100;
+  const cap = Number.isFinite(Number(field?.capPct)) ? Number(field.capPct) : 120;
+  const floor = Number.isFinite(Number(field?.floorPct)) ? Number(field.floorPct) : 0;
+  return Math.min(cap, Math.max(floor, raw));
 }
 
 // ── Turunkan skor sub-unit dari satu submission ──────────────────────────────

@@ -32,10 +32,13 @@ async function insertFields(client, templateId, fields) {
   let i = 0;
   for (const f of fields || []) {
     i++;
+    const direction = f.direction === "lower_better" ? "lower_better" : "higher_better";
+    const capPct = Number.isFinite(Number(f.capPct)) ? Number(f.capPct) : 120;
+    const floorPct = Number.isFinite(Number(f.floorPct)) ? Number(f.floorPct) : 0;
     await client.query(
       `INSERT INTO form_fields
-        (template_id, field_key, name, type, satuan, source, formula_id, formula_expr, default_weight, is_margin, sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        (template_id, field_key, name, type, satuan, source, formula_id, formula_expr, default_weight, is_margin, direction, cap_pct, floor_pct, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
       [
         templateId,
         f.id || `f${i}`,
@@ -47,6 +50,9 @@ async function insertFields(client, templateId, fields) {
         f.formulaExpr || null,
         Number(f.defaultWeight) || 0,
         !!f.isMargin,
+        direction,
+        capPct,
+        floorPct,
         i,
       ]
     );
