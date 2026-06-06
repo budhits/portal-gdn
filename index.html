@@ -7,6 +7,20 @@
     <link rel="apple-touch-icon" href="/favicon.png" />
     <meta name="theme-color" content="#1b1d23" />
     <title>Portal GDN</title>
+    <style>
+      /* Zoom global 110% — perbesar seluruh tampilan (teks, gambar, layout)
+         secara proporsional di semua halaman. Setara Ctrl++ di browser.
+         Fallback transform untuk Firefox yang belum mendukung `zoom`. */
+      :root { --app-zoom: 1.1; }
+      body { zoom: var(--app-zoom); }
+      @supports not (zoom: 1) {
+        body {
+          transform: scale(var(--app-zoom));
+          transform-origin: top left;
+          width: calc(100% / var(--app-zoom));
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
