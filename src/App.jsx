@@ -4086,32 +4086,35 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
 
   return (
     <Card style={{ padding: 0 }}>
-      {/* Header cerah (clickable) */}
+      {/* Header putih: caret + tile warna unit + nama + capaian (clickable) */}
       <div
         onClick={() => setExpanded(!expanded)}
         style={{
-          padding: "12px 16px",
-          background: `linear-gradient(135deg, ${unit.color}, ${unit.colorDark})`,
-          color: COLORS.white,
+          padding: "14px 18px",
           display: "flex",
           alignItems: "center",
-          gap: 10,
+          gap: 13,
           cursor: "pointer",
+          borderBottom: expanded ? `1px solid ${COLORS.border}` : "none",
         }}
       >
-        <span style={{ display: "inline-flex", color: "rgba(255,255,255,0.85)", transform: expanded ? "rotate(90deg)" : "none", transition: "transform 0.15s" }}><Icon name="arrowRight" size={13} color="rgba(255,255,255,0.85)" /></span>
-        <Icon name={unit.icon} size={20} color={COLORS.white} />
+        <span style={{ display: "inline-flex", color: COLORS.textLight, transform: expanded ? "rotate(90deg)" : "none", transition: "transform 0.15s" }}><Icon name="arrowRight" size={14} color={COLORS.textLight} /></span>
+        <div style={{ width: 38, height: 38, borderRadius: 10, background: unit.color + "1A", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon name={unit.icon} size={20} color={unit.color} />
+        </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 800 }}>{unit.name}</div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
+          <div style={{ fontFamily: FONTS.heading, fontSize: 17, fontWeight: 700, color: COLORS.text, letterSpacing: -0.3 }}>{unit.name}</div>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 3 }}>
             {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name} · ` : ""}{closedEntries.length} closing{pendingEntries.length > 0 && ` · ${pendingEntries.length} pending`}
           </div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.92)", marginTop: 3 }}>
-            Target {formatRupiah(target)} · Real. {formatRupiah(actual)} · Selisih {gap >= 0 ? "+" : "−"}{formatRupiah(Math.abs(gap))}
-          </div>
         </div>
-        <div style={{ fontSize: 22, fontWeight: 800, background: "rgba(255,255,255,0.22)", borderRadius: 9, padding: "5px 11px", whiteSpace: "nowrap" }}>
-          {hasClosing ? `${percentage}%` : "—"}
+        <div style={{ textAlign: "right", flexShrink: 0 }}>
+          <div style={{ fontFamily: FONTS.heading, fontSize: 26, fontWeight: 700, color: status.color, letterSpacing: -0.6, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+            {hasClosing ? `${percentage}%` : "—"}
+          </div>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
+            {formatRupiah(actual)} / {formatRupiah(target)}
+          </div>
         </div>
       </div>
 
