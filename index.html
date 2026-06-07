@@ -15,21 +15,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet" />
 
-    <style>
-      /* Zoom global 110% — DIPERTAHANKAN UNTUK SEMENTARA.
-         Hapus baris zoom HANYA setelah skala tipografi base 14px diterapkan di
-         ui.jsx + halaman (lihat CHANGES.md §2). Menghapusnya lebih dulu akan
-         membuat tampilan mengecil karena komponen masih memakai 11–12px. */
-      :root { --app-zoom: 1.1; }
-      body { zoom: var(--app-zoom); }
-      @supports not (zoom: 1) {
-        body {
-          transform: scale(var(--app-zoom));
-          transform-origin: top left;
-          width: calc(100% / var(--app-zoom));
-        }
-      }
-    </style>
+    <!-- Zoom 110% global telah DIHAPUS (Tahap 2c): skala tipografi kini base 14px
+         jujur di ui.jsx + halaman, jadi zoom tak diperlukan lagi (render lebih tajam). -->
   </head>
   <body>
     <div id="root"></div>

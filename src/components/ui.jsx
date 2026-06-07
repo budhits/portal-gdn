@@ -2,7 +2,7 @@
 // Murni presentasional — hanya bergantung pada COLORS/FONTS, tanpa state aplikasi.
 
 import { useState } from "react";
-import { COLORS, FONTS } from "../constants.js";
+import { COLORS, FONTS, RADIUS } from "../constants.js";
 
 export function Icon({ name, size = 18, color = "currentColor", strokeWidth = 1.6, style }) {
   const paths = {
@@ -70,7 +70,7 @@ export function Pill({ children, color, bg }) {
       borderRadius: 99,
       background: bg,
       color: color,
-      fontSize: 11,
+      fontSize: 11.5,
       fontWeight: 700,
       lineHeight: 1.4,
     }}>
@@ -88,7 +88,7 @@ export function Card({ children, style, onClick, hover }) {
       onMouseLeave={() => hover && setHovered(false)}
       style={{
         background: COLORS.white,
-        borderRadius: 14,
+        borderRadius: RADIUS.lg,
         border: `1px solid ${COLORS.border}`,
         boxShadow: hovered ? "0 4px 12px rgba(0,0,0,0.08)" : "0 1px 3px rgba(0,0,0,0.05)",
         transition: "all 0.2s",
@@ -105,7 +105,7 @@ export function Card({ children, style, onClick, hover }) {
   );
 }
 
-export function ProgressBar({ value, color, height = 6 }) {
+export function ProgressBar({ value, color, height = 8 }) {
   const clamped = Math.max(0, Math.min(100, value));
   return (
     <div style={{
@@ -132,12 +132,13 @@ export function Button({ children, variant = "primary", onClick, disabled, size 
     success:   { background: COLORS.success, color: COLORS.white, border: "none" },
     danger:    { background: COLORS.white, color: COLORS.danger, border: `1px solid ${COLORS.danger}` },
     ghost:     { background: "transparent", color: COLORS.textMuted, border: "none" },
+    gold:      { background: COLORS.gold, color: "#2A2410", border: "none" },
   };
 
   const SIZES = {
-    sm: { padding: "5px 10px", fontSize: 11 },
-    md: { padding: "8px 14px", fontSize: 12 },
-    lg: { padding: "10px 18px", fontSize: 13 },
+    sm: { padding: "5px 10px", fontSize: 12 },
+    md: { padding: "8px 14px", fontSize: 13 },
+    lg: { padding: "10px 18px", fontSize: 14 },
   };
 
   const v = VARIANTS[variant];
@@ -150,7 +151,7 @@ export function Button({ children, variant = "primary", onClick, disabled, size 
       style={{
         ...v,
         ...s,
-        borderRadius: 8,
+        borderRadius: RADIUS.sm,
         fontWeight: 700,
         cursor: disabled ? "not-allowed" : "pointer",
         fontFamily: "inherit",
@@ -174,8 +175,8 @@ export function SectionHeader({ title, subtitle, action }) {
       gap: 10,
     }}>
       <div>
-        <h2 style={{ margin: 0, fontFamily: FONTS.heading, fontSize: 16, fontWeight: 700, color: COLORS.dark, letterSpacing: -0.3 }}>{title}</h2>
-        {subtitle && <p style={{ margin: "3px 0 0", fontSize: 11, color: COLORS.textMuted }}>{subtitle}</p>}
+        <h2 style={{ margin: 0, fontFamily: FONTS.heading, fontSize: 18, fontWeight: 700, color: COLORS.dark, letterSpacing: -0.3 }}>{title}</h2>
+        {subtitle && <p style={{ margin: "3px 0 0", fontSize: 13, color: COLORS.textMuted }}>{subtitle}</p>}
       </div>
       {action}
     </div>
@@ -200,11 +201,11 @@ export function InfoBanner({ icon, title, children, variant = "info" }) {
       color: v.color,
     }}>
       {title && (
-        <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
           <Icon name={iconName} size={15} color={v.color} /> {title}
         </div>
       )}
-      <div style={{ fontSize: 11, lineHeight: 1.5, display: "flex", gap: 8 }}>
+      <div style={{ fontSize: 13, lineHeight: 1.5, display: "flex", gap: 8 }}>
         {!title && <Icon name={iconName} size={15} color={v.color} style={{ marginTop: 1 }} />}
         <div>{children}</div>
       </div>

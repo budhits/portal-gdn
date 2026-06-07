@@ -1800,14 +1800,14 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
         }}>
           <img src={GDN_LOGO} alt="GDN" style={{ height: 58, width: "auto", display: "block" }} />
         </div>
-        <h1 style={{ fontFamily: FONTS.heading, textAlign: "center", margin: 0, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark }}>
+        <h1 style={{ fontFamily: FONTS.heading, textAlign: "center", margin: 0, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark }}>
           {APP_CONFIG.name}
         </h1>
-        <p style={{ textAlign: "center", margin: "6px 0 18px", fontSize: 12, color: COLORS.textMuted }}>
+        <p style={{ textAlign: "center", margin: "6px 0 18px", fontSize: 13, color: COLORS.textMuted }}>
           Sistem Planning & Monitoring Bisnis
         </p>
 
-        <p style={{ textAlign: "center", margin: "0 0 18px", fontSize: 11, color: COLORS.textMuted }}>
+        <p style={{ textAlign: "center", margin: "0 0 18px", fontSize: 12.5, color: COLORS.textMuted }}>
           Silakan masuk dengan akun Anda
         </p>
 
@@ -1823,7 +1823,7 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
             placeholder="Email"
             autoComplete="username"
             style={{
-              padding: "11px 12px", borderRadius: 10, fontSize: 14,
+              padding: "11px 12px", borderRadius: 10, fontSize: 15,
               border: `1px solid ${COLORS.border}`, outline: "none", fontFamily: FONTS.body,
             }}
           />
@@ -1834,12 +1834,12 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
             placeholder="Password"
             autoComplete="current-password"
             style={{
-              padding: "11px 12px", borderRadius: 10, fontSize: 14,
+              padding: "11px 12px", borderRadius: 10, fontSize: 15,
               border: `1px solid ${COLORS.border}`, outline: "none", fontFamily: FONTS.body,
             }}
           />
           {error && (
-            <div style={{ fontSize: 12, color: COLORS.danger, background: COLORS.dangerBg, padding: "8px 10px", borderRadius: 8 }}>
+            <div style={{ fontSize: 13, color: COLORS.danger, background: COLORS.dangerBg, padding: "8px 10px", borderRadius: 8 }}>
               {error}
             </div>
           )}
@@ -1847,7 +1847,7 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
             type="submit"
             disabled={loading || !email || !password}
             style={{
-              padding: "11px 12px", borderRadius: 10, fontSize: 14, fontWeight: 700,
+              padding: "11px 12px", borderRadius: 10, fontSize: 15, fontWeight: 700,
               color: COLORS.white, background: COLORS.primary, border: "none",
               cursor: loading ? "wait" : "pointer", opacity: (loading || !email || !password) ? 0.6 : 1,
               fontFamily: FONTS.body,
@@ -1862,7 +1862,7 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "4px 0 12px" }}>
               <div style={{ flex: 1, height: 1, background: COLORS.border }} />
-              <span style={{ fontSize: 10, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.6 }}>atau</span>
+              <span style={{ fontSize: 12, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.6 }}>atau</span>
               <div style={{ flex: 1, height: 1, background: COLORS.border }} />
             </div>
             <div ref={googleBtnRef} style={{ display: "flex", justifyContent: "center", marginBottom: 8 }} />
@@ -1874,7 +1874,7 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
           paddingTop: 14,
           borderTop: `1px solid ${COLORS.bgMuted}`,
           textAlign: "center",
-          fontSize: 10,
+          fontSize: 12,
           color: COLORS.textLight,
           lineHeight: 1.5,
         }}>Akses terbatas untuk pengguna terdaftar. Hubungi Administrator untuk mendapatkan akun.
@@ -1982,7 +1982,7 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
       }}>
         <img src={GDN_LOGO} alt="GDN" style={{ height: 26, width: "auto", display: "block" }} />
       </div>
-      <span style={{ fontFamily: FONTS.heading, color: COLORS.white, fontWeight: 700, fontSize: 15, letterSpacing: -0.3 }}>{APP_CONFIG.name}</span>
+      <span style={{ fontFamily: FONTS.heading, color: COLORS.white, fontWeight: 700, fontSize: 16, letterSpacing: -0.3 }}>{APP_CONFIG.name}</span>
 
       {/* HP: menu utama disembunyikan ke drawer (hamburger); spacer agar akun tetap kanan */}
       {isMobile && <div style={{ flex: 1, minWidth: 0 }} />}
@@ -2016,7 +2016,7 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
                 gap: 7,
                 background: active ? "rgba(255,255,255,0.10)" : "transparent",
                 color: active ? COLORS.white : "rgba(255,255,255,0.55)",
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 600,
                 fontFamily: "inherit",
                 position: "relative",
@@ -2035,7 +2035,7 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
                   borderRadius: 99,
                   background: COLORS.danger,
                   color: COLORS.white,
-                  fontSize: 9,
+                  fontSize: 11,
                   fontWeight: 800,
                 }}>{inboxCount}</span>
               )}
@@ -2061,7 +2061,7 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
             {!navOpen && inboxCount > 0 && (
               <span style={{
                 position: "absolute", top: -5, right: -5, minWidth: 16, height: 16, padding: "0 4px",
-                borderRadius: 99, background: COLORS.danger, color: COLORS.white, fontSize: 9, fontWeight: 800,
+                borderRadius: 99, background: COLORS.danger, color: COLORS.white, fontSize: 11, fontWeight: 800,
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
               }}>{inboxCount}</span>
             )}
@@ -2088,7 +2088,7 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
               width: 26, height: 26, borderRadius: 99,
               background: COLORS.gold,
               display: "flex", alignItems: "center", justifyContent: "center",
-              color: COLORS.dark, fontSize: 11, fontWeight: 800, overflow: "hidden",
+              color: COLORS.dark, fontSize: 12.5, fontWeight: 800, overflow: "hidden",
             }}>
               {user.avatar
                 ? <img src={user.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -2096,8 +2096,8 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
             </div>
             {!isMobile && (
               <div style={{ lineHeight: 1.1, textAlign: "left" }}>
-                <div style={{ color: COLORS.white, fontSize: 10, fontWeight: 700 }}>{user.name}</div>
-                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}>{ROLE_LABELS[user.role]}</div>
+                <div style={{ color: COLORS.white, fontSize: 12, fontWeight: 700 }}>{user.name}</div>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>{ROLE_LABELS[user.role]}</div>
               </div>
             )}
           </button>
@@ -2112,8 +2112,8 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
                 border: `1px solid ${COLORS.border}`,
               }}>
                 <div style={{ padding: "10px 14px", borderBottom: `1px solid ${COLORS.bgMuted}` }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.dark }}>{user.name}</div>
-                  <div style={{ fontSize: 10, color: COLORS.textMuted }}>{user.email}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>{user.name}</div>
+                  <div style={{ fontSize: 12, color: COLORS.textMuted }}>{user.email}</div>
                 </div>
                 <button
                   onClick={() => { setMenuOpen(false); setShowChangePw(true); }}
@@ -2121,7 +2121,7 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
                   style={{
                     width: "100%", textAlign: "left", padding: "10px 14px",
                     background: "transparent", border: "none", cursor: "pointer",
-                    fontFamily: "inherit", fontSize: 12, color: COLORS.text,
+                    fontFamily: "inherit", fontSize: 13, color: COLORS.text,
                     display: "flex", alignItems: "center", gap: 8,
                   }}
                   onMouseEnter={e => e.currentTarget.style.background = COLORS.bgMuted}
@@ -2141,7 +2141,7 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
             border: "1px solid rgba(255,255,255,0.2)",
             borderRadius: 7,
             color: "rgba(255,255,255,0.7)",
-            fontSize: 10,
+            fontSize: 12,
             cursor: "pointer",
             fontFamily: "inherit",
             display: "inline-flex",
@@ -2175,7 +2175,7 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
                   style={{
                     display: "flex", alignItems: "center", gap: 12, width: "100%",
                     padding: "13px 14px", borderRadius: 8, border: "none", cursor: "pointer",
-                    textAlign: "left", fontFamily: "inherit", fontSize: 15, fontWeight: 600,
+                    textAlign: "left", fontFamily: "inherit", fontSize: 16, fontWeight: 600,
                     background: active ? "rgba(255,255,255,0.12)" : "transparent",
                     color: active ? COLORS.white : "rgba(255,255,255,0.72)",
                   }}
@@ -2185,7 +2185,7 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
                   {key === "inbox" && inboxCount > 0 && (
                     <span style={{
                       minWidth: 18, height: 18, padding: "0 5px", borderRadius: 99,
-                      background: COLORS.danger, color: COLORS.white, fontSize: 10, fontWeight: 800,
+                      background: COLORS.danger, color: COLORS.white, fontSize: 12, fontWeight: 800,
                       display: "inline-flex", alignItems: "center", justifyContent: "center",
                     }}>{inboxCount}</span>
                   )}
@@ -2226,7 +2226,7 @@ function ChangePasswordModal({ onClose }) {
   };
 
   const inputStyle = {
-    width: "100%", padding: "10px 12px", borderRadius: 8, fontSize: 13,
+    width: "100%", padding: "10px 12px", borderRadius: 8, fontSize: 14,
     border: `1px solid ${COLORS.border}`, outline: "none", fontFamily: "inherit",
     boxSizing: "border-box",
   };
@@ -2240,7 +2240,7 @@ function ChangePasswordModal({ onClose }) {
         boxShadow: "0 20px 60px rgba(0,0,0,0.3)", overflow: "hidden" }}>
         <div style={{ padding: "14px 18px", borderBottom: `1px solid ${COLORS.bgMuted}`,
           display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>Ubah Password</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: COLORS.dark }}>Ubah Password</div>
           <button onClick={onClose} type="button" style={{ background: "transparent", border: "none",
             cursor: "pointer" }}><Icon name="x" size={16} color={COLORS.textMuted} /></button>
         </div>
@@ -2250,13 +2250,13 @@ function ChangePasswordModal({ onClose }) {
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
               <Icon name="check" size={36} color={COLORS.success} />
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>Password berhasil diubah</div>
-            <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>Password berhasil diubah</div>
+            <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 4 }}>
               Gunakan password baru saat login berikutnya.
             </div>
             <button onClick={onClose} type="button" style={{ marginTop: 16, padding: "9px 18px",
               background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8,
-              fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Tutup</button>
+              fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Tutup</button>
           </div>
         ) : (
           <form onSubmit={submit} style={{ padding: "16px 18px", display: "grid", gap: 10 }}>
@@ -2267,18 +2267,18 @@ function ChangePasswordModal({ onClose }) {
             <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
               placeholder="Ulangi password baru" autoComplete="new-password" style={inputStyle} />
             {error && (
-              <div style={{ fontSize: 12, color: COLORS.danger, background: COLORS.dangerBg,
+              <div style={{ fontSize: 13, color: COLORS.danger, background: COLORS.dangerBg,
                 padding: "8px 10px", borderRadius: 8 }}>{error}</div>
             )}
-            <div style={{ fontSize: 10, color: COLORS.textLight }}>
+            <div style={{ fontSize: 12, color: COLORS.textLight }}>
               Catatan: jika akun Anda hanya pernah login via Google, kosongkan password lama.
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 2 }}>
               <button type="button" onClick={onClose} style={{ padding: "9px 16px", background: COLORS.white,
-                color: COLORS.text, border: `1px solid ${COLORS.border}`, borderRadius: 8, fontSize: 12,
+                color: COLORS.text, border: `1px solid ${COLORS.border}`, borderRadius: 8, fontSize: 13,
                 fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Batal</button>
               <button type="submit" disabled={busy} style={{ padding: "9px 18px", background: COLORS.primary,
-                color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700,
                 cursor: busy ? "not-allowed" : "pointer", opacity: busy ? 0.6 : 1, fontFamily: "inherit" }}>
                 {busy ? "Menyimpan..." : "Simpan"}
               </button>
@@ -2362,7 +2362,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px" }}>
       {/* Greeting */}
       <div style={{ marginBottom: 14 }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: 26, fontWeight: 700, color: COLORS.dark, margin: 0, letterSpacing: -0.5 }}>
+        <h1 style={{ fontFamily: FONTS.heading, fontSize: 30, fontWeight: 700, color: COLORS.dark, margin: 0, letterSpacing: -0.5 }}>
           Selamat datang, {user.name}
         </h1>
         <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: "4px 0 0" }}>
@@ -2379,7 +2379,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
           flexWrap: "wrap",
         }}>
           <div style={{
-            fontSize: 11,
+            fontSize: 12.5,
             fontWeight: 700,
             color: COLORS.textMuted,
             textTransform: "uppercase",
@@ -2395,7 +2395,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
               border: `1px solid ${COLORS.border}`,
               borderRadius: 8,
               background: COLORS.white,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 600,
               fontFamily: "inherit",
               color: COLORS.dark,
@@ -2423,7 +2423,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
               border: `1px solid ${selectedPeriodKey === "2026-05" ? COLORS.primary : COLORS.border}`,
               background: selectedPeriodKey === "2026-05" ? COLORS.primary : COLORS.white,
               color: selectedPeriodKey === "2026-05" ? COLORS.white : COLORS.text,
-              fontSize: 11,
+              fontSize: 12.5,
               fontWeight: 600,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -2439,7 +2439,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
               border: `1px solid ${selectedPeriodKey === "ytd-2026" ? COLORS.primary : COLORS.border}`,
               background: selectedPeriodKey === "ytd-2026" ? COLORS.primary : COLORS.white,
               color: selectedPeriodKey === "ytd-2026" ? COLORS.white : COLORS.text,
-              fontSize: 11,
+              fontSize: 12.5,
               fontWeight: 600,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -2451,7 +2451,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
           {/* Description */}
           <div style={{
             marginLeft: "auto",
-            fontSize: 10,
+            fontSize: 12,
             color: COLORS.textLight,
             fontStyle: "italic",
           }}>
@@ -2503,7 +2503,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
           subtitle="Target dari estimasi, realisasi dari closing. Sub-unit yang belum closing tampil sebagai pending."
         />
         {unitsWithMargin.length === 0 ? (
-          <Card style={{ padding: 24, textAlign: "center", color: COLORS.textLight, fontSize: 12 }}>
+          <Card style={{ padding: 24, textAlign: "center", color: COLORS.textLight, fontSize: 13 }}>
             Belum ada margin di {selectedPeriod.label}
           </Card>
         ) : (
@@ -2512,7 +2512,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
             <MarginGrandTotalCard total={grandTotalMargin} periodLabel={selectedPeriod.label} />
 
             {/* RESUME per unit: chip cerah, 2 per baris */}
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "16px 0 8px" }}>
+            <div style={{ fontSize: 12.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "16px 0 8px" }}>
               Resume per Unit
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(480px, 100%), 1fr))", gap: 12, marginBottom: 20 }}>
@@ -2522,7 +2522,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
             </div>
 
             {/* DETAIL sub-unit: kartu, 2 per baris */}
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "0 0 8px" }}>
+            <div style={{ fontSize: 12.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "0 0 8px" }}>
               Detail Sub-Unit
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(480px, 100%), 1fr))", gap: 12 }}>
@@ -2558,13 +2558,13 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
 
       {/* Budget summary — 6 boxes in 2 rows (Owner & Finance) — di bawah KPI */}
       <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 7 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 7 }}>
           <Icon name="money" size={14} color={COLORS.secondary} />
           Ringkasan Budget Project
         </div>
 
         {/* Row 1: periode terpilih */}
-        <div style={{ fontSize: 10, fontWeight: 700, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
           {selectedPeriod.label}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, marginBottom: 14 }}>
@@ -2597,7 +2597,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
         </div>
 
         {/* Row 2: all periode */}
-        <div style={{ fontSize: 10, fontWeight: 700, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
           All Periode
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
@@ -2631,7 +2631,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
           subtitle="Snapshot progress saat ini (project berjalan lintas periode)"
         />
         {unitsWithProjects.length === 0 ? (
-          <Card style={{ padding: 24, textAlign: "center", color: COLORS.textLight, fontSize: 12 }}>
+          <Card style={{ padding: 24, textAlign: "center", color: COLORS.textLight, fontSize: 13 }}>
             Belum ada project aktif
           </Card>
         ) : (
@@ -2657,16 +2657,16 @@ function StatCard({ label, value, sub, icon, color }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <div style={{
-            fontSize: 10,
+            fontSize: 12,
             color: COLORS.textLight,
             fontWeight: 700,
             textTransform: "uppercase",
             letterSpacing: 0.5,
           }}>{label}</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color, marginTop: 4 }}>{value}</div>
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>{sub}</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color, marginTop: 4 }}>{value}</div>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>{sub}</div>
         </div>
-        <div style={{ fontSize: 22, opacity: 0.35 }}>{icon}</div>
+        <div style={{ fontSize: 24, opacity: 0.35 }}>{icon}</div>
       </div>
     </Card>
   );
@@ -2681,13 +2681,13 @@ function BudgetBox({ label, value, accent, sub }) {
       borderRadius: 12,
       borderLeft: `4px solid ${accent}`,
     }}>
-      <div style={{ fontSize: 10, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>
+      <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>
         {label}
       </div>
-      <div style={{ fontSize: 19, fontWeight: 800, color: accent, marginTop: 5 }}>
+      <div style={{ fontSize: 20, fontWeight: 800, color: accent, marginTop: 5 }}>
         {formatRupiah(value)}
       </div>
-      <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 3 }}>
+      <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 3 }}>
         {sub}
       </div>
     </div>
@@ -2716,8 +2716,8 @@ function UnitCard({ unit, period, onClick }) {
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <Icon name={unit.icon} size={20} color={COLORS.white} />
           <div>
-            <div style={{ color: COLORS.white, fontWeight: 800, fontSize: 13 }}>{unit.name}</div>
-            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 10 }}>
+            <div style={{ color: COLORS.white, fontWeight: 800, fontSize: 14 }}>{unit.name}</div>
+            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>
               {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name}` : "Tanpa Leader"}
             </div>
           </div>
@@ -2729,7 +2729,7 @@ function UnitCard({ unit, period, onClick }) {
 
       <div style={{ padding: "11px 14px" }}>
         {subUnits.length === 0 && (
-          <div style={{ fontSize: 11, color: COLORS.textLight, textAlign: "center", padding: "12px 0" }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textLight, textAlign: "center", padding: "12px 0" }}>
             Belum ada sub unit
           </div>
         )}
@@ -2737,7 +2737,7 @@ function UnitCard({ unit, period, onClick }) {
           <UnitCardSubUnitRow key={su.id} subUnit={su} />
         ))}
         {subUnits.length > 3 && (
-          <div style={{ fontSize: 10, color: COLORS.textLight, textAlign: "center", marginTop: 6 }}>
+          <div style={{ fontSize: 12, color: COLORS.textLight, textAlign: "center", marginTop: 6 }}>
             +{subUnits.length - 3} sub unit lainnya
           </div>
         )}
@@ -2750,7 +2750,7 @@ function UnitCard({ unit, period, onClick }) {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        fontSize: 10,
+        fontSize: 12,
         color: COLORS.textMuted,
       }}>
         <span>{unit.contributingCount !== undefined
@@ -2775,7 +2775,7 @@ function UnitCardSubUnitRow({ subUnit }) {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        fontSize: 11,
+        fontSize: 12.5,
         marginBottom: 3,
       }}>
         <span style={{ color: COLORS.text, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>
@@ -2794,7 +2794,7 @@ function UnitCardSubUnitRow({ subUnit }) {
         height={5}
       />
       <div style={{
-        fontSize: 9,
+        fontSize: 11,
         color: COLORS.textLight,
         marginTop: 2,
         display: "flex",
@@ -2833,8 +2833,8 @@ function ProjectUnitCard({ unit, onSelectProject }) {
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <Icon name={unit.icon} size={20} color={COLORS.white} />
           <div>
-            <div style={{ color: COLORS.white, fontWeight: 800, fontSize: 13 }}>{unit.name}</div>
-            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 10 }}>
+            <div style={{ color: COLORS.white, fontWeight: 800, fontSize: 14 }}>{unit.name}</div>
+            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>
               {projects.length} project aktif
             </div>
           </div>
@@ -2848,7 +2848,7 @@ function ProjectUnitCard({ unit, onSelectProject }) {
           <ProjectRow key={p.id} project={p} onSelect={onSelectProject} />
         ))}
         {projects.length > 3 && (
-          <div style={{ fontSize: 10, color: COLORS.textLight, textAlign: "center", marginTop: 6 }}>
+          <div style={{ fontSize: 12, color: COLORS.textLight, textAlign: "center", marginTop: 6 }}>
             +{projects.length - 3} project lainnya
           </div>
         )}
@@ -2862,7 +2862,7 @@ function ProjectUnitCard({ unit, onSelectProject }) {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        fontSize: 10,
+        fontSize: 12,
         color: COLORS.textMuted,
       }}>
         <span>{formatRupiah(totalSpent)} / {formatRupiah(totalBudget)}</span>
@@ -2904,7 +2904,7 @@ function ProjectRow({ project, onSelect }) {
         gap: 8,
       }}>
         <span style={{
-          fontSize: 11,
+          fontSize: 12.5,
           fontWeight: 700,
           color: COLORS.dark,
           overflow: "hidden",
@@ -2921,7 +2921,7 @@ function ProjectRow({ project, onSelect }) {
         <div style={{
           display: "flex",
           justifyContent: "space-between",
-          fontSize: 9,
+          fontSize: 11,
           color: COLORS.textMuted,
           marginBottom: 2,
         }}>
@@ -2936,7 +2936,7 @@ function ProjectRow({ project, onSelect }) {
         <div style={{
           display: "flex",
           justifyContent: "space-between",
-          fontSize: 9,
+          fontSize: 11,
           color: COLORS.textMuted,
           marginBottom: 2,
         }}>
@@ -2986,17 +2986,17 @@ function MarginResumeChip({ unit }) {
       <div style={{ minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Icon name={unit.icon} size={18} color={COLORS.white} />
-          <span style={{ fontSize: 14, fontWeight: 800 }}>{unit.name}</span>
+          <span style={{ fontSize: 15, fontWeight: 800 }}>{unit.name}</span>
         </div>
-        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>
+        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>
           {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name}` : "Tanpa Leader"} · {status.label}
         </div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.95)", marginTop: 7 }}>
+        <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.95)", marginTop: 7 }}>
           Target {formatRupiah(target)} · Real. {formatRupiah(actual)}
         </div>
       </div>
       <div style={{
-        fontSize: 24, fontWeight: 800, color: COLORS.white,
+        fontSize: 28, fontWeight: 800, color: COLORS.white,
         background: "rgba(255,255,255,0.22)", borderRadius: 10, padding: "6px 12px", whiteSpace: "nowrap",
       }}>
         {hasClosing ? `${percentage}%` : "—"}
@@ -3035,8 +3035,8 @@ function MarginUnitCard({ unit }) {
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <Icon name={unit.icon} size={20} color={COLORS.white} />
           <div>
-            <div style={{ color: COLORS.white, fontWeight: 800, fontSize: 13 }}>{unit.name}</div>
-            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 10 }}>
+            <div style={{ color: COLORS.white, fontWeight: 800, fontSize: 14 }}>{unit.name}</div>
+            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>
               {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name}` : "Tanpa Leader"}
             </div>
           </div>
@@ -3048,7 +3048,7 @@ function MarginUnitCard({ unit }) {
 
       <div style={{ padding: "11px 14px" }}>
         {rows.length === 0 && (
-          <div style={{ fontSize: 11, color: COLORS.textLight, textAlign: "center", padding: "12px 0" }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textLight, textAlign: "center", padding: "12px 0" }}>
             Belum ada sub unit
           </div>
         )}
@@ -3056,7 +3056,7 @@ function MarginUnitCard({ unit }) {
           <MarginCardSubRow key={r.submissionId} entry={r} />
         ))}
         {rows.length > 4 && (
-          <div style={{ fontSize: 10, color: COLORS.textLight, textAlign: "center", marginTop: 6 }}>
+          <div style={{ fontSize: 12, color: COLORS.textLight, textAlign: "center", marginTop: 6 }}>
             +{rows.length - 4} sub unit lainnya
           </div>
         )}
@@ -3070,7 +3070,7 @@ function MarginUnitCard({ unit }) {
         justifyContent: "space-between",
         alignItems: "center",
         gap: 8,
-        fontSize: 10,
+        fontSize: 12,
         color: COLORS.textMuted,
       }}>
         <span>
@@ -3095,7 +3095,7 @@ function MarginCardSubRow({ entry }) {
 
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, marginBottom: 3 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, marginBottom: 3 }}>
         <span style={{ color: COLORS.text, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>
           <Icon name={icon} size={13} color={COLORS.textMuted} /> {name}
         </span>
@@ -3104,7 +3104,7 @@ function MarginCardSubRow({ entry }) {
       {!isPending && (
         <ProgressBar value={Math.min(pct, 100)} color={color} height={4} />
       )}
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: COLORS.textLight, marginTop: 2 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>
         <span>Target {formatRupiah(entry.targetMargin)}</span>
         <span>{isPending ? "Belum closing" : `Real. ${formatRupiah(entry.actualMargin)}`}</span>
       </div>
@@ -3133,10 +3133,10 @@ function MarginGrandTotalCard({ total, periodLabel, gap, label = "Total Semua Un
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "rgba(255,255,255,0.7)" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "rgba(255,255,255,0.7)" }}>
             {label} · {periodLabel}
           </div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>
+          <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>
             Target: {formatRupiah(total.target)}
             {" • "}
             Realisasi: {formatRupiah(total.actual)}
@@ -3148,7 +3148,7 @@ function MarginGrandTotalCard({ total, periodLabel, gap, label = "Total Semua Un
             )}
           </div>
         </div>
-        <div style={{ fontSize: 30, fontWeight: 800, color: COLORS.white }}>
+        <div style={{ fontSize: 34, fontWeight: 800, color: COLORS.white }}>
           {total.target > 0 ? `${total.percentage}%` : "—"}
         </div>
       </div>
@@ -3199,8 +3199,8 @@ function MarginUnitRow({ unit, isLast }) {
             display: "flex", alignItems: "center", justifyContent: "center",
           }}><Icon name={unit.icon} size={17} color={unit.color} /></div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>{unit.name}</div>
-            <div style={{ fontSize: 10, color: COLORS.textMuted }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>{unit.name}</div>
+            <div style={{ fontSize: 12, color: COLORS.textMuted }}>
               {closedCount > 0 && `${closedCount} closing di periode ini`}
               {closedCount > 0 && pendingEntries.length > 0 && " • "}
               {pendingEntries.length > 0 && `${pendingEntries.length} pending closing`}
@@ -3210,7 +3210,7 @@ function MarginUnitRow({ unit, isLast }) {
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: 800,
             color: status.color,
             lineHeight: 1,
@@ -3227,7 +3227,7 @@ function MarginUnitRow({ unit, isLast }) {
             gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
             gap: 10,
             marginBottom: 8,
-            fontSize: 11,
+            fontSize: 12.5,
           }}>
             <div>
               <div style={{ color: COLORS.textLight, fontWeight: 600, marginBottom: 2 }}>Target</div>
@@ -3248,7 +3248,7 @@ function MarginUnitRow({ unit, isLast }) {
 
           {/* Breakdown of closed entries */}
           {closedEntries.length > 0 && (
-            <div style={{ marginTop: 8, fontSize: 10, color: COLORS.textMuted }}>
+            <div style={{ marginTop: 8, fontSize: 12, color: COLORS.textMuted }}>
               <div style={{ fontWeight: 600, marginBottom: 4 }}>Detail closing:</div>
               {closedEntries.map(entry => (
                 <div key={entry.submissionId || entry.id} style={{
@@ -3275,7 +3275,7 @@ function MarginUnitRow({ unit, isLast }) {
           padding: "8px 10px",
           background: COLORS.warningBg,
           borderRadius: 6,
-          fontSize: 10,
+          fontSize: 12,
           color: "#92400E",
         }}>
           <div
@@ -3290,7 +3290,7 @@ function MarginUnitRow({ unit, isLast }) {
             <span>Estimasi siklus/event berjalan: <strong>+{formatRupiah(pendingTotal)}</strong>
               {" "}({pendingEntries.length} entry, belum closing)
             </span>
-            <span style={{ fontSize: 11 }}>{showPendingDetail ? "▲" : "▼"}</span>
+            <span style={{ fontSize: 12.5 }}>{showPendingDetail ? "▲" : "▼"}</span>
           </div>
           {showPendingDetail && (
             <div style={{
@@ -3400,7 +3400,7 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
           border: "none",
           color: COLORS.textMuted,
           cursor: "pointer",
-          fontSize: 12,
+          fontSize: 13,
           padding: "4px 0 8px",
           fontFamily: "inherit",
         }}
@@ -3418,11 +3418,11 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 48, height: 48, borderRadius: 12, background: "rgba(255,255,255,0.12)" }}><Icon name={unit.icon} size={28} color={COLORS.white} /></div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1 }}>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1 }}>
               Unit Bisnis
             </div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>{unit.name}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)" }}>
+            <div style={{ fontSize: 24, fontWeight: 800 }}>{unit.name}</div>
+            <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.85)" }}>
               {unit.leaderId
                 ? `Leader: ${getUser(unit.leaderId)?.name}`
                 : "Tanpa Leader"}
@@ -3431,8 +3431,8 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.7)" }}>Pencapaian Unit</div>
-            <div style={{ fontSize: 32, fontWeight: 800 }}>{unitScore}%</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>Pencapaian Unit</div>
+            <div style={{ fontSize: 36, fontWeight: 800 }}>{unitScore}%</div>
             <Pill color={COLORS.white} bg="rgba(255,255,255,0.2)">{status.label}</Pill>
           </div>
         </div>
@@ -3446,7 +3446,7 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
             <button
               onClick={startEditWeights}
               type="button"
-              style={{ padding: "7px 13px", background: COLORS.white, color: COLORS.primary, border: `1px solid ${COLORS.primary}`, borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}
+              style={{ padding: "7px 13px", background: COLORS.white, color: COLORS.primary, border: `1px solid ${COLORS.primary}`, borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}
             >
               <Icon name="edit" size={12} color={COLORS.primary} style={{ pointerEvents: "none" }} /> Atur Bobot
             </button>
@@ -3457,20 +3457,20 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
       {/* Weight editor panel */}
       {editingWeights && (
         <Card style={{ padding: "16px 18px", marginBottom: 12, border: `1px solid ${COLORS.primary}` }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 4 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 4 }}>
             Atur Bobot Sub Unit
           </div>
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 14 }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 14 }}>
             Tentukan seberapa besar pengaruh tiap sub unit ke skor unit. Total harus tepat 100%.
           </div>
 
           <div style={{ display: "grid", gap: 8, marginBottom: 14 }}>
             {subUnits.map(su => (
               <div key={su.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ flex: 1, fontSize: 12, fontWeight: 700, color: COLORS.dark }}>
+                <div style={{ flex: 1, fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
                   {su.name}
                   {!su.snapshot && (
-                    <span style={{ fontSize: 10, color: COLORS.textLight, fontWeight: 400, fontStyle: "italic" }}> (belum closing periode ini)</span>
+                    <span style={{ fontSize: 12, color: COLORS.textLight, fontWeight: 400, fontStyle: "italic" }}> (belum closing periode ini)</span>
                   )}
                 </div>
                 <input
@@ -3486,9 +3486,9 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
                     min="0" max="100"
                     value={draftWeights[su.id] || 0}
                     onChange={e => setDraftWeights({ ...draftWeights, [su.id]: Math.max(0, Math.min(100, Number(e.target.value))) })}
-                    style={{ width: 52, padding: "5px 7px", fontSize: 12, fontWeight: 700, textAlign: "right", border: `1px solid ${COLORS.border}`, borderRadius: 6, fontFamily: "inherit" }}
+                    style={{ width: 52, padding: "5px 7px", fontSize: 13, fontWeight: 700, textAlign: "right", border: `1px solid ${COLORS.border}`, borderRadius: 6, fontFamily: "inherit" }}
                   />
-                  <span style={{ fontSize: 12, color: COLORS.textMuted }}>%</span>
+                  <span style={{ fontSize: 13, color: COLORS.textMuted }}>%</span>
                 </div>
               </div>
             ))}
@@ -3502,10 +3502,10 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
             border: `1px solid ${draftTotal === 100 ? "#CDE3C2" : "#E8C9C5"}`,
             marginBottom: 14,
           }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: draftTotal === 100 ? "#3F6E31" : COLORS.danger }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: draftTotal === 100 ? "#3F6E31" : COLORS.danger }}>
               Total Bobot: {draftTotal}%
             </span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: draftTotal === 100 ? "#3F6E31" : COLORS.danger }}>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: draftTotal === 100 ? "#3F6E31" : COLORS.danger }}>
               {draftTotal === 100 ? "✓ Pas 100%" : draftTotal > 100 ? `Kelebihan ${draftTotal - 100}%` : `Kurang ${100 - draftTotal}%`}
             </span>
           </div>
@@ -3517,7 +3517,7 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
               type="button"
               disabled={draftTotal !== 100}
               style={{
-                padding: "9px 20px", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 800,
+                padding: "9px 20px", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 800,
                 fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6,
                 background: draftTotal === 100 ? COLORS.primary : COLORS.border,
                 color: draftTotal === 100 ? COLORS.white : COLORS.textLight,
@@ -3551,7 +3551,7 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
         />
         <Card style={{ padding: 0, overflow: "hidden" }}>
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ background: COLORS.bgMuted }}>
                   <th style={{ ...tableHeaderStyle, textAlign: "left" }}>Sub Unit</th>
@@ -3568,7 +3568,7 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
                     return (
                       <tr key={su.id} style={{ borderBottom: `1px solid ${COLORS.border}`, opacity: 0.6 }}>
                         <td style={{ padding: "9px 12px", fontWeight: 700, color: COLORS.textMuted }}>{su.name}</td>
-                        <td colSpan={4} style={{ padding: "9px 12px", textAlign: "center", fontSize: 11, color: COLORS.textLight, fontStyle: "italic" }}>
+                        <td colSpan={4} style={{ padding: "9px 12px", textAlign: "center", fontSize: 12.5, color: COLORS.textLight, fontStyle: "italic" }}>
                           Belum closing di periode ini — tidak dihitung
                         </td>
                       </tr>
@@ -3593,7 +3593,7 @@ function UnitDetailPage({ unitId, onBack, onSelectSubmission }) {
                   <td style={{ padding: "11px 12px", textAlign: "center", color: COLORS.textLight }}>—</td>
                   <td style={{ padding: "11px 12px", textAlign: "center", fontWeight: 800, color: COLORS.dark }}>{totalWeight}%</td>
                   <td style={{ padding: "11px 12px", textAlign: "right", fontWeight: 800, color: COLORS.dark }}>{weightedSum.toLocaleString("id-ID")}</td>
-                  <td style={{ padding: "11px 12px", textAlign: "right", fontWeight: 800, color: unit.color, fontSize: 14 }}>{unitScore}%</td>
+                  <td style={{ padding: "11px 12px", textAlign: "right", fontWeight: 800, color: unit.color, fontSize: 15 }}>{unitScore}%</td>
                 </tr>
               </tbody>
             </table>
@@ -3645,10 +3645,10 @@ function SubUnitDetailCard({ subUnit, parentUnit, onSelect, effectiveWeight }) {
 
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-            <span style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>{subUnit.name}</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: COLORS.dark }}>{subUnit.name}</span>
             <Pill color={status.color} bg={status.bg}>{status.label}</Pill>
           </div>
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 6 }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 6 }}>
             PIC: <strong style={{ color: COLORS.text }}>{subUnit.pic?.name || "— Belum ditugaskan"}</strong>
             {" • "}
             Dibuat: {formatDate(subUnit.createdAt)}
@@ -3658,7 +3658,7 @@ function SubUnitDetailCard({ subUnit, parentUnit, onSelect, effectiveWeight }) {
               <ProgressBar value={score} color={status.color} height={7} />
             </div>
             <span style={{
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 800,
               color: status.color,
               minWidth: 40,
@@ -3670,8 +3670,8 @@ function SubUnitDetailCard({ subUnit, parentUnit, onSelect, effectiveWeight }) {
         </div>
 
         <div style={{ textAlign: "right", minWidth: 70 }}>
-          <div style={{ fontSize: 9, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase" }}>Bobot</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: parentUnit.color }}>{weight}%</div>
+          <div style={{ fontSize: 11, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase" }}>Bobot</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: parentUnit.color }}>{weight}%</div>
         </div>
       </div>
 
@@ -3693,7 +3693,7 @@ function SubUnitDetailCard({ subUnit, parentUnit, onSelect, effectiveWeight }) {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
               {scoredFields.map((f, i) => (
                 <span key={i} style={{
-                  fontSize: 10, padding: "3px 8px", borderRadius: 6,
+                  fontSize: 12, padding: "3px 8px", borderRadius: 6,
                   background: f.isMargin ? COLORS.warningBg : COLORS.bgMuted,
                   color: f.isMargin ? "#8A6420" : COLORS.textMuted,
                   border: `1px solid ${f.isMargin ? "#EBD9B4" : COLORS.border}`,
@@ -3759,9 +3759,9 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
       {/* Header */}
       <div style={{ marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
         <div>
-          <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Project Lintas Unit
+          <h1 style={{ fontFamily: FONTS.heading, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Project Lintas Unit
           </h1>
-          <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
+          <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 0" }}>
             Total {stats.total} project • {stats.onTrack} on track • {stats.atRisk} perhatian • {stats.behind} tertinggal
           </p>
         </div>
@@ -3774,7 +3774,7 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
               color: COLORS.white,
               border: "none",
               borderRadius: 8,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 700,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -3793,7 +3793,7 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
       {/* Filters */}
       <Card style={{ padding: "12px 16px", marginBottom: 16 }}>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>
             Filter:
           </div>
           <select
@@ -3804,7 +3804,7 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
               border: `1px solid ${COLORS.border}`,
               borderRadius: 8,
               background: COLORS.white,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 600,
               fontFamily: "inherit",
               cursor: "pointer",
@@ -3823,7 +3823,7 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
               border: `1px solid ${COLORS.border}`,
               borderRadius: 8,
               background: COLORS.white,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 600,
               fontFamily: "inherit",
               cursor: "pointer",
@@ -3835,7 +3835,7 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
             <option value="behind">Tertinggal</option>
             <option value="done">Selesai</option>
           </select>
-          <div style={{ marginLeft: "auto", fontSize: 11, color: COLORS.textMuted }}>
+          <div style={{ marginLeft: "auto", fontSize: 12.5, color: COLORS.textMuted }}>
             Menampilkan {filtered.length} dari {allProjects.length} project
           </div>
         </div>
@@ -3843,7 +3843,7 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
 
       {/* Project cards */}
       {filtered.length === 0 ? (
-        <Card style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 12 }}>
+        <Card style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 13 }}>
           Tidak ada project yang sesuai filter
         </Card>
       ) : (
@@ -3880,17 +3880,17 @@ function ProjectListItem({ project, onClick }) {
 
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>{project.name}</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: COLORS.dark }}>{project.name}</span>
             <Pill color={status.color} bg={status.bg}>{status.label}</Pill>
           </div>
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 8 }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8 }}>
             {unit.name}{subUnit && <> · {subUnit.name}</>} • {project.milestonesDone}/{project.milestonesTotal} milestone • {formatDate(project.startDate)} → {formatDate(project.endDate)}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
             {/* Work progress */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, marginBottom: 3 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
                 <span style={{ color: COLORS.textMuted, fontWeight: 600 }}>Pekerjaan</span>
                 <span style={{ color: COLORS.text, fontWeight: 700 }}>{workProgress}%</span>
               </div>
@@ -3899,7 +3899,7 @@ function ProjectListItem({ project, onClick }) {
 
             {/* Budget progress */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, marginBottom: 3 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
                 <span style={{ color: COLORS.textMuted, fontWeight: 600 }}>Budget</span>
                 <span style={{ color: COLORS.text, fontWeight: 700 }}>
                   {formatRupiah(project.budgetSpent)} / {formatRupiah(project.budgetPlanned)}
@@ -3914,7 +3914,7 @@ function ProjectListItem({ project, onClick }) {
           </div>
         </div>
 
-        <div style={{ color: COLORS.textLight, fontSize: 18 }}>→</div>
+        <div style={{ color: COLORS.textLight, fontSize: 19 }}>→</div>
       </div>
     </Card>
   );
@@ -3975,9 +3975,9 @@ function MarginDetailPage({ user, onSelectSubmission }) {
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px" }}>
       <div style={{ marginBottom: 18 }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Margin · {selectedPeriod.label}
+        <h1 style={{ fontFamily: FONTS.heading, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Margin · {selectedPeriod.label}
         </h1>
-        <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
+        <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 0" }}>
           Target dari estimasi · realisasi dari closing · drill-down per sub-unit
         </p>
       </div>
@@ -3985,7 +3985,7 @@ function MarginDetailPage({ user, onSelectSubmission }) {
       {/* Period filter */}
       <Card style={{ padding: "12px 16px", marginBottom: 16 }}>
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.6 }}>Periode:
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.6 }}>Periode:
           </div>
           <select
             value={selectedPeriodKey}
@@ -3995,7 +3995,7 @@ function MarginDetailPage({ user, onSelectSubmission }) {
               border: `1px solid ${COLORS.border}`,
               borderRadius: 8,
               background: COLORS.white,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 600,
               fontFamily: "inherit",
               cursor: "pointer",
@@ -4021,7 +4021,7 @@ function MarginDetailPage({ user, onSelectSubmission }) {
                 border: `1px solid ${COLORS.border}`,
                 borderRadius: 8,
                 background: COLORS.white,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 600,
                 fontFamily: "inherit",
                 cursor: "pointer",
@@ -4055,7 +4055,7 @@ function MarginDetailPage({ user, onSelectSubmission }) {
       )}
 
       {/* DETAIL per unit (2 kolom) */}
-      <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "0 0 8px" }}>
+      <div style={{ fontSize: 12.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "0 0 8px" }}>
         Detail per Unit
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(480px, 100%), 1fr))", gap: 12 }}>
@@ -4071,9 +4071,9 @@ function MarginDetailPage({ user, onSelectSubmission }) {
 function MarginStat({ k, v, s, accent, small }) {
   return (
     <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "13px 15px", borderLeft: `4px solid ${accent}` }}>
-      <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 0.4, color: COLORS.textMuted }}>{k}</div>
+      <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 0.4, color: COLORS.textMuted }}>{k}</div>
       <div style={{ fontSize: small ? 15 : 21, fontWeight: 800, color: accent, marginTop: 4 }}>{v}</div>
-      <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 2 }}>{s}</div>
+      <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>{s}</div>
     </div>
   );
 }
@@ -4104,15 +4104,15 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
         <span style={{ display: "inline-flex", color: "rgba(255,255,255,0.85)", transform: expanded ? "rotate(90deg)" : "none", transition: "transform 0.15s" }}><Icon name="arrowRight" size={13} color="rgba(255,255,255,0.85)" /></span>
         <Icon name={unit.icon} size={20} color={COLORS.white} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 800 }}>{unit.name}</div>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
+          <div style={{ fontSize: 15, fontWeight: 800 }}>{unit.name}</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
             {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name} · ` : ""}{closedEntries.length} closing{pendingEntries.length > 0 && ` · ${pendingEntries.length} pending`}
           </div>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.92)", marginTop: 3 }}>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.92)", marginTop: 3 }}>
             Target {formatRupiah(target)} · Real. {formatRupiah(actual)} · Selisih {gap >= 0 ? "+" : "−"}{formatRupiah(Math.abs(gap))}
           </div>
         </div>
-        <div style={{ fontSize: 20, fontWeight: 800, background: "rgba(255,255,255,0.22)", borderRadius: 9, padding: "5px 11px", whiteSpace: "nowrap" }}>
+        <div style={{ fontSize: 22, fontWeight: 800, background: "rgba(255,255,255,0.22)", borderRadius: 9, padding: "5px 11px", whiteSpace: "nowrap" }}>
           {hasClosing ? `${percentage}%` : "—"}
         </div>
       </div>
@@ -4128,7 +4128,7 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
           {closedEntries.length > 0 && (
             <div style={{ marginTop: 12 }}>
               <div style={{
-                fontSize: 10, fontWeight: 700, color: COLORS.success,
+                fontSize: 12, fontWeight: 700, color: COLORS.success,
                 textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6,
               }}>Sudah Closing ({closedEntries.length})
               </div>
@@ -4142,7 +4142,7 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
           {pendingEntries.length > 0 && (
             <div style={{ marginTop: 14 }}>
               <div style={{
-                fontSize: 10, fontWeight: 700, color: COLORS.warning,
+                fontSize: 12, fontWeight: 700, color: COLORS.warning,
                 textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6,
               }}>Pending Closing ({pendingEntries.length})
               </div>
@@ -4153,7 +4153,7 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
                 marginTop: 6, padding: "6px 10px",
                 background: COLORS.warningBg,
                 borderRadius: 6,
-                fontSize: 10, color: "#92400E",
+                fontSize: 12, color: "#92400E",
                 fontStyle: "italic",
               }}>
                 Total estimasi pending: <strong>{formatRupiah(pendingTotal)}</strong>
@@ -4166,7 +4166,7 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
               padding: "20px 0",
               textAlign: "center",
               color: COLORS.textLight,
-              fontSize: 11,
+              fontSize: 12.5,
             }}>
               Belum ada data margin di periode ini
             </div>
@@ -4204,7 +4204,7 @@ function MarginEntryRow({ entry, isPending, onSelectSubmission }) {
       gridTemplateColumns: isMobile ? "1fr 1fr" : "1.3fr 0.9fr 0.9fr 0.7fr",
       gap: 8,
       alignItems: "center",
-      fontSize: 11,
+      fontSize: 12.5,
       cursor: clickable ? "pointer" : "default",
       transition: "background 0.12s, border-color 0.12s",
     }}>
@@ -4213,18 +4213,18 @@ function MarginEntryRow({ entry, isPending, onSelectSubmission }) {
           {subUnitName}
           {clickable && <Icon name="arrowRight" size={11} color={COLORS.textLight} />}
         </div>
-        <div style={{ fontSize: 9, color: COLORS.textMuted, marginTop: 1 }}>
+        <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 1 }}>
           {entry.period}
           {!isPending && entry.closedAt && <> · closed {formatDate(entry.closedAt)}</>}
           {isPending && <> · belum closing</>}
         </div>
       </div>
       <div style={{ textAlign: "right" }}>
-        <div style={{ fontSize: 9, color: COLORS.textLight }}>Target</div>
+        <div style={{ fontSize: 11, color: COLORS.textLight }}>Target</div>
         <div style={{ fontWeight: 600, color: COLORS.text }}>{formatRupiah(entry.targetMargin)}</div>
       </div>
       <div style={{ textAlign: "right" }}>
-        <div style={{ fontSize: 9, color: COLORS.textLight }}>Realisasi</div>
+        <div style={{ fontSize: 11, color: COLORS.textLight }}>Realisasi</div>
         <div style={{ fontWeight: 700, color: isPending ? COLORS.textLight : achColor }}>
           {isPending ? "—" : formatRupiah(entry.actualMargin)}
         </div>
@@ -4235,7 +4235,7 @@ function MarginEntryRow({ entry, isPending, onSelectSubmission }) {
         ) : (
           <>
             <div style={{ fontWeight: 800, color: achColor }}>{achieved}%</div>
-            <div style={{ fontSize: 9, color: gap >= 0 ? COLORS.success : COLORS.danger }}>
+            <div style={{ fontSize: 11, color: gap >= 0 ? COLORS.success : COLORS.danger }}>
               {gap >= 0 ? "+" : "−"}{formatRupiah(Math.abs(gap))}
             </div>
           </>
@@ -4304,16 +4304,16 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px" }}>
       <div style={{ marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
         <div>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>KPI
+        <h1 style={{ fontFamily: FONTS.heading, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>KPI
         </h1>
-        <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
+        <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 0" }}>
           Performa & riwayat semua submission KPI ({submissions.length} total)
         </p>
         </div>
         {isOwnerLevel(user.role) && onNewKPI && (
           <button onClick={onNewKPI} type="button" style={{
             padding: "9px 16px", background: COLORS.primary, color: COLORS.white, border: "none",
-            borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+            borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
             display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
           }}>
             <Icon name="plus" size={14} color={COLORS.white} /> Ajukan KPI Baru
@@ -4324,43 +4324,43 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
       {/* Summary cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginBottom: 16 }}>
         <div style={{ padding: "14px 16px", background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, borderLeft: `4px solid ${COLORS.primary}` }}>
-          <div style={{ fontSize: 10, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Rata-rata Skor</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: COLORS.primary, marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Rata-rata Skor</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: COLORS.primary, marginTop: 4 }}>
             {summary.scoredCount > 0 ? `${summary.avgScore}%` : "—"}
           </div>
-          <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 2 }}>dari {summary.scoredCount} KPI terskor</div>
+          <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>dari {summary.scoredCount} KPI terskor</div>
         </div>
         <div style={{ padding: "14px 16px", background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, borderLeft: `4px solid ${COLORS.success}` }}>
-          <div style={{ fontSize: 10, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Status Performa</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: COLORS.dark, marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Status Performa</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: COLORS.dark, marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap" }}>
             <span style={{ color: COLORS.success }}>{summary.onTrack} ✓</span>
             <span style={{ color: COLORS.warning }}>{summary.attention} ◐</span>
             <span style={{ color: COLORS.danger }}>{summary.below} ✕</span>
           </div>
-          <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 2 }}>on-track / perhatian / di bawah</div>
+          <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>on-track / perhatian / di bawah</div>
         </div>
         <div style={{ padding: "14px 16px", background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, borderLeft: `4px solid ${COLORS.secondary}` }}>
-          <div style={{ fontSize: 10, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Total Margin</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.secondary, marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Total Margin</div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: COLORS.secondary, marginTop: 4 }}>
             {summary.marginActual > 0 ? formatRupiah(summary.marginActual) : "—"}
           </div>
-          <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>
             {summary.marginTarget > 0 ? `dari target ${formatRupiah(summary.marginTarget)}` : "belum ada closing"}
           </div>
         </div>
         <div style={{ padding: "14px 16px", background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, borderLeft: `4px solid ${COLORS.info}` }}>
-          <div style={{ fontSize: 10, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Status KPI</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.dark, marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Status KPI</div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: COLORS.dark, marginTop: 4 }}>
             {summary.active} aktif · {summary.closed} closed
           </div>
-          <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 2 }}>{filtered.length} total terfilter</div>
+          <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>{filtered.length} total terfilter</div>
         </div>
       </div>
 
       {/* Filters */}
       <Card style={{ padding: "12px 16px", marginBottom: 16 }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase" }}>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase" }}>
             Filter:
           </span>
           <select value={filterUnit} onChange={e => setFilterUnit(e.target.value)}
@@ -4385,7 +4385,7 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
               return <option key={tid} value={tid}>{t?.name || tid}</option>;
             })}
           </select>
-          <div style={{ marginLeft: "auto", fontSize: 11, color: COLORS.textMuted }}>
+          <div style={{ marginLeft: "auto", fontSize: 12.5, color: COLORS.textMuted }}>
             {filtered.length} dari {submissions.length}
           </div>
         </div>
@@ -4393,7 +4393,7 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
 
       {/* Tabel dipisah per status: Aktif vs Selesai (Closed) vs lainnya */}
       {sorted.length === 0 ? (
-        <Card style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 12 }}>
+        <Card style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 13 }}>
           Tidak ada submission yang sesuai filter
         </Card>
       ) : (
@@ -4420,17 +4420,17 @@ function KPISection({ label, color, count, rows, onSelectSubmission }) {
     <Card style={{ padding: 0 }}>
       <div style={{ padding: "10px 14px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ width: 9, height: 9, borderRadius: 5, background: color, flexShrink: 0 }} />
-        <span style={{ fontSize: 12, fontWeight: 800, color: COLORS.dark }}>{label}</span>
-        <span style={{ fontSize: 11, color: COLORS.textMuted }}>({count})</span>
+        <span style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>{label}</span>
+        <span style={{ fontSize: 12.5, color: COLORS.textMuted }}>({count})</span>
       </div>
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+        <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ background: "#F8FAFC" }}>
               {["Periode", "Sub Unit", "Template", "Skor", "Margin", "Status", "Tanggal"].map(h => (
                 <th key={h} style={{
                   padding: "10px 12px",
-                  fontSize: 10, fontWeight: 700,
+                  fontSize: 12, fontWeight: 700,
                   color: COLORS.textMuted,
                   textAlign: h === "Skor" || h === "Margin" ? "right" : "left",
                   textTransform: "uppercase", letterSpacing: 0.4,
@@ -4458,7 +4458,7 @@ const selectStyle = {
   border: `1px solid ${COLORS.border}`,
   borderRadius: 8,
   background: COLORS.white,
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: 600,
   fontFamily: "inherit",
   cursor: "pointer",
@@ -4507,7 +4507,7 @@ function KPIHistoryRow({ submission, onClick }) {
             <div style={{ width: 56 }}><ProgressBar value={perf.score} color={scoreStatus.color} height={4} /></div>
           </div>
         ) : (
-          <span style={{ color: COLORS.textLight, fontSize: 11 }}>—</span>
+          <span style={{ color: COLORS.textLight, fontSize: 12.5 }}>—</span>
         )}
       </td>
       {/* Margin */}
@@ -4517,16 +4517,16 @@ function KPIHistoryRow({ submission, onClick }) {
             <span style={{ fontWeight: 700, color: marginPct >= 100 ? COLORS.success : marginPct >= 80 ? COLORS.warning : COLORS.danger }}>
               {marginPct}%
             </span>
-            <span style={{ fontSize: 10, color: COLORS.textLight }}>{formatRupiah(perf.marginActual)}</span>
+            <span style={{ fontSize: 12, color: COLORS.textLight }}>{formatRupiah(perf.marginActual)}</span>
           </div>
         ) : (
-          <span style={{ color: COLORS.textLight, fontSize: 11 }}>—</span>
+          <span style={{ color: COLORS.textLight, fontSize: 12.5 }}>—</span>
         )}
       </td>
       <td style={{ padding: "10px 12px" }}>
         <Pill color={info.color} bg={info.bg}>{info.label}</Pill>
       </td>
-      <td style={{ padding: "10px 12px", color: COLORS.textMuted, fontSize: 11 }}>
+      <td style={{ padding: "10px 12px", color: COLORS.textMuted, fontSize: 12.5 }}>
         {formatDate(showDate)}
       </td>
     </tr>
@@ -4553,9 +4553,9 @@ function InboxPage({ user, onSubmitNew, onCloseKPI, onViewDetail }) {
     return (
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 14px" }}>
         <div style={{ marginBottom: 18 }}>
-          <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Approval Inbox
+          <h1 style={{ fontFamily: FONTS.heading, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Approval Inbox
           </h1>
-          <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
+          <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 0" }}>
             {scoped
               ? "Review estimasi KPI yang diajukan PIC di unit Anda. Set bobot lalu approve. Progres KPI yang berjalan ada di menu KPI."
               : "Review estimasi KPI yang diajukan leader & PIC. Set bobot lalu approve."}
@@ -4586,17 +4586,17 @@ function InboxPage({ user, onSubmitNew, onCloseKPI, onViewDetail }) {
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "20px 14px" }}>
       <div style={{ marginBottom: 18 }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>{title}</h1>
-        <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>{subtitle}</p>
+        <h1 style={{ fontFamily: FONTS.heading, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>{title}</h1>
+        <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 0" }}>{subtitle}</p>
       </div>
 
       {items.length === 0 ? (
         <Card style={{ padding: 40, textAlign: "center" }}>
-          <div style={{ fontSize: 40, marginBottom: 10 }}></div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>
+          <div style={{ fontSize: 44, marginBottom: 10 }}></div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.dark }}>
             Tidak ada item di inbox
           </div>
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 4 }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 4 }}>
             Semua KPI sudah ditangani.
           </div>
         </Card>
@@ -4659,10 +4659,10 @@ function ProjectApprovalInbox({ user }) {
 
   return (
     <div style={{ marginTop: 22 }}>
-      <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark, marginBottom: 4 }}>
+      <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark, marginBottom: 4 }}>
         Project Menunggu Approval ({pending.length})
       </div>
-      <p style={{ fontSize: 11, color: COLORS.textMuted, margin: "0 0 10px" }}>
+      <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: "0 0 10px" }}>
         Pengajuan project baru dari unit. Setujui untuk mengaktifkan, atau tolak.
       </p>
       <div style={{ display: "grid", gap: 8 }}>
@@ -4679,8 +4679,8 @@ function ProjectApprovalInbox({ user }) {
                   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                 }}><Icon name={unit?.icon || "folder"} size={20} color={unit?.color || COLORS.textMuted} /></div>
                 <div style={{ flex: 1, minWidth: 180 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>{proj.name}</div>
-                  <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>{proj.name}</div>
+                  <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
                     {unit?.name || "—"}{subUnit ? ` · ${subUnit.name}` : ""}
                     {proj.budgetPlanned ? ` · Budget ${formatRupiah(proj.budgetPlanned)}` : ""}
                   </div>
@@ -4688,13 +4688,13 @@ function ProjectApprovalInbox({ user }) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={() => reject(proj)} type="button" disabled={busy}
                     style={{ padding: "8px 14px", background: COLORS.white, color: COLORS.danger,
-                      border: `1px solid ${COLORS.danger}`, borderRadius: 8, fontSize: 12, fontWeight: 700,
+                      border: `1px solid ${COLORS.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700,
                       cursor: busy ? "not-allowed" : "pointer", opacity: busy ? 0.6 : 1, fontFamily: "inherit" }}>
                     Tolak
                   </button>
                   <button onClick={() => approve(proj)} type="button" disabled={busy}
                     style={{ padding: "8px 14px", background: COLORS.success, color: COLORS.white,
-                      border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                      border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700,
                       cursor: busy ? "not-allowed" : "pointer", opacity: busy ? 0.6 : 1, fontFamily: "inherit" }}>
                     {busy ? "Memproses..." : "Setujui"}
                   </button>
@@ -4740,12 +4740,12 @@ function InboxItem({ item, userRole, onCloseKPI, onViewDetail }) {
         }}><Icon name={config.icon} size={22} color={config.color} /></div>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark, display: "inline-flex", alignItems: "center", gap: 6 }}>
               {unit && <Icon name={unit.icon} size={14} color={unit.color} />}{sub?.name} · {template?.name}
             </span>
             <Pill color={config.color} bg={config.bg}>{item.period}</Pill>
           </div>
-          <div style={{ fontSize: 11, color: COLORS.textMuted }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
             Diajukan oleh <strong>{submitter?.name}</strong> pada {formatDate(item.createdAt)}
             {item.approvedAt && <> • Disetujui {formatDate(item.approvedAt)}</>}
           </div>
@@ -4803,16 +4803,16 @@ function AuditLogPage({ user }) {
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px" }}>
       <div style={{ marginBottom: 18 }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Audit Log
+        <h1 style={{ fontFamily: FONTS.heading, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Audit Log
         </h1>
-        <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
+        <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 0" }}>
           {entries.length} aktivitas tercatat • Tampilan {isOwnerLevel(user.role) ? "semua unit" : "unit Anda saja"}
         </p>
       </div>
 
       <Card style={{ padding: "12px 16px", marginBottom: 16 }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase" }}>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase" }}>
             Filter:
           </span>
           <select value={filterActor} onChange={e => setFilterActor(e.target.value)} style={selectStyle}>
@@ -4834,7 +4834,7 @@ function AuditLogPage({ user }) {
               <option key={e} value={e}>{e.replace("_", " ")}</option>
             ))}
           </select>
-          <div style={{ marginLeft: "auto", fontSize: 11, color: COLORS.textMuted }}>
+          <div style={{ marginLeft: "auto", fontSize: 12.5, color: COLORS.textMuted }}>
             {filtered.length} dari {entries.length}
           </div>
         </div>
@@ -4842,7 +4842,7 @@ function AuditLogPage({ user }) {
 
       <Card style={{ padding: 0 }}>
         {sorted.length === 0 ? (
-          <div style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 12 }}>
+          <div style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 13 }}>
             Tidak ada aktivitas yang sesuai filter
           </div>
         ) : (
@@ -4881,16 +4881,16 @@ function AuditLogRow({ entry, isLast }) {
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 3 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>
             {actor?.name}
           </span>
           <Pill color={action.color} bg={action.bg}>{action.label}</Pill>
           {unit && <Pill color={unit.color} bg={unit.colorLight}>{unit.name}</Pill>}
         </div>
-        <div style={{ fontSize: 12, color: COLORS.text }}>{entry.entityLabel}</div>
+        <div style={{ fontSize: 13, color: COLORS.text }}>{entry.entityLabel}</div>
         {entry.details && (
           <div style={{
-            fontSize: 11,
+            fontSize: 12.5,
             color: COLORS.textMuted,
             marginTop: 4,
             padding: "5px 8px",
@@ -4902,7 +4902,7 @@ function AuditLogRow({ entry, isLast }) {
         )}
         {entry.diff && (
           <div style={{
-            fontSize: 11,
+            fontSize: 12.5,
             marginTop: 4,
             padding: "5px 8px",
             background: "#FFFBEB",
@@ -4918,7 +4918,7 @@ function AuditLogRow({ entry, isLast }) {
 
       <div style={{
         textAlign: "right",
-        fontSize: 10,
+        fontSize: 12,
         color: COLORS.textLight,
         whiteSpace: "nowrap",
         flexShrink: 0,
@@ -4948,7 +4948,7 @@ function FormPageWrapper({ title, subtitle, onBack, children }) {
           border: "none",
           color: COLORS.textMuted,
           cursor: "pointer",
-          fontSize: 12,
+          fontSize: 13,
           padding: "4px 0 12px",
           fontFamily: "inherit",
         }}
@@ -4956,8 +4956,8 @@ function FormPageWrapper({ title, subtitle, onBack, children }) {
         ← Kembali
       </button>
       <div style={{ marginBottom: 18 }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>{title}</h1>
-        {subtitle && <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>{subtitle}</p>}
+        <h1 style={{ fontFamily: FONTS.heading, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>{title}</h1>
+        {subtitle && <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 0" }}>{subtitle}</p>}
       </div>
       {children}
     </div>
@@ -4993,7 +4993,7 @@ function FormFieldInput({ field, value, onChange, disabled, computedValue }) {
           padding: "9px 12px",
           border: `1px solid ${COLORS.border}`,
           borderRadius: 8,
-          fontSize: 13,
+          fontSize: 14,
           fontFamily: "inherit",
           background: disabled ? "#F1F5F9" : COLORS.white,
           color: COLORS.dark,
@@ -5011,7 +5011,7 @@ function FormFieldInput({ field, value, onChange, disabled, computedValue }) {
         alignItems: "center",
         marginBottom: 5,
       }}>
-        <label style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark }}>
+        <label style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
           {isAuto && ""}{field.name}
           {field.satuan && <span style={{ color: COLORS.textMuted, fontWeight: 400, marginLeft: 4 }}>({field.satuan})</span>}
           {field.isMargin && (
@@ -5021,7 +5021,7 @@ function FormFieldInput({ field, value, onChange, disabled, computedValue }) {
           )}
         </label>
         {isAuto && (
-          <span style={{ fontSize: 10, color: COLORS.primaryDark, fontFamily: "monospace" }}>
+          <span style={{ fontSize: 12, color: COLORS.primaryDark, fontFamily: "monospace" }}>
             {getFormula(field.formulaId)?.formula}
           </span>
         )}
@@ -5033,7 +5033,7 @@ function FormFieldInput({ field, value, onChange, disabled, computedValue }) {
           background: COLORS.infoBg,
           border: "1px solid #C5DBF0",
           borderRadius: 8,
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: 700,
           color: COLORS.primaryDark,
           fontFamily: "monospace",
@@ -5054,7 +5054,7 @@ function FormFieldInput({ field, value, onChange, disabled, computedValue }) {
             padding: "9px 12px",
             border: `1px solid ${COLORS.border}`,
             borderRadius: 8,
-            fontSize: 13,
+            fontSize: 14,
             fontFamily: "inherit",
             background: disabled ? "#F1F5F9" : COLORS.white,
             color: COLORS.dark,
@@ -5063,7 +5063,7 @@ function FormFieldInput({ field, value, onChange, disabled, computedValue }) {
         />
       )}
 
-      <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 3 }}>
+      <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 3 }}>
         Sumber: {field.source}
       </div>
     </div>
@@ -5114,19 +5114,19 @@ function SubmitKPIForm({ user, context, onBack }) {
       return (
         <FormPageWrapper title="Ajukan KPI Baru" subtitle="Pilih sub-unit yang KPI-nya akan diajukan" onBack={onBack}>
           <Card style={{ padding: "16px 18px" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, marginBottom: 12 }}>Pilih Sub Unit</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark, marginBottom: 12 }}>Pilih Sub Unit</div>
             <div style={{ display: "grid", gap: 14 }}>
               {Object.keys(subsByUnit).map(uid => {
                 const u = UNITS[uid];
                 return (
                   <div key={uid}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 800, color: u?.color || COLORS.dark, marginBottom: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 800, color: u?.color || COLORS.dark, marginBottom: 6 }}>
                       {u && <Icon name={u.icon} size={14} color={u.color} />}{u?.name || uid}
                     </div>
                     <div style={{ display: "grid", gap: 6 }}>
                       {subsByUnit[uid].map(s => (
                         <button key={s.id} type="button" onClick={() => setPickedSubUnitId(s.id)}
-                          style={{ textAlign: "left", padding: "10px 12px", border: `1px solid ${COLORS.border}`, borderRadius: 8, background: COLORS.white, cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 700, color: COLORS.dark }}>
+                          style={{ textAlign: "left", padding: "10px 12px", border: `1px solid ${COLORS.border}`, borderRadius: 8, background: COLORS.white, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
                           {s.name}
                         </button>
                       ))}
@@ -5218,7 +5218,7 @@ function SubmitKPIForm({ user, context, onBack }) {
       {/* Step 1: pick template */}
       {step === 1 && (
         <Card style={{ padding: "16px 18px" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, marginBottom: 12 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark, marginBottom: 12 }}>
             Pilih Template Form KPI
           </div>
           <div style={{ display: "grid", gap: 8 }}>
@@ -5243,18 +5243,18 @@ function SubmitKPIForm({ user, context, onBack }) {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>
                         {t.name}
                       </div>
-                      <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 3 }}>
+                      <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 3 }}>
                         {t.description}
                       </div>
-                      <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 4 }}>
+                      <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 4 }}>
                         {t.fields.length} field • {FREQ_LABELS[t.frequency]}
                       </div>
                     </div>
                     {selectedTemplateId === t.id && (
-                      <span style={{ fontSize: 20, color: COLORS.primary }}></span>
+                      <span style={{ fontSize: 22, color: COLORS.primary }}></span>
                     )}
                   </div>
                 </div>
@@ -5262,7 +5262,7 @@ function SubmitKPIForm({ user, context, onBack }) {
             })}
           </div>
           <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 11, color: COLORS.textMuted }}>
+            <span style={{ fontSize: 12.5, color: COLORS.textMuted }}>
               {template ? `Template "${template.name}" dipilih` : "Pilih salah satu template dulu untuk lanjut"}
             </span>
             <Button
@@ -5281,10 +5281,10 @@ function SubmitKPIForm({ user, context, onBack }) {
         <Card style={{ padding: "16px 18px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>
                 Isi Estimasi: {template.name}
               </div>
-              <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+              <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
                 Field auto-calculate akan terhitung otomatis dari input lain
               </div>
             </div>
@@ -5294,7 +5294,7 @@ function SubmitKPIForm({ user, context, onBack }) {
           {/* Period & expected close */}
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 16 }}>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
                 Periode <span style={{ color: COLORS.danger }}>*</span>
               </label>
               <input
@@ -5307,14 +5307,14 @@ function SubmitKPIForm({ user, context, onBack }) {
                   padding: "9px 12px",
                   border: `1px solid ${COLORS.border}`,
                   borderRadius: 8,
-                  fontSize: 13,
+                  fontSize: 14,
                   fontFamily: "inherit",
                   boxSizing: "border-box",
                 }}
               />
             </div>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
                 Estimasi Tanggal Closing <span style={{ color: COLORS.danger }}>*</span>
               </label>
               <input
@@ -5326,7 +5326,7 @@ function SubmitKPIForm({ user, context, onBack }) {
                   padding: "9px 12px",
                   border: `1px solid ${COLORS.border}`,
                   borderRadius: 8,
-                  fontSize: 13,
+                  fontSize: 14,
                   fontFamily: "inherit",
                   boxSizing: "border-box",
                 }}
@@ -5337,10 +5337,10 @@ function SubmitKPIForm({ user, context, onBack }) {
           {/* Pilih cara input realisasi margin DI AWAL (wajib, tanpa default) */}
           {needsMarginChoice && (
             <div style={{ border: `1px solid #FDE68A`, background: "#FFFBEB", borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: "#92400E", marginBottom: 4 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#92400E", marginBottom: 4 }}>
                 Cara Input Realisasi Margin <span style={{ color: COLORS.danger }}>*</span>
               </div>
-              <div style={{ fontSize: 11, color: "#92400E", opacity: 0.9, marginBottom: 10 }}>
+              <div style={{ fontSize: 12.5, color: "#92400E", opacity: 0.9, marginBottom: 10 }}>
                 Pilih satu sekarang. Selama KPI berjalan, realisasi margin hanya diisi lewat cara yang dipilih ini.
               </div>
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
@@ -5372,7 +5372,7 @@ function SubmitKPIForm({ user, context, onBack }) {
                         <div style={{ fontSize: 12.5, fontWeight: 800, color: COLORS.dark, display: "flex", alignItems: "center", gap: 6 }}>
                           <Icon name={opt.icon} size={14} color={active ? COLORS.primary : COLORS.textMuted} /> {opt.title}
                         </div>
-                        <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 3 }}>{opt.desc}</div>
+                        <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 3 }}>{opt.desc}</div>
                       </div>
                     </button>
                   );
@@ -5383,7 +5383,7 @@ function SubmitKPIForm({ user, context, onBack }) {
 
           {/* Fields */}
           <div style={{ borderTop: `1px solid ${COLORS.bgMuted}`, paddingTop: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>Input Estimasi Target
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>Input Estimasi Target
             </div>
             {template.fields.map(field => (
               <FormFieldInput
@@ -5419,7 +5419,7 @@ function SubmitKPIForm({ user, context, onBack }) {
                 color: COLORS.text,
                 border: `1px solid ${COLORS.border}`,
                 borderRadius: 8,
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 700,
                 cursor: "pointer",
                 fontFamily: "inherit",
@@ -5435,7 +5435,7 @@ function SubmitKPIForm({ user, context, onBack }) {
                 color: COLORS.white,
                 border: "none",
                 borderRadius: 8,
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: 800,
                 cursor: "pointer",
                 fontFamily: "inherit",
@@ -5472,11 +5472,11 @@ function StepBadge({ num, label, active, done, onClick }) {
         width: 24, height: 24, borderRadius: "50%",
         background: color, color: COLORS.white,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 12, fontWeight: 800,
+        fontSize: 13, fontWeight: 800,
       }}>
         {done ? "" : num}
       </div>
-      <div style={{ fontSize: 12, fontWeight: 700, color: color }}>{label}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: color }}>{label}</div>
     </div>
   );
 }
@@ -5562,10 +5562,10 @@ function CloseKPIForm({ user, context, onBack }) {
       onBack={onBack}
     >
       <Card style={{ padding: "16px 18px", marginBottom: 14 }}>
-        <div style={{ fontSize: 11, color: COLORS.primaryDark, marginBottom: 6, fontWeight: 700 }}>
+        <div style={{ fontSize: 12.5, color: COLORS.primaryDark, marginBottom: 6, fontWeight: 700 }}>
           Cara mengisi
         </div>
-        <div style={{ fontSize: 11, color: COLORS.primaryDark, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12.5, color: COLORS.primaryDark, lineHeight: 1.5 }}>
           Kolom <strong>Estimasi</strong> (kiri) = nilai target yang Bapak ajukan di awal.
           Kolom <strong>Realisasi</strong> (kanan) = nilai sebenarnya yang terjadi.
           Field auto-calculate akan terhitung sendiri saat Bapak isi field manual.
@@ -5573,7 +5573,7 @@ function CloseKPIForm({ user, context, onBack }) {
       </Card>
 
       <Card style={{ padding: "16px 18px" }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, marginBottom: 14 }}>Isi Realisasi
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark, marginBottom: 14 }}>Isi Realisasi
         </div>
 
         {template.fields.map(field => {
@@ -5595,7 +5595,7 @@ function CloseKPIForm({ user, context, onBack }) {
               }}
             >
               <div style={{
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 700,
                 color: COLORS.dark,
                 marginBottom: 8,
@@ -5613,7 +5613,7 @@ function CloseKPIForm({ user, context, onBack }) {
                   )}
                 </span>
                 {isAuto && (
-                  <span style={{ fontSize: 10, color: COLORS.primaryDark, fontFamily: "monospace" }}>
+                  <span style={{ fontSize: 12, color: COLORS.primaryDark, fontFamily: "monospace" }}>
                     {getFormula(field.formulaId)?.formula}
                   </span>
                 )}
@@ -5621,7 +5621,7 @@ function CloseKPIForm({ user, context, onBack }) {
 
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
                 <div>
-                  <div style={{ fontSize: 10, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>
+                  <div style={{ fontSize: 12, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>
                     Estimasi
                   </div>
                   <div style={{
@@ -5629,14 +5629,14 @@ function CloseKPIForm({ user, context, onBack }) {
                     background: COLORS.white,
                     border: `1px solid ${COLORS.bgMuted}`,
                     borderRadius: 7,
-                    fontSize: 13,
+                    fontSize: 14,
                     color: COLORS.textMuted,
                   }}>
                     {formatFieldValue(estVal, field.satuan, field.type)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, color: COLORS.success, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>
+                  <div style={{ fontSize: 12, color: COLORS.success, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>
                     Realisasi *
                   </div>
                   {isAuto ? (
@@ -5645,7 +5645,7 @@ function CloseKPIForm({ user, context, onBack }) {
                       background: COLORS.infoBg,
                       border: "1px solid #C5DBF0",
                       borderRadius: 7,
-                      fontSize: 13,
+                      fontSize: 14,
                       fontWeight: 700,
                       color: COLORS.primaryDark,
                     }}>
@@ -5670,7 +5670,7 @@ function CloseKPIForm({ user, context, onBack }) {
                         padding: "8px 11px",
                         border: `1px solid ${COLORS.success}`,
                         borderRadius: 7,
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: 700,
                         fontFamily: "inherit",
                         color: COLORS.dark,
@@ -5691,7 +5691,7 @@ function CloseKPIForm({ user, context, onBack }) {
                         padding: "8px 11px",
                         border: `1px solid ${COLORS.success}`,
                         borderRadius: 7,
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: 700,
                         fontFamily: "inherit",
                         color: COLORS.dark,
@@ -5715,13 +5715,13 @@ function CloseKPIForm({ user, context, onBack }) {
         }}>
           <label style={{
             display: "block",
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 800,
             color: "#92400E",
             marginBottom: 6,
           }}>Catatan / Alasan Closing <span style={{ color: COLORS.danger }}>*WAJIB</span>
           </label>
-          <div style={{ fontSize: 10, color: "#78350F", marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: "#78350F", marginBottom: 8 }}>
             Minimal 10 karakter. Ceritakan: kendala, hal penting, atau alasan jika ada selisih besar antara estimasi dan realisasi.
           </div>
           <textarea
@@ -5734,7 +5734,7 @@ function CloseKPIForm({ user, context, onBack }) {
               padding: "10px 12px",
               border: `1px solid ${COLORS.border}`,
               borderRadius: 7,
-              fontSize: 12,
+              fontSize: 13,
               fontFamily: "inherit",
               resize: "vertical",
               boxSizing: "border-box",
@@ -5742,7 +5742,7 @@ function CloseKPIForm({ user, context, onBack }) {
           />
           <div style={{
             marginTop: 5,
-            fontSize: 10,
+            fontSize: 12,
             color: closingNote.length < 10 ? COLORS.danger : COLORS.success,
             fontWeight: 600,
           }}>
@@ -5827,14 +5827,14 @@ function UpdateMonthlyKPIForm({ user, context, onBack }) {
       onBack={onBack}
     >
       <Card style={{ padding: "16px 18px", marginBottom: 14 }}>
-        <div style={{ fontSize: 11, color: COLORS.primaryDark, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12.5, color: COLORS.primaryDark, lineHeight: 1.5 }}>
           KPI bulanan boleh di-update kapan saja sepanjang bulan. Setiap update tercatat di Audit Log.
           Update terakhir akan jadi nilai final saat closing akhir bulan.
         </div>
       </Card>
 
       <Card style={{ padding: "16px 18px" }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, marginBottom: 14 }}>Update Nilai Realisasi
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark, marginBottom: 14 }}>Update Nilai Realisasi
         </div>
 
         {template.fields.map(field => (
@@ -5907,17 +5907,17 @@ function AddExpenseForm({ user, context, onBack }) {
       onBack={onBack}
     >
       <Card style={{ padding: "16px 18px", marginBottom: 14, background: COLORS.infoBg, border: "1px solid #C5DBF0" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
           <span style={{ color: COLORS.primaryDark }}>Budget Project:</span>
           <span style={{ fontWeight: 700, color: COLORS.primaryDark }}>{formatRupiah(project.budgetPlanned)}</span>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 5 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginTop: 5 }}>
           <span style={{ color: COLORS.primaryDark }}>Sudah terpakai:</span>
           <span style={{ fontWeight: 700, color: COLORS.primaryDark }}>
             {formatRupiah(project.budgetSpent)} ({Math.round((project.budgetSpent / project.budgetPlanned) * 100)}%)
           </span>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 5, paddingTop: 6, borderTop: "1px solid #C5DBF0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginTop: 5, paddingTop: 6, borderTop: "1px solid #C5DBF0" }}>
           <span style={{ color: COLORS.primaryDark }}>Sisa budget:</span>
           <span style={{ fontWeight: 800, color: COLORS.success }}>
             {formatRupiah(project.budgetPlanned - project.budgetSpent)}
@@ -5927,7 +5927,7 @@ function AddExpenseForm({ user, context, onBack }) {
 
       <Card style={{ padding: "16px 18px" }}>
         <div style={{ marginBottom: 12 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
             Nama Item / Deskripsi <span style={{ color: COLORS.danger }}>*</span>
           </label>
           <input
@@ -5941,7 +5941,7 @@ function AddExpenseForm({ user, context, onBack }) {
 
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 12 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
+            <label style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
               Nominal (Rp) <span style={{ color: COLORS.danger }}>*</span>
             </label>
             <input
@@ -5952,13 +5952,13 @@ function AddExpenseForm({ user, context, onBack }) {
               style={inputStyle}
             />
             {amount > 0 && (
-              <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 3 }}>
+              <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 3 }}>
                 = {formatRupiah(amount)}
               </div>
             )}
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
+            <label style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
               Tanggal Pengeluaran <span style={{ color: COLORS.danger }}>*</span>
             </label>
             <input
@@ -5971,7 +5971,7 @@ function AddExpenseForm({ user, context, onBack }) {
         </div>
 
         <div style={{ marginBottom: 12 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
             Hubungkan ke Milestone (opsional)
           </label>
           <select
@@ -5995,14 +5995,14 @@ function AddExpenseForm({ user, context, onBack }) {
           border: `2px dashed ${hasFile ? COLORS.success : COLORS.warning}`,
           borderRadius: 10,
         }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: hasFile ? "#065F46" : "#92400E", display: "block", marginBottom: 6 }}>Bukti Pembelian <span style={{ color: COLORS.danger }}>*WAJIB</span>
+          <label style={{ fontSize: 13, fontWeight: 700, color: hasFile ? "#065F46" : "#92400E", display: "block", marginBottom: 6 }}>Bukti Pembelian <span style={{ color: COLORS.danger }}>*WAJIB</span>
           </label>
-          <div style={{ fontSize: 10, color: hasFile ? "#065F46" : "#78350F", marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: hasFile ? "#065F46" : "#78350F", marginBottom: 8 }}>
             Upload foto nota, invoice, atau struk pembelian. Format: JPG, PNG, atau PDF.
           </div>
           {hasFile ? (
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ flex: 1, padding: "8px 12px", background: COLORS.white, borderRadius: 6, fontSize: 12, color: COLORS.success, fontWeight: 600 }}>nota_pembelian_001.jpg (2.3 MB)
+              <div style={{ flex: 1, padding: "8px 12px", background: COLORS.white, borderRadius: 6, fontSize: 13, color: COLORS.success, fontWeight: 600 }}>nota_pembelian_001.jpg (2.3 MB)
               </div>
               <Button variant="ghost" size="sm" onClick={() => setHasFile(false)}>Ganti</Button>
             </div>
@@ -6013,7 +6013,7 @@ function AddExpenseForm({ user, context, onBack }) {
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
             Catatan tambahan (opsional)
           </label>
           <textarea
@@ -6039,7 +6039,7 @@ const inputStyle = {
   padding: "9px 12px",
   border: `1px solid ${COLORS.border}`,
   borderRadius: 8,
-  fontSize: 13,
+  fontSize: 14,
   fontFamily: "inherit",
   background: COLORS.white,
   color: COLORS.dark,
@@ -6280,10 +6280,10 @@ function SubmitProjectForm({ user, context, onBack }) {
             marginBottom: 10,
           }}>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.dark }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>
                 Daftar Milestone <span style={{ color: COLORS.danger }}>*</span>
               </div>
-              <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>
                 {milestones.length} milestone • Bisa diubah/ditambah di Project Detail setelah disetujui
               </div>
             </div>
@@ -6296,7 +6296,7 @@ function SubmitProjectForm({ user, context, onBack }) {
                 color: COLORS.primary,
                 border: `1px solid ${COLORS.primary}`,
                 borderRadius: 7,
-                fontSize: 11,
+                fontSize: 12.5,
                 fontWeight: 700,
                 cursor: "pointer",
                 fontFamily: "inherit",
@@ -6319,7 +6319,7 @@ function SubmitProjectForm({ user, context, onBack }) {
             gridTemplateColumns: "24px 1fr 120px 130px 110px 28px",
             gap: 6,
             padding: "0 2px 6px",
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: 700,
             color: COLORS.textMuted,
             textTransform: "uppercase",
@@ -6350,20 +6350,20 @@ function SubmitProjectForm({ user, context, onBack }) {
                 background: COLORS.white,
                 border: `1px solid ${COLORS.border}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 10, fontWeight: 800, color: COLORS.textMuted,
+                fontSize: 12, fontWeight: 800, color: COLORS.textMuted,
               }}>{idx + 1}</div>
               <input
                 type="text"
                 value={m.name}
                 onChange={e => updateMilestone(m.key, "name", e.target.value)}
                 placeholder="cth: Survey & izin lahan"
-                style={{ ...inputStyle, padding: "7px 10px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 10px", fontSize: 13 }}
               />
               <input
                 type="date"
                 value={m.date}
                 onChange={e => updateMilestone(m.key, "date", e.target.value)}
-                style={{ ...inputStyle, padding: "7px 10px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 10px", fontSize: 13 }}
               />
               <input
                 type="text"
@@ -6374,14 +6374,14 @@ function SubmitProjectForm({ user, context, onBack }) {
                   updateMilestone(m.key, "budget", raw === "" ? "" : Number(raw));
                 }}
                 placeholder="Rp (opsional)"
-                style={{ ...inputStyle, padding: "7px 10px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 10px", fontSize: 13 }}
               />
               <input
                 type="text"
                 value={m.pic}
                 onChange={e => updateMilestone(m.key, "pic", e.target.value)}
                 placeholder="opsional"
-                style={{ ...inputStyle, padding: "7px 10px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 10px", fontSize: 13 }}
               />
               <button
                 onClick={() => removeMilestone(m.key)}
@@ -6421,7 +6421,7 @@ function SubmitProjectForm({ user, context, onBack }) {
                 borderRadius: 8,
                 background: planned === 0 ? COLORS.white : match ? COLORS.successBg : over ? COLORS.dangerBg : COLORS.warningBg,
                 border: `1px solid ${planned === 0 ? COLORS.border : match ? COLORS.success : over ? COLORS.danger : COLORS.warning}`,
-                fontSize: 11,
+                fontSize: 12.5,
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -6469,10 +6469,10 @@ function SubmitProjectForm({ user, context, onBack }) {
             {convertToSubUnit && <Icon name="check" size={13} color={COLORS.white} />}
           </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
               Jadikan Sub Unit baru saat project selesai
             </div>
-            <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+            <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
               Cocok untuk project seperti pembukaan kolam/cabang baru yang akan jadi unit operasional.
             </div>
           </div>
@@ -6496,7 +6496,7 @@ function SubmitProjectForm({ user, context, onBack }) {
               color: COLORS.white,
               border: "none",
               borderRadius: 8,
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: 800,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -6515,7 +6515,7 @@ function SubmitProjectForm({ user, context, onBack }) {
 }
 
 const labelStyle = {
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: 700,
   color: COLORS.dark,
   display: "block",
@@ -6894,14 +6894,14 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
         <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 46, height: 46, borderRadius: 12, background: "rgba(255,255,255,0.12)" }}><Icon name={unit.icon} size={26} color={COLORS.white} /></div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1 }}>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1 }}>
               Project
             </div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>{project.name}</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 5 }}>
+            <div style={{ fontSize: 24, fontWeight: 800 }}>{project.name}</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 5 }}>
               {unit.name}{subUnit && <> · {subUnit.name}</>} • {formatDate(project.startDate)} → {formatDate(project.endDate)}
             </div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", marginTop: 6 }}>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.9)", marginTop: 6 }}>
               {project.desc}
             </div>
           </div>
@@ -6910,20 +6910,20 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
         {/* Dual progress */}
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginTop: 16 }}>
           <div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.75)", marginBottom: 4, fontWeight: 600 }}>Pekerjaan: {milestonesDone}/{milestones.length} milestone
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginBottom: 4, fontWeight: 600 }}>Pekerjaan: {milestonesDone}/{milestones.length} milestone
             </div>
             <ProgressBar value={workProgress} color={COLORS.white} height={8} />
-            <div style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>{workProgress}%</div>
+            <div style={{ fontSize: 15, fontWeight: 800, marginTop: 4 }}>{workProgress}%</div>
           </div>
           <div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.75)", marginBottom: 4, fontWeight: 600 }}>Budget: {formatRupiah(totalSpent)} / {formatRupiah(project.budgetPlanned)}
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginBottom: 4, fontWeight: 600 }}>Budget: {formatRupiah(totalSpent)} / {formatRupiah(project.budgetPlanned)}
             </div>
             <ProgressBar
               value={budgetProgress}
               color={budgetProgress > 100 ? "#FCA5A5" : budgetProgress > 85 ? "#FCD34D" : COLORS.white}
               height={8}
             />
-            <div style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>{budgetProgress}%</div>
+            <div style={{ fontSize: 15, fontWeight: 800, marginTop: 4 }}>{budgetProgress}%</div>
           </div>
         </div>
       </div>
@@ -6944,7 +6944,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
               borderBottom: `2px solid ${tab === key ? COLORS.primary : "transparent"}`,
               background: "transparent",
               color: tab === key ? COLORS.primary : COLORS.textMuted,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 700,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -6958,7 +6958,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
       {/* Tab content */}
       {tab === "overview" && (
         <Card style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark, marginBottom: 14 }}>
             Ringkasan Project
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
@@ -6997,7 +6997,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
 
             return (
               <div style={{ marginTop: 18 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, marginBottom: 4 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, marginBottom: 4 }}>
                   Budget per Bulan — Rencana vs Realisasi
                 </div>
                 <div style={{ fontSize: 10.5, color: COLORS.textMuted, marginBottom: 10 }}>
@@ -7037,7 +7037,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
                               {selisih === 0 ? "0" : formatRupiah(Math.abs(selisih))}
                             </td>
                             <td style={{ padding: "8px 10px" }}>
-                              <span style={{ fontSize: 10, color: statusColor, fontWeight: 700 }}>{statusLabel}</span>
+                              <span style={{ fontSize: 12, color: statusColor, fontWeight: 700 }}>{statusLabel}</span>
                             </td>
                           </tr>
                         );
@@ -7048,7 +7048,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
                         <td style={{ padding: "9px 10px", textAlign: "right", fontWeight: 800, color: COLORS.warning }}>{formatRupiah(totalRealisasi)}</td>
                         <td style={{ padding: "9px 10px", textAlign: "right", fontWeight: 800, color: (totalRencana - totalRealisasi) >= 0 ? COLORS.success : COLORS.danger }}>{formatRupiah(Math.abs(totalRencana - totalRealisasi))}</td>
                         <td style={{ padding: "9px 10px" }}>
-                          <span style={{ fontSize: 10, color: COLORS.textMuted, fontWeight: 700 }}>
+                          <span style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 700 }}>
                             {totalRealisasi < totalRencana ? `${formatRupiah(totalRencana - totalRealisasi)} belum cair` : "Sesuai/terlampaui"}
                           </span>
                         </td>
@@ -7073,10 +7073,10 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
         <Card style={{ padding: "16px 18px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>
                 Milestone Project
               </div>
-              <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+              <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
                 {canEdit ? "Centang milestone yang sudah selesai. Progress otomatis update." : "View only — Anda tidak punya akses edit"}
               </div>
             </div>
@@ -7094,7 +7094,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
                     color: COLORS.white,
                     border: "none",
                     borderRadius: 7,
-                    fontSize: 11,
+                    fontSize: 12.5,
                     fontWeight: 700,
                     cursor: "pointer",
                     fontFamily: "inherit",
@@ -7119,7 +7119,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
               borderRadius: 10,
               marginBottom: 12,
             }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 10 }}>
                 {editingMsId === null ? "Milestone Baru" : "Edit Milestone"}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 130px 120px 120px", gap: 8, marginBottom: 10 }}>
@@ -7173,7 +7173,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
                     color: COLORS.white,
                     border: "none",
                     borderRadius: 7,
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 700,
                     cursor: "pointer",
                     fontFamily: "inherit",
@@ -7204,10 +7204,10 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
         <Card style={{ padding: "16px 18px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>
                 Realisasi Budget (Pengeluaran)
               </div>
-              <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+              <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
                 Total {expenses.length} entry • {formatRupiah(totalSpent)} terpakai
               </div>
             </div>
@@ -7221,7 +7221,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
                   color: COLORS.white,
                   border: "none",
                   borderRadius: 8,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 700,
                   cursor: "pointer",
                   fontFamily: "inherit",
@@ -7245,7 +7245,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
               borderRadius: 10,
               marginBottom: 14,
             }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 10 }}>
                 Input Realisasi Budget
               </div>
               <div style={{ marginBottom: 10 }}>
@@ -7307,7 +7307,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
                 }}>
                   {exHasReceipt && <Icon name="check" size={11} color={COLORS.white} strokeWidth={3} />}
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: COLORS.dark }}>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.dark }}>
                   Bukti/nota terlampir <span style={{ color: COLORS.danger }}>*</span> (wajib untuk realisasi)
                 </span>
               </div>
@@ -7322,7 +7322,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
                     color: COLORS.white,
                     border: "none",
                     borderRadius: 8,
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 700,
                     cursor: "pointer",
                     fontFamily: "inherit",
@@ -7335,7 +7335,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
           )}
 
           {expenses.length === 0 ? (
-            <div style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 12 }}>
+            <div style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 13 }}>
               Belum ada realisasi tercatat
             </div>
           ) : (
@@ -7357,10 +7357,10 @@ function StatBox({ label, value, color }) {
       border: `1px solid ${COLORS.bgMuted}`,
       borderRadius: 10,
     }}>
-      <div style={{ fontSize: 10, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+      <div style={{ fontSize: 12, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
         {label}
       </div>
-      <div style={{ fontSize: 16, fontWeight: 800, color }}>{value}</div>
+      <div style={{ fontSize: 17, fontWeight: 800, color }}>{value}</div>
     </div>
   );
 }
@@ -7407,14 +7407,14 @@ function MilestoneRow({ milestone, spent = 0, isLast, canEdit, onToggle, onEdit,
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: 700,
           color: milestone.done ? "#3F6E31" : COLORS.dark,
           textDecoration: milestone.done ? "line-through" : "none",
         }}>
           {milestone.name}
         </div>
-        <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+        <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
           Target: {formatDate(milestone.date)}{milestone.pic && ` • PIC: ${milestone.pic}`}
         </div>
 
@@ -7425,7 +7425,7 @@ function MilestoneRow({ milestone, spent = 0, isLast, canEdit, onToggle, onEdit,
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              fontSize: 11,
+              fontSize: 12.5,
               marginBottom: 3,
             }}>
               <span style={{ color: COLORS.textMuted }}>
@@ -7451,7 +7451,7 @@ function MilestoneRow({ milestone, spent = 0, isLast, canEdit, onToggle, onEdit,
             </div>
           </div>
         ) : (
-          <div style={{ marginTop: 5, fontSize: 10, color: COLORS.textLight, fontStyle: "italic" }}>
+          <div style={{ marginTop: 5, fontSize: 12, color: COLORS.textLight, fontStyle: "italic" }}>
             Budget belum dialokasi
           </div>
         )}
@@ -7528,15 +7528,15 @@ function ExpenseRow({ expense, milestones, isLast }) {
       }}><Icon name="money" size={18} color={COLORS.warning} /></div>
 
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>{expense.name}</div>
-        <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 2 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>{expense.name}</div>
+        <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>
           {formatDate(expense.date)}
           {ms && <> • Milestone: {ms.name}</>}
           {expense.hasReceipt && <> • Bukti terlampir</>}
         </div>
       </div>
 
-      <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: COLORS.dark }}>
         {formatRupiah(expense.amount)}
       </div>
     </div>
@@ -7548,7 +7548,7 @@ const backButtonStyle = {
   border: "none",
   color: COLORS.textMuted,
   cursor: "pointer",
-  fontSize: 12,
+  fontSize: 13,
   padding: "4px 0 12px",
   fontFamily: "inherit",
 };
@@ -7560,7 +7560,7 @@ const adminBtnStyle = {
   color: COLORS.text,
   border: `1px solid ${COLORS.border}`,
   borderRadius: 7,
-  fontSize: 11,
+  fontSize: 12.5,
   fontWeight: 700,
   cursor: "pointer",
   fontFamily: "inherit",
@@ -7572,7 +7572,7 @@ const adminBtnDanger = {
   color: COLORS.danger,
   border: `1px solid ${COLORS.danger}`,
   borderRadius: 7,
-  fontSize: 11,
+  fontSize: 12.5,
   fontWeight: 700,
   cursor: "pointer",
   fontFamily: "inherit",
@@ -7654,11 +7654,11 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
         <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 46, height: 46, borderRadius: 12, background: "rgba(255,255,255,0.12)" }}><Icon name={unit.icon} size={26} color={COLORS.white} /></div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1 }}>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1 }}>
               KPI Submission
             </div>
-            <div style={{ fontSize: 20, fontWeight: 800 }}>{subUnit.name} — {template.name}</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 5, display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>{subUnit.name} — {template.name}</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 5, display: "flex", alignItems: "center", gap: 6 }}>
               <Icon name="calendar" size={13} color="rgba(255,255,255,0.85)" /> {submission.period}
               {" • "}
               Diajukan oleh {submitter?.name} pada {formatDate(submission.createdAt)}
@@ -7682,7 +7682,7 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
         return (
         <Card style={{ padding: "14px 16px", marginBottom: 14, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-            <div style={{ fontSize: 12, color: "#92400E", maxWidth: 560 }}>
+            <div style={{ fontSize: 13, color: "#92400E", maxWidth: 560 }}>
               {canClose
                 ? "Siklus/event sudah berakhir? Klik tombol untuk closing KPI."
                 : !hasMarginField
@@ -7703,7 +7703,7 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
                   <button
                     type="button"
                     onClick={() => { if (confirm(`Ganti cara input margin ke "${otherLabel}"?`)) changeMarginMode(otherMode); }}
-                    style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: 700, color: COLORS.primary, textDecoration: "underline" }}
+                    style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 700, color: COLORS.primary, textDecoration: "underline" }}
                   >Ganti cara → {otherLabel}</button>
                 </div>
               )}
@@ -7712,7 +7712,7 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
               <button
                 onClick={() => onClose(submission.id)}
                 type="button"
-                style={{ padding: "8px 16px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+                style={{ padding: "8px 16px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
               >Tutup KPI Sekarang</button>
             )}
             {(showDailyBtn || showUpdateBtn) && (
@@ -7721,19 +7721,19 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
                   <button
                     onClick={() => setShowDailyMargin(true)}
                     type="button"
-                    style={{ padding: "8px 16px", background: COLORS.secondary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}
+                    style={{ padding: "8px 16px", background: COLORS.secondary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}
                   >
                     <Icon name="calendar" size={13} color={COLORS.white} style={{ pointerEvents: "none" }} /> Margin Harian
                   </button>
                 )}
                 {showDailyBtn && showUpdateBtn && (
-                  <span style={{ color: "#92400E", fontSize: 11, fontWeight: 700 }}>atau</span>
+                  <span style={{ color: "#92400E", fontSize: 12.5, fontWeight: 700 }}>atau</span>
                 )}
                 {showUpdateBtn && (
                   <button
                     onClick={() => onUpdate(submission.id)}
                     type="button"
-                    style={{ padding: "8px 16px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+                    style={{ padding: "8px 16px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
                   >Update Realisasi</button>
                 )}
               </div>
@@ -7754,12 +7754,12 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
 
       {/* Values comparison */}
       <Card style={{ padding: "16px 18px" }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, marginBottom: 12 }}>Detail Nilai KPI
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark, marginBottom: 12 }}>Detail Nilai KPI
         </div>
 
         {/* Table */}
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ background: COLORS.bgMuted }}>
                 <th style={tableHeaderStyle}>Variabel</th>
@@ -7795,7 +7795,7 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
                         {field.type === "auto" && ""}{field.name}
                         {field.isMargin && <span style={{ marginLeft: 6 }}><Pill color={COLORS.success} bg={COLORS.successBg}></Pill></span>}
                       </div>
-                      <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 2 }}>
+                      <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>
                         {field.satuan && `${field.satuan} • `}{field.source}
                       </div>
                     </td>
@@ -7836,12 +7836,12 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
           background: "#F0FDF4",
           border: "1px solid #BBF7D0",
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#065F46", marginBottom: 6 }}>Catatan Closing
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#065F46", marginBottom: 6 }}>Catatan Closing
           </div>
-          <div style={{ fontSize: 12, color: "#065F46", lineHeight: 1.5, fontStyle: "italic" }}>
+          <div style={{ fontSize: 13, color: "#065F46", lineHeight: 1.5, fontStyle: "italic" }}>
             "{submission.closingNote}"
           </div>
-          <div style={{ fontSize: 10, color: "#065F46", marginTop: 6 }}>
+          <div style={{ fontSize: 12, color: "#065F46", marginTop: 6 }}>
             — Closed pada {formatDate(submission.closedAt)}
           </div>
         </Card>
@@ -7849,7 +7849,7 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
 
       {/* Approval info */}
       {submission.approvedAt && (
-        <Card style={{ marginTop: 10, padding: "10px 14px", background: "#FAFBFC", fontSize: 11, color: COLORS.textMuted }}>Approved by <strong>{getUser(submission.approvedBy)?.name}</strong> pada {formatDate(submission.approvedAt)}
+        <Card style={{ marginTop: 10, padding: "10px 14px", background: "#FAFBFC", fontSize: 12.5, color: COLORS.textMuted }}>Approved by <strong>{getUser(submission.approvedBy)?.name}</strong> pada {formatDate(submission.approvedAt)}
         </Card>
       )}
     </div>
@@ -7858,7 +7858,7 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
 
 const tableHeaderStyle = {
   padding: "10px 12px",
-  fontSize: 10,
+  fontSize: 12,
   fontWeight: 700,
   color: COLORS.textMuted,
   textAlign: "left",
@@ -7936,8 +7936,8 @@ function AdminPanel({ user }) {
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px" }}>
       <div style={{ marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
         <div>
-          <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Admin Panel</h1>
-          <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
+          <h1 style={{ fontFamily: FONTS.heading, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Admin Panel</h1>
+          <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 0" }}>
             Kelola form template, sub unit, dan user. Untuk approval KPI, lihat menu Inbox.
           </p>
         </div>
@@ -7948,7 +7948,7 @@ function AdminPanel({ user }) {
             title="Unduh semua data KPI (template, sub-unit, submission, skor & margin) sebagai file JSON"
             style={{
               padding: "9px 14px", background: COLORS.white, color: COLORS.primary,
-              border: `1px solid ${COLORS.primary}`, borderRadius: 8, fontSize: 12, fontWeight: 700,
+              border: `1px solid ${COLORS.primary}`, borderRadius: 8, fontSize: 13, fontWeight: 700,
               cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
             }}
           >
@@ -7968,7 +7968,7 @@ function AdminPanel({ user }) {
               borderRadius: 8,
               background: section === key ? COLORS.dark : COLORS.white,
               color: section === key ? COLORS.white : COLORS.text,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 600,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -8022,8 +8022,8 @@ function ApprovalInbox({ user } = {}) {
         <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
           <Icon name="checkCircle" size={40} color={COLORS.success} />
         </div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>Tidak ada KPI menunggu approval</div>
-        <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 4 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.dark }}>Tidak ada KPI menunggu approval</div>
+        <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 4 }}>
           {processedIds.length > 0
             ? `${processedIds.length} KPI sudah diproses sesi ini. Semua estimasi sudah ditangani.`
             : "Semua estimasi KPI dari leader & PIC sudah disetujui."}
@@ -8043,7 +8043,7 @@ function ApprovalInbox({ user } = {}) {
           borderBottom: `1px solid ${COLORS.bgMuted}`,
           background: "#FAFBFC",
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5 }}>
             {pending.length} Menunggu Approval
           </div>
         </div>
@@ -8085,18 +8085,18 @@ function ApprovalListItem({ submission, isSelected, onClick }) {
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
         {unit && <Icon name={unit.icon} size={15} color={unit.color} />}
-        <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
           {subUnit?.name}
         </span>
       </div>
-      <div style={{ fontSize: 11, color: COLORS.text, marginBottom: 3 }}>
+      <div style={{ fontSize: 12.5, color: COLORS.text, marginBottom: 3 }}>
         {template?.name}
       </div>
-      <div style={{ fontSize: 10, color: COLORS.textMuted }}>
+      <div style={{ fontSize: 12, color: COLORS.textMuted }}>
         {submission.period}
       </div>
       <div style={{
-        fontSize: 9,
+        fontSize: 11,
         color: COLORS.textLight,
         marginTop: 4,
         display: "flex",
@@ -8186,19 +8186,19 @@ function ApprovalDetail({ submission, onProcessed }) {
         background: `linear-gradient(135deg, ${unit.color}, ${unit.colorDark})`,
         color: COLORS.white,
       }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
           <Icon name={unit.icon} size={13} color="rgba(255,255,255,0.85)" /> {unit.name}
         </div>
-        <div style={{ fontSize: 17, fontWeight: 800, marginTop: 3 }}>
+        <div style={{ fontSize: 18, fontWeight: 800, marginTop: 3 }}>
           {subUnit.name} — {template.name}
         </div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>{submission.period} • Diajukan oleh <strong>{submitter?.name}</strong> pada {formatDate(submission.createdAt)}
+        <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>{submission.period} • Diajukan oleh <strong>{submitter?.name}</strong> pada {formatDate(submission.createdAt)}
         </div>
       </div>
 
       {/* Estimated values */}
       <div style={{ padding: "16px 18px", borderBottom: `1px solid ${COLORS.bgMuted}` }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, marginBottom: 10 }}>Estimasi yang Diajukan
+        <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark, marginBottom: 10 }}>Estimasi yang Diajukan
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 8 }}>
@@ -8216,10 +8216,10 @@ function ApprovalDetail({ submission, onProcessed }) {
                   borderRadius: 8,
                 }}
               >
-                <div style={{ fontSize: 9, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase", marginBottom: 3 }}>
+                <div style={{ fontSize: 11, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase", marginBottom: 3 }}>
                   {isAuto && ""}{field.name}
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: isAuto ? COLORS.primaryDark : COLORS.dark }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: isAuto ? COLORS.primaryDark : COLORS.dark }}>
                   {formatFieldValue(value, field.satuan, field.type)}
                 </div>
                 {field.isMargin && (
@@ -8234,7 +8234,7 @@ function ApprovalDetail({ submission, onProcessed }) {
       {/* Weights setup */}
       <div style={{ padding: "16px 18px", borderBottom: `1px solid ${COLORS.bgMuted}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark }}>Atur Bobot KPI
+          <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>Atur Bobot KPI
           </div>
           <Pill
             color={weightValid ? COLORS.success : COLORS.danger}
@@ -8257,7 +8257,7 @@ function ApprovalDetail({ submission, onProcessed }) {
                 borderRadius: 7,
               }}
             >
-              <div style={{ flex: 1, fontSize: 12, color: COLORS.text, fontWeight: 600 }}>
+              <div style={{ flex: 1, fontSize: 13, color: COLORS.text, fontWeight: 600 }}>
                 {field.name}
                 <span style={{ color: COLORS.textLight, fontWeight: 400, marginLeft: 5 }}>
                   ({field.satuan})
@@ -8274,12 +8274,12 @@ function ApprovalDetail({ submission, onProcessed }) {
                   padding: "5px 8px",
                   border: `1px solid ${COLORS.border}`,
                   borderRadius: 6,
-                  fontSize: 12,
+                  fontSize: 13,
                   textAlign: "right",
                   fontFamily: "inherit",
                 }}
               />
-              <span style={{ fontSize: 12, color: COLORS.textMuted, minWidth: 12 }}>%</span>
+              <span style={{ fontSize: 13, color: COLORS.textMuted, minWidth: 12 }}>%</span>
             </div>
           ))}
         </div>
@@ -8294,7 +8294,7 @@ function ApprovalDetail({ submission, onProcessed }) {
           alignItems: "center",
           gap: 10,
         }}>
-          <div style={{ flex: 1, fontSize: 12, color: COLORS.text, fontWeight: 600 }}>
+          <div style={{ flex: 1, fontSize: 13, color: COLORS.text, fontWeight: 600 }}>
             Bobot {subUnit.name} dalam {unit.name}
           </div>
           <input
@@ -8308,20 +8308,20 @@ function ApprovalDetail({ submission, onProcessed }) {
               padding: "5px 8px",
               border: `1px solid ${unit.color}`,
               borderRadius: 6,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 700,
               textAlign: "right",
               fontFamily: "inherit",
               color: unit.color,
             }}
           />
-          <span style={{ fontSize: 12, color: unit.color, fontWeight: 700, minWidth: 12 }}>%</span>
+          <span style={{ fontSize: 13, color: unit.color, fontWeight: 700, minWidth: 12 }}>%</span>
         </div>
       </div>
 
       {/* Feedback (for reject) */}
       <div style={{ padding: "12px 18px", borderBottom: `1px solid ${COLORS.bgMuted}` }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: COLORS.text, marginBottom: 5 }}>Catatan / Koreksi (opsional untuk approve, wajib untuk reject)
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.text, marginBottom: 5 }}>Catatan / Koreksi (opsional untuk approve, wajib untuk reject)
         </div>
         <textarea
           value={feedback}
@@ -8333,7 +8333,7 @@ function ApprovalDetail({ submission, onProcessed }) {
             padding: "8px 11px",
             border: `1px solid ${COLORS.border}`,
             borderRadius: 7,
-            fontSize: 12,
+            fontSize: 13,
             fontFamily: "inherit",
             resize: "none",
             boxSizing: "border-box",
@@ -8363,7 +8363,7 @@ function ApprovalDetail({ submission, onProcessed }) {
             color: feedback.trim() ? COLORS.danger : COLORS.textLight,
             border: `1px solid ${feedback.trim() ? COLORS.danger : COLORS.border}`,
             borderRadius: 8,
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: 700,
             cursor: "pointer",
             fontFamily: "inherit",
@@ -8382,7 +8382,7 @@ function ApprovalDetail({ submission, onProcessed }) {
             color: COLORS.white,
             border: "none",
             borderRadius: 8,
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: 800,
             cursor: "pointer",
             fontFamily: "inherit",
@@ -8732,8 +8732,8 @@ function FormBuilder({ onClose, initialData }) {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Icon name="cog" size={20} color={COLORS.gold} />
             <div>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>Form Builder — Rancang KPI Baru</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>
+              <div style={{ fontSize: 17, fontWeight: 800 }}>Form Builder — Rancang KPI Baru</div>
+              <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.7)" }}>
                 Semua variabel bisa Bapak tentukan sendiri
               </div>
             </div>
@@ -8754,7 +8754,7 @@ function FormBuilder({ onClose, initialData }) {
 
         <div style={{ padding: "18px 20px", maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}>
           {/* Info dasar */}
-          <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.dark, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>
             1. Info Template
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 180px", gap: 12, marginBottom: 12 }}>
@@ -8795,11 +8795,11 @@ function FormBuilder({ onClose, initialData }) {
             alignItems: "center",
             marginBottom: 10,
           }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5 }}>
               2. Variabel / Field ({fields.length})
             </div>
             <div style={{
-              fontSize: 11,
+              fontSize: 12.5,
               fontWeight: 700,
               padding: "4px 10px",
               borderRadius: 99,
@@ -8819,7 +8819,7 @@ function FormBuilder({ onClose, initialData }) {
             gridTemplateColumns: "40px 1fr 70px 92px 54px 84px 54px 54px 56px 28px",
             gap: 5,
             padding: "0 2px 6px",
-            fontSize: 9,
+            fontSize: 11,
             fontWeight: 700,
             color: COLORS.textMuted,
             textTransform: "uppercase",
@@ -8868,7 +8868,7 @@ function FormBuilder({ onClose, initialData }) {
                     display: "inline-flex", alignItems: "center", justifyContent: "center",
                   }}
                 >
-                  <span style={{ fontSize: 9, color: COLORS.textMuted }}>▲</span>
+                  <span style={{ fontSize: 11, color: COLORS.textMuted }}>▲</span>
                 </button>
                 <button
                   onClick={() => moveField(idx, 1)}
@@ -8885,7 +8885,7 @@ function FormBuilder({ onClose, initialData }) {
                     display: "inline-flex", alignItems: "center", justifyContent: "center",
                   }}
                 >
-                  <span style={{ fontSize: 9, color: COLORS.textMuted }}>▼</span>
+                  <span style={{ fontSize: 11, color: COLORS.textMuted }}>▼</span>
                 </button>
               </div>
 
@@ -8895,14 +8895,14 @@ function FormBuilder({ onClose, initialData }) {
                 value={f.name}
                 onChange={e => updateField(f.key, "name", e.target.value.replace(/\s+/g, "_"))}
                 placeholder="cth: Total_Biaya"
-                style={{ ...inputStyle, padding: "7px 9px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 9px", fontSize: 13 }}
               />
 
               {/* Satuan */}
               <select
                 value={f.satuan}
                 onChange={e => updateField(f.key, "satuan", e.target.value)}
-                style={{ ...inputStyle, padding: "7px 6px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 6px", fontSize: 13 }}
               >
                 {SATUAN_OPTIONS.map(s => (
                   <option key={s} value={s}>{s === "" ? "—" : s}</option>
@@ -8913,7 +8913,7 @@ function FormBuilder({ onClose, initialData }) {
               <select
                 value={f.source}
                 onChange={e => updateField(f.key, "source", e.target.value)}
-                style={{ ...inputStyle, padding: "7px 6px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 6px", fontSize: 13 }}
               >
                 <option value="Manual">Manual</option>
                 <option value="Formula">Otomatis</option>
@@ -8926,7 +8926,7 @@ function FormBuilder({ onClose, initialData }) {
                 onChange={e => updateField(f.key, "weight", e.target.value === "" ? 0 : Number(e.target.value))}
                 min={0}
                 max={100}
-                style={{ ...inputStyle, padding: "7px 6px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 6px", fontSize: 13 }}
               />
 
               {/* Target: arah Min/Maks */}
@@ -8934,7 +8934,7 @@ function FormBuilder({ onClose, initialData }) {
                 value={f.direction || "higher_better"}
                 onChange={e => updateField(f.key, "direction", e.target.value)}
                 title="Min = capai ≥ target (tinggi lebih baik). Maks = jaga ≤ target (rendah lebih baik)."
-                style={{ ...inputStyle, padding: "7px 4px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 4px", fontSize: 13 }}
               >
                 <option value="higher_better">Min</option>
                 <option value="lower_better">Maks</option>
@@ -8947,7 +8947,7 @@ function FormBuilder({ onClose, initialData }) {
                 onChange={e => updateField(f.key, "capPct", e.target.value === "" ? 0 : Number(e.target.value))}
                 min={0}
                 title="Batas atas pencapaian (%)"
-                style={{ ...inputStyle, padding: "7px 5px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 5px", fontSize: 13 }}
               />
 
               {/* Floor % (batas bawah) */}
@@ -8957,7 +8957,7 @@ function FormBuilder({ onClose, initialData }) {
                 onChange={e => updateField(f.key, "floorPct", e.target.value === "" ? 0 : Number(e.target.value))}
                 min={0}
                 title="Batas bawah pencapaian (%)"
-                style={{ ...inputStyle, padding: "7px 5px", fontSize: 12 }}
+                style={{ ...inputStyle, padding: "7px 5px", fontSize: 13 }}
               />
 
               {/* Margin */}
@@ -9011,7 +9011,7 @@ function FormBuilder({ onClose, initialData }) {
                   gap: 8,
                   flexWrap: "wrap",
                 }}>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: COLORS.primaryDark, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.primaryDark, textTransform: "uppercase", letterSpacing: 0.4 }}>
                     Rumus untuk "{f.name || "(belum diberi nama)"}"
                   </div>
                   {/* Mode toggle */}
@@ -9020,7 +9020,7 @@ function FormBuilder({ onClose, initialData }) {
                       type="button"
                       onClick={() => updateField(f.key, "formulaMode", "easy")}
                       style={{
-                        padding: "4px 10px", fontSize: 10, fontWeight: 700,
+                        padding: "4px 10px", fontSize: 12, fontWeight: 700,
                         border: "none", cursor: "pointer", fontFamily: "inherit",
                         background: f.formulaMode !== "advanced" ? COLORS.primary : COLORS.white,
                         color: f.formulaMode !== "advanced" ? COLORS.white : COLORS.textMuted,
@@ -9030,7 +9030,7 @@ function FormBuilder({ onClose, initialData }) {
                       type="button"
                       onClick={() => updateField(f.key, "formulaMode", "advanced")}
                       style={{
-                        padding: "4px 10px", fontSize: 10, fontWeight: 700,
+                        padding: "4px 10px", fontSize: 12, fontWeight: 700,
                         border: "none", cursor: "pointer", fontFamily: "inherit",
                         background: f.formulaMode === "advanced" ? COLORS.primary : COLORS.white,
                         color: f.formulaMode === "advanced" ? COLORS.white : COLORS.textMuted,
@@ -9041,7 +9041,7 @@ function FormBuilder({ onClose, initialData }) {
 
                 {/* Live preview of the resulting expression */}
                 <div style={{
-                  fontSize: 11,
+                  fontSize: 12.5,
                   fontWeight: 700,
                   color: COLORS.primaryDark,
                   background: COLORS.white,
@@ -9062,7 +9062,7 @@ function FormBuilder({ onClose, initialData }) {
                       onChange={e => updateField(f.key, "formulaText", e.target.value)}
                       rows={2}
                       placeholder="cth: (Tebar * SR / 100) * Bobot_per_Ekor / 1000"
-                      style={{ ...inputStyle, fontSize: 12, fontFamily: "monospace", resize: "vertical" }}
+                      style={{ ...inputStyle, fontSize: 13, fontFamily: "monospace", resize: "vertical" }}
                     />
                     {/* Validation hint */}
                     {(() => {
@@ -9070,18 +9070,18 @@ function FormBuilder({ onClose, initialData }) {
                       fields.forEach(rf => { if (rf.name.trim()) refMap[rf.name] = 1; });
                       const r = evalFormula(f.formulaText || "", refMap);
                       if (!f.formulaText || !f.formulaText.trim()) {
-                        return <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 5 }}>Ketik rumus pakai nama field, angka, dan operator + − * / ( )</div>;
+                        return <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 5 }}>Ketik rumus pakai nama field, angka, dan operator + − * / ( )</div>;
                       }
                       return r.ok
-                        ? <div style={{ fontSize: 10, color: COLORS.success, marginTop: 5, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}><Icon name="checkCircle" size={12} color={COLORS.success} /> Rumus valid secara struktur</div>
-                        : <div style={{ fontSize: 10, color: COLORS.danger, marginTop: 5, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}><Icon name="warning" size={12} color={COLORS.danger} /> {r.error}</div>;
+                        ? <div style={{ fontSize: 12, color: COLORS.success, marginTop: 5, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}><Icon name="checkCircle" size={12} color={COLORS.success} /> Rumus valid secara struktur</div>
+                        : <div style={{ fontSize: 12, color: COLORS.danger, marginTop: 5, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}><Icon name="warning" size={12} color={COLORS.danger} /> {r.error}</div>;
                     })()}
-                    <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 8, marginBottom: 4 }}>
+                    <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 8, marginBottom: 4 }}>
                       Klik field untuk menyisipkan ke rumus:
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                       {refOptionsFor(f.key).length === 0 ? (
-                        <span style={{ fontSize: 10, color: COLORS.textLight }}>(belum ada field lain)</span>
+                        <span style={{ fontSize: 12, color: COLORS.textLight }}>(belum ada field lain)</span>
                       ) : (
                         refOptionsFor(f.key).map(rf => (
                           <button
@@ -9122,7 +9122,7 @@ function FormBuilder({ onClose, initialData }) {
                               updateField(f.key, "formulaText", cur + sep + real + " ");
                             }}
                             style={{
-                              fontSize: 12,
+                              fontSize: 13,
                               fontFamily: "monospace",
                               fontWeight: 800,
                               color: COLORS.text,
@@ -9152,14 +9152,14 @@ function FormBuilder({ onClose, initialData }) {
                 {f.formulaSteps.map((step, sIdx) => (
                   <div key={sIdx} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                     {sIdx === 0 ? (
-                      <div style={{ width: 54, fontSize: 11, color: COLORS.textMuted, fontWeight: 700, textAlign: "center" }}>
+                      <div style={{ width: 54, fontSize: 12.5, color: COLORS.textMuted, fontWeight: 700, textAlign: "center" }}>
                         mulai:
                       </div>
                     ) : (
                       <select
                         value={step.operator}
                         onChange={e => updateStep(f.key, sIdx, "operator", e.target.value)}
-                        style={{ ...inputStyle, padding: "6px 4px", fontSize: 14, width: 54, textAlign: "center", fontWeight: 700 }}
+                        style={{ ...inputStyle, padding: "6px 4px", fontSize: 15, width: 54, textAlign: "center", fontWeight: 700 }}
                       >
                         <option value="+">+</option>
                         <option value="-">−</option>
@@ -9171,7 +9171,7 @@ function FormBuilder({ onClose, initialData }) {
                     <select
                       value={step.operandType}
                       onChange={e => updateStep(f.key, sIdx, "operandType", e.target.value)}
-                      style={{ ...inputStyle, padding: "6px 6px", fontSize: 11, width: 95 }}
+                      style={{ ...inputStyle, padding: "6px 6px", fontSize: 12.5, width: 95 }}
                     >
                       <option value="field">Field</option>
                       <option value="number">Angka</option>
@@ -9181,7 +9181,7 @@ function FormBuilder({ onClose, initialData }) {
                       <select
                         value={step.operand}
                         onChange={e => updateStep(f.key, sIdx, "operand", e.target.value)}
-                        style={{ ...inputStyle, padding: "6px 8px", fontSize: 12, flex: 1 }}
+                        style={{ ...inputStyle, padding: "6px 8px", fontSize: 13, flex: 1 }}
                       >
                         <option value="">— pilih field —</option>
                         {refOptionsFor(f.key).map(rf => (
@@ -9194,7 +9194,7 @@ function FormBuilder({ onClose, initialData }) {
                         value={step.operand}
                         onChange={e => updateStep(f.key, sIdx, "operand", e.target.value)}
                         placeholder="cth: 100"
-                        style={{ ...inputStyle, padding: "6px 8px", fontSize: 12, flex: 1 }}
+                        style={{ ...inputStyle, padding: "6px 8px", fontSize: 13, flex: 1 }}
                       />
                     )}
 
@@ -9227,7 +9227,7 @@ function FormBuilder({ onClose, initialData }) {
                     color: COLORS.primary,
                     border: `1px dashed ${COLORS.primary}`,
                     borderRadius: 6,
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: 700,
                     cursor: "pointer",
                     fontFamily: "inherit",
@@ -9240,7 +9240,7 @@ function FormBuilder({ onClose, initialData }) {
                   Tambah langkah
                 </button>
 
-                <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 7, fontStyle: "italic" }}>
+                <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 7, fontStyle: "italic" }}>
                   Dihitung berurutan kiri ke kanan. Untuk rumus berkurung kompleks, gunakan Mode Lanjutan.
                 </div>
                 </>
@@ -9263,7 +9263,7 @@ function FormBuilder({ onClose, initialData }) {
               color: COLORS.primary,
               border: `1px dashed ${COLORS.primary}`,
               borderRadius: 8,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 700,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -9282,7 +9282,7 @@ function FormBuilder({ onClose, initialData }) {
           {/* ─── 3. Uji Nilai (Preview) ─── */}
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${COLORS.border}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5 }}>
                 3. Uji Nilai (Preview Hitung)
               </div>
               <button
@@ -9294,7 +9294,7 @@ function FormBuilder({ onClose, initialData }) {
                   color: showPreview ? COLORS.white : COLORS.primary,
                   border: `1px solid ${COLORS.primary}`,
                   borderRadius: 7,
-                  fontSize: 11,
+                  fontSize: 12.5,
                   fontWeight: 700,
                   cursor: "pointer",
                   fontFamily: "inherit",
@@ -9315,24 +9315,24 @@ function FormBuilder({ onClose, initialData }) {
                 borderRadius: 10,
                 border: `1px solid ${COLORS.border}`,
               }}>
-                <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 10 }}>
+                <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10 }}>
                   Isi nilai contoh untuk field manual, lalu lihat hasil perhitungan field otomatis. Ini menguji rumus Bapak <strong>sebelum</strong> template disimpan.
                 </div>
 
                 {manualFieldsList.length === 0 ? (
-                  <div style={{ fontSize: 11, color: COLORS.textLight, fontStyle: "italic", padding: "8px 0" }}>
+                  <div style={{ fontSize: 12.5, color: COLORS.textLight, fontStyle: "italic", padding: "8px 0" }}>
                     Belum ada field manual untuk diisi. Tambahkan field manual dulu.
                   </div>
                 ) : (
                   <>
                     {/* Manual inputs */}
-                    <div style={{ fontSize: 10, fontWeight: 800, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
                       Input (Field Manual)
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8, marginBottom: 14 }}>
                       {manualFieldsList.map(f => (
                         <div key={f.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <label style={{ fontSize: 11, color: COLORS.text, flex: 1, fontWeight: 600 }}>
+                          <label style={{ fontSize: 12.5, color: COLORS.text, flex: 1, fontWeight: 600 }}>
                             {f.name}{f.satuan ? ` (${f.satuan})` : ""}
                           </label>
                           <input
@@ -9340,18 +9340,18 @@ function FormBuilder({ onClose, initialData }) {
                             value={testValues[f.key] ?? ""}
                             onChange={e => setTestValues({ ...testValues, [f.key]: e.target.value })}
                             placeholder="0"
-                            style={{ ...inputStyle, padding: "6px 9px", fontSize: 12, width: 110 }}
+                            style={{ ...inputStyle, padding: "6px 9px", fontSize: 13, width: 110 }}
                           />
                         </div>
                       ))}
                     </div>
 
                     {/* Computed results */}
-                    <div style={{ fontSize: 10, fontWeight: 800, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
                       Hasil (Field Otomatis)
                     </div>
                     {fields.filter(f => f.source === "Formula" && f.name.trim()).length === 0 ? (
-                      <div style={{ fontSize: 11, color: COLORS.textLight, fontStyle: "italic" }}>
+                      <div style={{ fontSize: 12.5, color: COLORS.textLight, fontStyle: "italic" }}>
                         Belum ada field otomatis.
                       </div>
                     ) : (
@@ -9370,22 +9370,22 @@ function FormBuilder({ onClose, initialData }) {
                               borderRadius: 7,
                             }}>
                               <div>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
                                   {f.name}{f.satuan ? ` (${f.satuan})` : ""}
                                   {f.isMargin && <span style={{ marginLeft: 6 }}><Pill color={COLORS.success} bg={COLORS.successBg}>Margin</Pill></span>}
                                 </div>
-                                <div style={{ fontSize: 10, color: COLORS.textMuted, fontFamily: "monospace", marginTop: 2 }}>
+                                <div style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: "monospace", marginTop: 2 }}>
                                   = {exprForField(f) || "(kosong)"}
                                 </div>
                               </div>
                               <div style={{
-                                fontSize: 14,
+                                fontSize: 15,
                                 fontWeight: 800,
                                 color: hasErr ? COLORS.danger : COLORS.primary,
                                 textAlign: "right",
                               }}>
                                 {hasErr
-                                  ? <span style={{ fontSize: 10, fontWeight: 700 }}>{res.error}</span>
+                                  ? <span style={{ fontSize: 12, fontWeight: 700 }}>{res.error}</span>
                                   : (res ? formatFieldValue(res.value, f.satuan, "number") : "—")}
                               </div>
                             </div>
@@ -9409,7 +9409,7 @@ function FormBuilder({ onClose, initialData }) {
           alignItems: "center",
           background: COLORS.bg,
         }}>
-          <div style={{ fontSize: 11, color: COLORS.textMuted }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
             {fields.filter(f => f.source === "Formula").length} field otomatis • {fields.filter(f => f.source === "Manual").length} field manual
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -9423,7 +9423,7 @@ function FormBuilder({ onClose, initialData }) {
                 color: COLORS.white,
                 border: "none",
                 borderRadius: 8,
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 800,
                 cursor: "pointer",
                 fontFamily: "inherit",
@@ -9479,7 +9479,7 @@ function FormLibrary() {
           justifyContent: "space-between",
           alignItems: "center",
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5 }}>
             {LIVE.templates.length} Template
           </div>
           <button
@@ -9491,7 +9491,7 @@ function FormLibrary() {
               color: COLORS.white,
               border: "none",
               borderRadius: 7,
-              fontSize: 11,
+              fontSize: 12.5,
               fontWeight: 700,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -9555,18 +9555,18 @@ function FormTemplateListItem({ template, isSelected, onClick }) {
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
         <Icon name={freq.icon} size={14} color={freq.color} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
           {template.name}
         </span>
       </div>
-      <div style={{ fontSize: 10, color: COLORS.textMuted, marginBottom: 4 }}>
+      <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 4 }}>
         {template.description}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Pill color={freq.color} bg={freq.color === COLORS.primary ? COLORS.infoBg : freq.color === COLORS.warning ? COLORS.warningBg : COLORS.goldLight}>
           {freq.label}
         </Pill>
-        <span style={{ fontSize: 10, color: COLORS.textLight }}>
+        <span style={{ fontSize: 12, color: COLORS.textLight }}>
           {template.fields.length} field • {usageCount}× pakai
         </span>
       </div>
@@ -9593,13 +9593,13 @@ function FormTemplateDetail({ template, onDuplicate }) {
         alignItems: "flex-start",
       }}>
         <div>
-          <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.dark }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.dark }}>
             {template.name}
           </div>
-          <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 3 }}>
+          <div style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 3 }}>
             {template.description}
           </div>
-          <div style={{ fontSize: 10, color: COLORS.textLight, marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 4 }}>
             Dibuat: {formatDate(template.createdAt)}
             {" • "}
             Frekuensi: <strong>{template.frequency}</strong>
@@ -9659,7 +9659,7 @@ function FormTemplateDetail({ template, onDuplicate }) {
           padding: "10px 18px",
           background: COLORS.warningBg,
           borderBottom: `1px solid #EBD9B4`,
-          fontSize: 11,
+          fontSize: 12.5,
           color: "#8A6420",
           display: "flex",
           alignItems: "center",
@@ -9674,7 +9674,7 @@ function FormTemplateDetail({ template, onDuplicate }) {
 
       {/* Manual fields */}
       <div style={{ padding: "16px 18px", borderBottom: `1px solid ${COLORS.bgMuted}` }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Field Input Manual ({manualFields.length})
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Field Input Manual ({manualFields.length})
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
           {manualFields.map(field => (
@@ -9686,7 +9686,7 @@ function FormTemplateDetail({ template, onDuplicate }) {
       {/* Auto fields */}
       {autoFields.length > 0 && (
         <div style={{ padding: "16px 18px", borderBottom: `1px solid ${COLORS.bgMuted}` }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Field Auto-Calculate ({autoFields.length})
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.dark, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Field Auto-Calculate ({autoFields.length})
           </div>
           <div style={{ display: "grid", gap: 6 }}>
             {autoFields.map(field => {
@@ -9705,7 +9705,7 @@ function FormTemplateDetail({ template, onDuplicate }) {
                   }}
                 >
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.primaryDark }}>{field.name}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.primaryDark }}>{field.name}
                       <span style={{ color: COLORS.textMuted, fontWeight: 400, marginLeft: 5 }}>
                         ({field.satuan})
                       </span>
@@ -9714,12 +9714,12 @@ function FormTemplateDetail({ template, onDuplicate }) {
                       )}
                     </div>
                     {formula && (
-                      <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 3, fontFamily: "monospace" }}>
+                      <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 3, fontFamily: "monospace" }}>
                         = {formula.formula}
                       </div>
                     )}
                   </div>
-                  <div style={{ fontSize: 10, color: COLORS.textLight }}>
+                  <div style={{ fontSize: 12, color: COLORS.textLight }}>
                     Default: {field.defaultWeight}%
                   </div>
                 </div>
@@ -9734,7 +9734,7 @@ function FormTemplateDetail({ template, onDuplicate }) {
         padding: "10px 14px",
         background: marginField ? "#F0FDF4" : "#FFFBEB",
         borderTop: `1px solid ${marginField ? "#BBF7D0" : "#FDE68A"}`,
-        fontSize: 10,
+        fontSize: 12,
         color: marginField ? "#065F46" : "#92400E",
       }}>
         {marginField
@@ -9762,11 +9762,11 @@ function FormFieldCard({ field }) {
       borderRadius: 7,
       border: `1px solid ${COLORS.bgMuted}`,
     }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.dark, marginBottom: 3 }}>
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.dark, marginBottom: 3 }}>
         {field.name}
         {field.isMargin && <span style={{ marginLeft: 4 }}></span>}
       </div>
-      <div style={{ fontSize: 9, color: s.color, fontWeight: 600 }}>
+      <div style={{ fontSize: 11, color: s.color, fontWeight: 600 }}>
         {field.satuan && <>{field.satuan} • </>}
         {field.source}
       </div>
@@ -9909,8 +9909,8 @@ function UnitManager() {
         gap: 10,
       }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800 }}>Unit Manager</h3>
-          <p style={{ margin: "3px 0 0", fontSize: 11, color: COLORS.textMuted }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>Unit Manager</h3>
+          <p style={{ margin: "3px 0 0", fontSize: 12.5, color: COLORS.textMuted }}>
             Kelola unit bisnis: tambah, ganti nama, atur leader, warna & ikon
           </p>
         </div>
@@ -9923,7 +9923,7 @@ function UnitManager() {
             color: COLORS.white,
             border: "none",
             borderRadius: 8,
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 700,
             cursor: "pointer",
             fontFamily: "inherit",
@@ -9944,7 +9944,7 @@ function UnitManager() {
           background: COLORS.infoBg,
           borderBottom: `1px solid ${COLORS.border}`,
         }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 12 }}>
             {editingId === null ? "Unit Baru" : "Edit Unit"}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
@@ -10034,8 +10034,8 @@ function UnitManager() {
                 <Icon name={fIcon} size={20} color={UNIT_COLOR_OPTIONS[fColorIdx].color} />
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>{fName || "Nama Unit"}</div>
-                <div style={{ fontSize: 10, color: COLORS.textMuted }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>{fName || "Nama Unit"}</div>
+                <div style={{ fontSize: 12, color: COLORS.textMuted }}>
                   {fLeaderId ? `Leader: ${getUser(fLeaderId)?.name}` : "Tanpa Leader"}
                 </div>
               </div>
@@ -10054,7 +10054,7 @@ function UnitManager() {
                 color: COLORS.white,
                 border: "none",
                 borderRadius: 8,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 700,
                 cursor: busy ? "not-allowed" : "pointer",
                 opacity: busy ? 0.6 : 1,
@@ -10093,8 +10093,8 @@ function UnitManager() {
                 <Icon name={unit.icon} size={20} color={unit.color} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>{unit.name}</div>
-                <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>{unit.name}</div>
+                <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
                   {leader ? `Leader: ${leader.name}` : <em style={{ color: COLORS.warning }}>Tanpa Leader</em>}
                   {" • "}
                   {dep.subCount} sub unit • {dep.projCount} project
@@ -10131,7 +10131,7 @@ function UnitManager() {
         padding: "10px 14px",
         background: COLORS.warningBg,
         borderTop: `1px solid #EBD9B4`,
-        fontSize: 10,
+        fontSize: 12,
         color: "#8A6420",
       }}>
         Nama & leader unit bisa diganti kapan saja tanpa merusak data. Unit hanya bisa dihapus jika sudah kosong (tanpa sub unit, KPI, atau project).
@@ -10258,8 +10258,8 @@ function SubUnitManager() {
         gap: 10,
       }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800 }}>Sub Unit Manager</h3>
-          <p style={{ margin: "3px 0 0", fontSize: 11, color: COLORS.textMuted }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>Sub Unit Manager</h3>
+          <p style={{ margin: "3px 0 0", fontSize: 12.5, color: COLORS.textMuted }}>
             Setiap unit punya beberapa sub unit, masing-masing punya PIC sendiri
           </p>
         </div>
@@ -10272,7 +10272,7 @@ function SubUnitManager() {
             color: showForm ? COLORS.text : COLORS.white,
             border: showForm ? `1px solid ${COLORS.border}` : "none",
             borderRadius: 8,
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 700,
             cursor: "pointer",
             fontFamily: "inherit",
@@ -10293,7 +10293,7 @@ function SubUnitManager() {
           background: COLORS.infoBg,
           borderBottom: `1px solid ${COLORS.border}`,
         }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 12 }}>
             {editingId === null ? "Sub Unit Baru" : "Edit Sub Unit"}
           </div>
           {(() => {
@@ -10314,10 +10314,10 @@ function SubUnitManager() {
                       borderRadius: 8,
                     }}>
                       <Icon name="lock" size={14} color={COLORS.textMuted} />
-                      <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.text }}>
                         {UNITS[formParentId]?.name}
                       </span>
-                      <span style={{ fontSize: 10, color: COLORS.warning, marginLeft: "auto" }}>
+                      <span style={{ fontSize: 12, color: COLORS.warning, marginLeft: "auto" }}>
                         Tidak bisa dipindah — sudah punya {editingKpiCount} KPI
                       </span>
                     </div>
@@ -10355,7 +10355,7 @@ function SubUnitManager() {
           })()}
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
             <button onClick={() => setShowForm(false)} type="button" style={adminBtnStyle}>Batal</button>
-            <button onClick={handleAdd} type="button" style={{ padding: "8px 18px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{editingId === null ? "Simpan Sub Unit" : "Simpan Perubahan"}</button>
+            <button onClick={handleAdd} type="button" style={{ padding: "8px 18px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{editingId === null ? "Simpan Sub Unit" : "Simpan Perubahan"}</button>
           </div>
         </div>
       )}
@@ -10365,7 +10365,7 @@ function SubUnitManager() {
         background: COLORS.bgMuted,
         borderBottom: `1px solid ${COLORS.bgMuted}`,
       }}>
-        <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, marginBottom: 6 }}>
+        <div style={{ fontSize: 12.5, color: COLORS.textMuted, fontWeight: 600, marginBottom: 6 }}>
           Pilih Unit:
         </div>
         <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
@@ -10382,7 +10382,7 @@ function SubUnitManager() {
                   border: `1px solid ${isActive ? unit.color : COLORS.border}`,
                   background: isActive ? unit.color : COLORS.white,
                   color: isActive ? COLORS.white : COLORS.text,
-                  fontSize: 11,
+                  fontSize: 12.5,
                   fontWeight: 600,
                   cursor: "pointer",
                   fontFamily: "inherit",
@@ -10401,7 +10401,7 @@ function SubUnitManager() {
             padding: "30px 20px",
             textAlign: "center",
             color: COLORS.textLight,
-            fontSize: 12,
+            fontSize: 13,
           }}>
             Belum ada sub unit untuk {selectedUnit.name}
           </div>
@@ -10423,7 +10423,7 @@ function SubUnitManager() {
         padding: "10px 14px",
         background: COLORS.warningBg,
         borderTop: `1px solid #EBD9B4`,
-        fontSize: 10,
+        fontSize: 12,
         color: "#8A6420",
       }}>Saat sub unit baru dibuat, otomatis bisa di-assign ke PIC. PIC dapat akses login & workspace sendiri.
       </div>
@@ -10450,11 +10450,11 @@ function SubUnitManagerRow({ subUnit, parentUnit, isLast, kpiCount = 0, onEdit, 
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>{subUnit.name}</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>{subUnit.name}</span>
           <Pill color={COLORS.success} bg={COLORS.successBg}>{subUnit.status}</Pill>
           {kpiCount > 0 && <Pill color={COLORS.primary} bg={COLORS.infoBg}>{kpiCount} KPI</Pill>}
         </div>
-        <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+        <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
           PIC: {subUnit.pic ? (
             <strong style={{ color: COLORS.text }}>{subUnit.pic.name} ({subUnit.pic.email})</strong>
           ) : (
@@ -10596,8 +10596,8 @@ function UserManager() {
         gap: 10,
       }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800 }}>User Manager</h3>
-          <p style={{ margin: "3px 0 0", fontSize: 11, color: COLORS.textMuted }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>User Manager</h3>
+          <p style={{ margin: "3px 0 0", fontSize: 12.5, color: COLORS.textMuted }}>
             Total {allUsers.length} user (termasuk {counts[ROLES.PIC]} PIC sub unit)
           </p>
         </div>
@@ -10610,7 +10610,7 @@ function UserManager() {
             color: showForm ? COLORS.text : COLORS.white,
             border: showForm ? `1px solid ${COLORS.border}` : "none",
             borderRadius: 8,
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 700,
             cursor: "pointer",
             fontFamily: "inherit",
@@ -10631,11 +10631,11 @@ function UserManager() {
           background: COLORS.infoBg,
           borderBottom: `1px solid ${COLORS.border}`,
         }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 12 }}>
             {editingId ? "Ubah User" : "User Baru"}
           </div>
           {error && (
-            <div style={{ fontSize: 11, color: COLORS.danger, background: COLORS.dangerBg, padding: "8px 10px", borderRadius: 8, marginBottom: 12 }}>
+            <div style={{ fontSize: 12.5, color: COLORS.danger, background: COLORS.dangerBg, padding: "8px 10px", borderRadius: 8, marginBottom: 12 }}>
               {error}
             </div>
           )}
@@ -10701,7 +10701,7 @@ function UserManager() {
               onClick={handleSave}
               type="button"
               disabled={busy}
-              style={{ padding: "8px 18px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1, fontFamily: "inherit" }}
+              style={{ padding: "8px 18px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1, fontFamily: "inherit" }}
             >
               {busy ? "Menyimpan…" : (editingId ? "Simpan Perubahan" : "Simpan User")}
             </button>
@@ -10735,7 +10735,7 @@ function UserManager() {
               border: `1px solid ${filterRole === key ? COLORS.dark : COLORS.border}`,
               background: filterRole === key ? COLORS.dark : COLORS.white,
               color: filterRole === key ? COLORS.white : COLORS.text,
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: 600,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -10747,13 +10747,13 @@ function UserManager() {
       </div>
 
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+        <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ background: "#F8FAFC" }}>
               {["Nama", "Email", "Role", "Unit / Sub Unit", "Aksi"].map(h => (
                 <th key={h} style={{
                   padding: "9px 12px",
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 700,
                   color: COLORS.textMuted,
                   textAlign: "left",
@@ -10775,7 +10775,7 @@ function UserManager() {
         padding: "10px 14px",
         background: "#FFFBEB",
         borderTop: `1px solid #FDE68A`,
-        fontSize: 10,
+        fontSize: 12,
         color: "#92400E",
       }}>PIC sub unit punya akun login sendiri, terpisah dari Leader. Mereka hanya lihat sub unit yang ditugaskan.
       </div>
@@ -10800,7 +10800,7 @@ function UserManagerRow({ user, onEdit, onDelete }) {
             width: 28, height: 28, borderRadius: 99,
             background: COLORS.bgMuted, color: COLORS.text,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, fontWeight: 800, flexShrink: 0,
+            fontSize: 13, fontWeight: 800, flexShrink: 0,
           }}>{user.name.charAt(0)}</span>
           <span style={{ fontWeight: 700, color: COLORS.dark }}>{user.name}</span>
         </div>
@@ -10809,7 +10809,7 @@ function UserManagerRow({ user, onEdit, onDelete }) {
       <td style={{ padding: "10px 12px" }}>
         <Pill color={COLORS.text} bg={COLORS.bgMuted}>{ROLE_LABELS[user.role]}</Pill>
       </td>
-      <td style={{ padding: "10px 12px", color: COLORS.textMuted, fontSize: 11 }}>{location}</td>
+      <td style={{ padding: "10px 12px", color: COLORS.textMuted, fontSize: 12.5 }}>{location}</td>
       <td style={{ padding: "10px 12px" }}>
         <div style={{ display: "flex", gap: 4 }}>
           <button onClick={() => onEdit(user)} style={adminBtnStyle}>Edit</button>
@@ -10855,10 +10855,10 @@ function LeaderWorkspace({ user, onSubmitNew, onSelectSubmission }) {
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "20px 14px" }}>
       <div style={{ marginBottom: 14 }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: 22, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>
+        <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>
           Halo {user.name}
         </h1>
-        <p style={{ fontSize: 11, color: COLORS.textMuted, margin: "3px 0 0" }}>
+        <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: "3px 0 0" }}>
           Leader {unit.name} • {APP_CONFIG.period}
         </p>
       </div>
@@ -10874,13 +10874,13 @@ function LeaderWorkspace({ user, onSubmitNew, onSelectSubmission }) {
         alignItems: "center",
       }}>
         <div>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.75)", textTransform: "uppercase", letterSpacing: 1 }}>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", textTransform: "uppercase", letterSpacing: 1 }}>
             Pencapaian Unit
           </div>
-          <div style={{ fontSize: 30, fontWeight: 800 }}>
-            {unitScore}% <span style={{ fontSize: 13, fontWeight: 600 }}>· {status.label}</span>
+          <div style={{ fontSize: 34, fontWeight: 800 }}>
+            {unitScore}% <span style={{ fontSize: 14, fontWeight: 600 }}>· {status.label}</span>
           </div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
+          <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
             {subUnits.length} sub unit
           </div>
         </div>
@@ -10891,8 +10891,8 @@ function LeaderWorkspace({ user, onSubmitNew, onSelectSubmission }) {
       <Card style={{ padding: "12px 16px", marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>Ajukan KPI</div>
-            <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>Ajukan KPI</div>
+            <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
               Anda bisa ajukan KPI mewakili sub unit (terutama yang belum punya PIC)
             </div>
           </div>
@@ -10909,7 +10909,7 @@ function LeaderWorkspace({ user, onSubmitNew, onSelectSubmission }) {
             padding: "8px 11px",
             background: COLORS.warningBg,
             borderRadius: 7,
-            fontSize: 11,
+            fontSize: 12.5,
             color: "#92400E",
           }}>{subUnitsWithoutPic.length} sub unit belum punya PIC: {subUnitsWithoutPic.map(su => su.name).join(", ")}. Anda perlu input KPI-nya sendiri.
           </div>
@@ -10961,10 +10961,10 @@ function LeaderSubUnitCard({ subUnit, parentUnit, onSubmitNew }) {
 
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-            <span style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>{subUnit.name}</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>{subUnit.name}</span>
             <Pill color={status.color} bg={status.bg}>{status.label}</Pill>
           </div>
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 6 }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 6 }}>
             PIC: {subUnit.pic ? <strong>{subUnit.pic.name}</strong> : <em>Belum ditugaskan</em>}
           </div>
           <ProgressBar value={score} color={status.color} height={6} />
@@ -10972,8 +10972,8 @@ function LeaderSubUnitCard({ subUnit, parentUnit, onSubmitNew }) {
 
         <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
           <div>
-            <div style={{ fontSize: 9, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase" }}>Skor</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: status.color }}>{score}%</div>
+            <div style={{ fontSize: 11, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase" }}>Skor</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: status.color }}>{score}%</div>
           </div>
           {!subUnit.picId && onSubmitNew && (
             <Button variant="secondary" size="sm" onClick={() => onSubmitNew(subUnit.id)}>
@@ -11109,8 +11109,8 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Icon name="calendar" size={20} color={COLORS.gold} />
             <div>
-              <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 700 }}>Input Margin Harian</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>
+              <div style={{ fontFamily: FONTS.heading, fontSize: 17, fontWeight: 700 }}>Input Margin Harian</div>
+              <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.7)" }}>
                 {subUnitName} • {MONTH_NAMES_ID[monthIdx]} {year}
               </div>
             </div>
@@ -11133,20 +11133,20 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
           gap: 12,
         }}>
           <div>
-            <div style={{ fontSize: 10, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Total Margin Bulan</div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: totalMargin >= 0 ? COLORS.primary : COLORS.danger }}>
+            <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Total Margin Bulan</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: totalMargin >= 0 ? COLORS.primary : COLORS.danger }}>
               {formatRupiahFull(totalMargin)}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 10, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Hari Terisi</div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.dark }}>{filledDays} / {totalDays}</div>
+            <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Hari Terisi</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.dark }}>{filledDays} / {totalDays}</div>
           </div>
           <div>
-            <div style={{ fontSize: 10, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>
               {pctOfTarget !== null ? "Capaian vs Target" : "Rata-rata/Hari"}
             </div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.dark }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.dark }}>
               {pctOfTarget !== null ? `${pctOfTarget}%` : formatRupiah(avgPerDay)}
             </div>
           </div>
@@ -11156,17 +11156,17 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
         <div style={{ padding: "14px 20px 0", display: "flex", gap: 0, alignItems: "center" }}>
           <div style={{ display: "flex", border: `1px solid ${COLORS.border}`, borderRadius: 8, overflow: "hidden" }}>
             <button type="button" onClick={() => setMode("table")} style={{
-              padding: "6px 14px", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "inherit",
+              padding: "6px 14px", fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "inherit",
               background: mode === "table" ? COLORS.primary : COLORS.white,
               color: mode === "table" ? COLORS.white : COLORS.textMuted,
             }}>Tabel Sebulan</button>
             <button type="button" onClick={() => setMode("quick")} style={{
-              padding: "6px 14px", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "inherit",
+              padding: "6px 14px", fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "inherit",
               background: mode === "quick" ? COLORS.primary : COLORS.white,
               color: mode === "quick" ? COLORS.white : COLORS.textMuted,
             }}>Input Cepat</button>
           </div>
-          <div style={{ fontSize: 10, color: COLORS.textMuted, marginLeft: 12 }}>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, marginLeft: 12 }}>
             Hari tanpa margin isi 0. Total otomatis jadi realisasi bulan.
           </div>
         </div>
@@ -11205,13 +11205,13 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
               </div>
               <button onClick={saveQuick} type="button" style={{
                 padding: "9px 18px", background: COLORS.primary, color: COLORS.white, border: "none",
-                borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
                 display: "inline-flex", alignItems: "center", gap: 6,
               }}>
                 <Icon name="save" size={14} color={COLORS.white} /> Simpan & Lanjut Hari Berikutnya
               </button>
               {filledDays > 0 && (
-                <div style={{ marginTop: 14, fontSize: 11, color: COLORS.textMuted }}>
+                <div style={{ marginTop: 14, fontSize: 12.5, color: COLORS.textMuted }}>
                   Sudah terisi: {Object.keys(daily).filter(d => daily[d] !== "" && daily[d] !== undefined).sort((a,b)=>a-b).map(d => `tgl ${d}`).join(", ")}
                 </div>
               )}
@@ -11223,7 +11223,7 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
               gap: 6,
             }}>
               {weekdayLabels.map(w => (
-                <div key={w} style={{ fontSize: 9, fontWeight: 700, color: COLORS.textMuted, textAlign: "center", textTransform: "uppercase" }}>{w}</div>
+                <div key={w} style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textAlign: "center", textTransform: "uppercase" }}>{w}</div>
               ))}
               {/* leading blanks to align first day to weekday */}
               {Array.from({ length: new Date(year, monthIdx, 1).getDay() }).map((_, i) => (
@@ -11239,7 +11239,7 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
                     padding: "5px 5px 6px",
                     background: filled ? COLORS.infoBg : COLORS.white,
                   }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: COLORS.textMuted, marginBottom: 3 }}>{day}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 3 }}>{day}</div>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -11251,7 +11251,7 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
                       placeholder="0"
                       style={{
                         width: "100%", boxSizing: "border-box",
-                        padding: "4px 5px", fontSize: 11,
+                        padding: "4px 5px", fontSize: 12.5,
                         border: `1px solid ${COLORS.border}`, borderRadius: 5,
                         fontFamily: "inherit", textAlign: "right",
                       }}
@@ -11268,14 +11268,14 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
           padding: "14px 20px", borderTop: `1px solid ${COLORS.border}`,
           display: "flex", justifyContent: "space-between", alignItems: "center", background: COLORS.bg,
         }}>
-          <div style={{ fontSize: 11, color: COLORS.textMuted }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
             Total bulan: <strong style={{ color: COLORS.dark }}>{formatRupiahFull(totalMargin)}</strong> dari {filledDays} hari terisi
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={onClose} type="button" style={adminBtnStyle}>Batal</button>
             <button onClick={handleSaveAll} type="button" disabled={busy} style={{
               padding: "9px 22px", background: COLORS.primary, color: COLORS.white, border: "none",
-              borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: busy ? "not-allowed" : "pointer",
+              borderRadius: 8, fontSize: 14, fontWeight: 800, cursor: busy ? "not-allowed" : "pointer",
               opacity: busy ? 0.6 : 1, fontFamily: "inherit",
               display: "inline-flex", alignItems: "center", gap: 7,
             }}>
@@ -11338,10 +11338,10 @@ function PICWorkspace({ user, onSubmitNew, onCloseKPI, onUpdateMonthly, onSelect
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "20px 14px" }}>
       <div style={{ marginBottom: 14 }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: 22, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>
+        <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>
           Halo {user.name}
         </h1>
-        <p style={{ fontSize: 11, color: COLORS.textMuted, margin: "3px 0 0" }}>
+        <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: "3px 0 0" }}>
           PIC {subUnit.name} • {APP_CONFIG.period}
         </p>
       </div>
@@ -11357,25 +11357,25 @@ function PICWorkspace({ user, onSubmitNew, onCloseKPI, onUpdateMonthly, onSelect
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 50, height: 50, borderRadius: 13, background: "rgba(255,255,255,0.12)" }}><Icon name={subUnit.icon} size={28} color={COLORS.white} /></div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1 }}>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1 }}>
               Sub Unit Anda
             </div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>{subUnit.name}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)" }}>
+            <div style={{ fontSize: 24, fontWeight: 800 }}>{subUnit.name}</div>
+            <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.85)" }}>
               Bagian dari {parentUnit.name}
               {leader && ` • Leader: ${leader.name}`}
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.7)" }}>Skor Terakhir</div>
-            <div style={{ fontSize: 32, fontWeight: 800 }}>{score > 0 ? `${score}%` : "—"}</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>Skor Terakhir</div>
+            <div style={{ fontSize: 36, fontWeight: 800 }}>{score > 0 ? `${score}%` : "—"}</div>
           </div>
         </div>
 
         <div style={{
           display: "flex",
           gap: 14,
-          fontSize: 11,
+          fontSize: 12.5,
           color: "rgba(255,255,255,0.85)",
           flexWrap: "wrap",
         }}>
@@ -11389,8 +11389,8 @@ function PICWorkspace({ user, onSubmitNew, onCloseKPI, onUpdateMonthly, onSelect
       <Card style={{ padding: "12px 16px", marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>KPI Anda</div>
-            <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.dark }}>KPI Anda</div>
+            <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
               {pendingApproval.length} menunggu approval • {inProgress.length} berjalan • {completed.length} selesai
             </div>
           </div>
@@ -11449,7 +11449,7 @@ function PICWorkspace({ user, onSubmitNew, onCloseKPI, onUpdateMonthly, onSelect
       )}
 
       {mySubmissions.length === 0 && (
-        <Card style={{ padding: 30, textAlign: "center", color: COLORS.textMuted, fontSize: 12 }}>
+        <Card style={{ padding: 30, textAlign: "center", color: COLORS.textMuted, fontSize: 13 }}>
           Belum ada KPI yang diajukan. Klik "Ajukan KPI Baru" untuk mulai.
         </Card>
       )}
@@ -11492,12 +11492,12 @@ function SubmissionRow({ submission, canClose, canUpdate, onClose, onUpdate, onV
         }}><Icon name={info.icon} size={20} color={info.color} /></div>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>
               {template?.name || "—"}
             </span>
             <Pill color={info.color} bg={info.bg}>{info.label}</Pill>
           </div>
-          <div style={{ fontSize: 11, color: COLORS.textMuted }}>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
             {submission.period}
             {submission.approvedAt && <> • Approved: {formatDate(submission.approvedAt)}</>}
             {submission.closedAt && <> • Closed: {formatDate(submission.closedAt)}</>}
@@ -11509,7 +11509,7 @@ function SubmissionRow({ submission, canClose, canUpdate, onClose, onUpdate, onV
               onClick={onDailyMargin}
               type="button"
               title="Input margin harian"
-              style={{ padding: "5px 12px", background: COLORS.secondary, color: COLORS.white, border: "none", borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}
+              style={{ padding: "5px 12px", background: COLORS.secondary, color: COLORS.white, border: "none", borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}
             >
               <Icon name="calendar" size={12} color={COLORS.white} style={{ pointerEvents: "none" }} /> Margin Harian
             </button>
@@ -11518,21 +11518,21 @@ function SubmissionRow({ submission, canClose, canUpdate, onClose, onUpdate, onV
             <button
               onClick={() => onClose && onClose(submission.id)}
               type="button"
-              style={{ padding: "5px 12px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+              style={{ padding: "5px 12px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
             >Tutup KPI</button>
           )}
           {canUpdate && (
             <button
               onClick={() => onUpdate && onUpdate(submission.id)}
               type="button"
-              style={{ padding: "5px 12px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+              style={{ padding: "5px 12px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
             >Update</button>
           )}
           <button
             onClick={() => onView && onView(submission.id)}
             type="button"
             title="Lihat detail"
-            style={{ padding: "5px 10px", background: COLORS.white, color: COLORS.text, border: `1px solid ${COLORS.border}`, borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}
+            style={{ padding: "5px 10px", background: COLORS.white, color: COLORS.text, border: `1px solid ${COLORS.border}`, borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}
           >
             <Icon name="eye" size={13} color={COLORS.textMuted} /> Lihat
           </button>
@@ -11802,7 +11802,7 @@ function AppInner() {
       <div style={{
         minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
         background: `linear-gradient(135deg, ${COLORS.dark}, #1E1B4B)`, color: COLORS.white,
-        fontFamily: FONTS.body, fontSize: 14, gap: 10, flexDirection: "column",
+        fontFamily: FONTS.body, fontSize: 15, gap: 10, flexDirection: "column",
       }}>
         <img src={GDN_LOGO} alt="GDN" style={{ height: 48, opacity: 0.9 }} />
         <div>Memuat data…</div>
