@@ -3738,7 +3738,7 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
           <h1 style={{ fontFamily: FONTS.heading, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Project Lintas Unit
           </h1>
           <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 0" }}>
-            Total {stats.total} project • {stats.onTrack} on track • {stats.atRisk} perhatian • {stats.behind} tertinggal
+            Pantau progres pekerjaan & budget project di semua unit.
           </p>
         </div>
         {canPropose && onNewProject && (
@@ -3764,6 +3764,34 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
             Ajukan Project Baru
           </button>
         )}
+      </div>
+
+      {/* Triase: chip ringkasan yang bisa diklik untuk memfilter status */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
+        {[
+          { key: "all",      n: stats.total,   l: "Total Project", c: COLORS.dark },
+          { key: "on_track", n: stats.onTrack, l: "On Track",      c: COLORS.success },
+          { key: "at_risk",  n: stats.atRisk,  l: "Perhatian",     c: COLORS.warning },
+          { key: "behind",   n: stats.behind,  l: "Tertinggal",    c: COLORS.danger },
+        ].map(ch => {
+          const active = filterStatus === ch.key;
+          return (
+            <button
+              key={ch.key}
+              type="button"
+              onClick={() => setFilterStatus(ch.key)}
+              style={{
+                position: "relative", overflow: "hidden", textAlign: "left", cursor: "pointer", fontFamily: "inherit",
+                background: COLORS.white, border: `1px solid ${active ? ch.c : COLORS.border}`,
+                borderRadius: 14, padding: "13px 16px", boxShadow: active ? `0 1px 3px ${ch.c}33` : "none",
+              }}
+            >
+              {active && <span style={{ position: "absolute", left: 0, top: 0, width: 3, height: "100%", background: ch.c }} />}
+              <div style={{ fontFamily: FONTS.heading, fontSize: 26, fontWeight: 800, color: ch.c, letterSpacing: -0.6, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{ch.n}</div>
+              <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 5, fontWeight: 600 }}>{ch.l}</div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Filters */}
@@ -3844,53 +3872,55 @@ function ProjectListItem({ project, onClick }) {
   const { workProgress, budgetProgress } = calculateProjectProgress(project);
   const status = getProjectStatusInfo(project.status);
 
-  return (
-    <Card hover onClick={onClick} style={{ padding: "14px 16px" }}>
-      <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-        <div style={{
-          width: 44, height: 44, borderRadius: 11,
-          background: unit.colorLight,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
-        }}><Icon name={unit.icon} size={22} color={unit.color} /></div>
+  const budgetColor = budgetProgress > 100 ? COLORS.danger : budgetProgress > 85 ? COLORS.warning : COLORS.info;
 
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 15, fontWeight: 800, color: COLORS.dark }}>{project.name}</span>
+  return (
+    <Card hover onClick={onClick} style={{ padding: "16px 18px" }}>
+      <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+        {/* Tile ikon netral + dot warna unit kecil */}
+        <div style={{
+          width: 44, height: 44, borderRadius: 12,
+          background: COLORS.bgMuted,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0, position: "relative",
+        }}>
+          <Icon name={unit.icon} size={20} color={COLORS.textLight} />
+          <span style={{ position: "absolute", top: 6, right: 6, width: 8, height: 8, borderRadius: 99, background: unit.color }} />
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5, flexWrap: "wrap" }}>
+            <span style={{ fontFamily: FONTS.heading, fontSize: 16.5, fontWeight: 700, color: COLORS.text, letterSpacing: -0.3 }}>{project.name}</span>
             <Pill color={status.color} bg={status.bg}>{status.label}</Pill>
           </div>
-          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8 }}>
-            {unit.name}{subUnit && <> · {subUnit.name}</>} • {project.milestonesDone}/{project.milestonesTotal} milestone • {formatDate(project.startDate)} → {formatDate(project.endDate)}
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 12 }}>
+            {unit.name}{subUnit && <> · {subUnit.name}</>} &nbsp;·&nbsp; {project.milestonesDone}/{project.milestonesTotal} milestone &nbsp;·&nbsp; {formatDate(project.startDate)} → {formatDate(project.endDate)}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 18 }}>
             {/* Work progress */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 5 }}>
                 <span style={{ color: COLORS.textMuted, fontWeight: 600 }}>Pekerjaan</span>
-                <span style={{ color: COLORS.text, fontWeight: 700 }}>{workProgress}%</span>
+                <span style={{ color: COLORS.text, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{workProgress}%</span>
               </div>
-              <ProgressBar value={workProgress} color={status.color} height={5} />
+              <ProgressBar value={workProgress} color={status.color} height={7} />
             </div>
 
-            {/* Budget progress */}
+            {/* Budget progress (dengan % eksplisit) */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
-                <span style={{ color: COLORS.textMuted, fontWeight: 600 }}>Budget</span>
-                <span style={{ color: COLORS.text, fontWeight: 700 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 5 }}>
+                <span style={{ color: COLORS.textMuted, fontWeight: 600 }}>Budget <span style={{ color: budgetColor, fontWeight: 700 }}>{budgetProgress}%</span></span>
+                <span style={{ color: COLORS.text, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
                   {formatRupiah(project.budgetSpent)} / {formatRupiah(project.budgetPlanned)}
                 </span>
               </div>
-              <ProgressBar
-                value={budgetProgress}
-                color={budgetProgress > 100 ? COLORS.danger : budgetProgress > 85 ? COLORS.warning : COLORS.info}
-                height={5}
-              />
+              <ProgressBar value={budgetProgress} color={budgetColor} height={7} />
             </div>
           </div>
         </div>
 
-        <div style={{ color: COLORS.textLight, fontSize: 19 }}>→</div>
+        <Icon name="arrowRight" size={18} color={COLORS.textLight} />
       </div>
     </Card>
   );
