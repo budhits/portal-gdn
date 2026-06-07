@@ -1722,6 +1722,7 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const googleBtnRef = useRef(null);
+  const isMobile = useIsMobile();
 
   // Render tombol resmi Google Identity Services bila Client ID tersedia.
   useEffect(() => {
@@ -1743,7 +1744,7 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
         },
       });
       window.google.accounts.id.renderButton(googleBtnRef.current, {
-        theme: "outline", size: "large", width: 412, text: "signin_with", shape: "pill",
+        theme: "outline", size: "large", width: 320, text: "signin_with", shape: "pill",
       });
     };
     // Muat skrip GIS sekali.
@@ -1774,110 +1775,110 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
     }
   };
 
+  const inputStyle = {
+    padding: "12px 14px", borderRadius: 12, fontSize: 14.5,
+    border: `1.5px solid ${COLORS.border}`, outline: "none",
+    fontFamily: FONTS.body, background: COLORS.bg, boxSizing: "border-box",
+  };
+
   return (
     <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: `linear-gradient(135deg, ${COLORS.dark}, #1E1B4B)`,
-      padding: 16,
+      minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+      background: `radial-gradient(120% 120% at 0% 0%, #243447 0%, ${COLORS.darker} 55%)`,
+      padding: 16, fontFamily: FONTS.body,
     }}>
       <div style={{
-        maxWidth: 460,
-        width: "100%",
-        background: COLORS.white,
-        borderRadius: 20,
-        padding: "28px 24px",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+        width: "100%", maxWidth: isMobile ? 420 : 860,
+        display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+        background: COLORS.white, borderRadius: 20, overflow: "hidden",
+        boxShadow: "0 30px 80px rgba(0,0,0,0.45)",
       }}>
-        <div style={{
-          width: 72, height: 72, borderRadius: 16,
-          margin: "0 auto 16px",
-          background: COLORS.darker,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          overflow: "hidden",
-        }}>
-          <img src={GDN_LOGO} alt="GDN" style={{ height: 58, width: "auto", display: "block" }} />
-        </div>
-        <h1 style={{ fontFamily: FONTS.heading, textAlign: "center", margin: 0, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark }}>
-          {APP_CONFIG.name}
-        </h1>
-        <p style={{ textAlign: "center", margin: "6px 0 18px", fontSize: 13, color: COLORS.textMuted }}>
-          Sistem Planning & Monitoring Bisnis
-        </p>
-
-        <p style={{ textAlign: "center", margin: "0 0 18px", fontSize: 12.5, color: COLORS.textMuted }}>
-          Silakan masuk dengan akun Anda
-        </p>
-
-        {/* Form login email + password (autentikasi sungguhan ke backend) */}
-        <form
-          onSubmit={(e) => { e.preventDefault(); submit(email, password); }}
-          style={{ display: "grid", gap: 10, marginBottom: 16 }}
-        >
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            autoComplete="username"
-            style={{
-              padding: "11px 12px", borderRadius: 10, fontSize: 15,
-              border: `1px solid ${COLORS.border}`, outline: "none", fontFamily: FONTS.body,
-            }}
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            autoComplete="current-password"
-            style={{
-              padding: "11px 12px", borderRadius: 10, fontSize: 15,
-              border: `1px solid ${COLORS.border}`, outline: "none", fontFamily: FONTS.body,
-            }}
-          />
-          {error && (
-            <div style={{ fontSize: 13, color: COLORS.danger, background: COLORS.dangerBg, padding: "8px 10px", borderRadius: 8 }}>
-              {error}
+        {/* Panel brand (desktop) */}
+        {!isMobile && (
+          <div style={{
+            position: "relative", padding: "34px 30px",
+            background: `linear-gradient(160deg, ${COLORS.dark} 0%, #233244 100%)`,
+            display: "flex", flexDirection: "column", justifyContent: "space-between", overflow: "hidden",
+          }}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.goldDeep})` }} />
+            <img src={GDN_LOGO} alt="" style={{ position: "absolute", right: -46, bottom: -36, width: 230, opacity: 0.10 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, position: "relative" }}>
+              <div style={{ width: 46, height: 46, borderRadius: 12, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(201,164,92,0.4)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                <img src={GDN_LOGO} alt="GDN" style={{ height: 34 }} />
+              </div>
+              <div style={{ fontFamily: FONTS.heading, color: COLORS.white, fontWeight: 700, fontSize: 19, letterSpacing: -0.3 }}>{APP_CONFIG.name}</div>
             </div>
-          )}
-          <button
-            type="submit"
-            disabled={loading || !email || !password}
-            style={{
-              padding: "11px 12px", borderRadius: 10, fontSize: 15, fontWeight: 700,
-              color: COLORS.white, background: COLORS.primary, border: "none",
-              cursor: loading ? "wait" : "pointer", opacity: (loading || !email || !password) ? 0.6 : 1,
-              fontFamily: FONTS.body,
-            }}
-          >
-            {loading ? "Memproses…" : "Masuk"}
-          </button>
-        </form>
-
-        {/* Login dengan Google (hanya email terdaftar yang diterima) */}
-        {googleClientId && (
-          <>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "4px 0 12px" }}>
-              <div style={{ flex: 1, height: 1, background: COLORS.border }} />
-              <span style={{ fontSize: 12, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.6 }}>atau</span>
-              <div style={{ flex: 1, height: 1, background: COLORS.border }} />
+            <div style={{ position: "relative" }}>
+              <div style={{ width: 30, height: 3, background: COLORS.gold, borderRadius: 2, marginBottom: 14 }} />
+              <h2 style={{ fontFamily: FONTS.heading, color: COLORS.white, margin: 0, fontSize: 25, lineHeight: 1.15, fontWeight: 700, letterSpacing: -0.5 }}>
+                Planning &amp;<br />Monitoring Bisnis
+              </h2>
+              <p style={{ color: "rgba(255,255,255,0.62)", fontSize: 13, lineHeight: 1.55, margin: "12px 0 0", maxWidth: 250 }}>
+                Pantau KPI, margin, dan project lintas unit Gerbang Digital Nusantara dalam satu portal.
+              </p>
             </div>
-            <div ref={googleBtnRef} style={{ display: "flex", justifyContent: "center", marginBottom: 8 }} />
-          </>
+            <div style={{ position: "relative", display: "flex", gap: 7, color: "rgba(255,255,255,0.4)", fontSize: 11, alignItems: "center" }}>
+              <span style={{ width: 6, height: 6, borderRadius: 99, background: COLORS.success, boxShadow: `0 0 0 3px ${COLORS.success}22` }} />
+              Periode aktif · {APP_CONFIG.period}
+            </div>
+          </div>
         )}
 
-        <div style={{
-          marginTop: 16,
-          paddingTop: 14,
-          borderTop: `1px solid ${COLORS.bgMuted}`,
-          textAlign: "center",
-          fontSize: 12,
-          color: COLORS.textLight,
-          lineHeight: 1.5,
-        }}>Akses terbatas untuk pengguna terdaftar. Hubungi Administrator untuk mendapatkan akun.
+        {/* Panel form */}
+        <div style={{ padding: isMobile ? "30px 24px" : "40px 36px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          {isMobile && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 11, background: COLORS.darker, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                <img src={GDN_LOGO} alt="GDN" style={{ height: 30 }} />
+              </div>
+              <div style={{ fontFamily: FONTS.heading, color: COLORS.dark, fontWeight: 700, fontSize: 18 }}>{APP_CONFIG.name}</div>
+            </div>
+          )}
+          <h1 style={{ fontFamily: FONTS.heading, margin: 0, fontSize: 26, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark }}>Masuk</h1>
+          <p style={{ margin: "7px 0 24px", fontSize: 14, color: COLORS.textMuted }}>Silakan masuk dengan akun terdaftar Anda.</p>
+
+          {/* Form login email + password (autentikasi sungguhan ke backend) */}
+          <form onSubmit={(e) => { e.preventDefault(); submit(email, password); }} style={{ display: "grid", gap: 14 }}>
+            <label style={{ display: "grid", gap: 7 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.text }}>Email</span>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nama@email.com" autoComplete="username" style={inputStyle} />
+            </label>
+            <label style={{ display: "grid", gap: 7 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.text }}>Password</span>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password" style={inputStyle} />
+            </label>
+            {error && (
+              <div style={{ fontSize: 13, color: COLORS.danger, background: COLORS.dangerBg, padding: "8px 10px", borderRadius: 8 }}>{error}</div>
+            )}
+            <button
+              type="submit"
+              disabled={loading || !email || !password}
+              style={{
+                marginTop: 4, padding: "13px", borderRadius: 12, fontSize: 15, fontWeight: 700,
+                color: COLORS.white, background: COLORS.primary, border: "none",
+                cursor: loading ? "wait" : "pointer", opacity: (loading || !email || !password) ? 0.6 : 1,
+                fontFamily: FONTS.body, boxShadow: `0 8px 20px ${COLORS.primary}38`,
+              }}
+            >
+              {loading ? "Memproses…" : "Masuk ke Portal"}
+            </button>
+          </form>
+
+          {/* Login dengan Google (hanya email terdaftar yang diterima) */}
+          {googleClientId && (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 16px" }}>
+                <div style={{ flex: 1, height: 1, background: COLORS.border }} />
+                <span style={{ fontSize: 11, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.8 }}>atau</span>
+                <div style={{ flex: 1, height: 1, background: COLORS.border }} />
+              </div>
+              <div ref={googleBtnRef} style={{ display: "flex", justifyContent: "center" }} />
+            </>
+          )}
+
+          <p style={{ margin: "22px 0 0", fontSize: 12, color: COLORS.textLight, lineHeight: 1.5 }}>
+            Akses terbatas untuk pengguna terdaftar. Hubungi Administrator untuk akun baru.
+          </p>
         </div>
       </div>
     </div>
