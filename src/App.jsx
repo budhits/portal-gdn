@@ -11484,6 +11484,55 @@ function AppInner() {
     setPage(formContext?.returnTo || "workspace");
   };
 
+  // ── Tombol "Back" perangkat/browser menelusuri halaman internal aplikasi ────
+  // Portal ini SPA berbasis state (bukan URL/react-router). Tanpa penyetelan ini,
+  // tombol back HP/browser langsung keluar dari situs (atau lompat ke web yang
+  // dibuka sebelumnya). Solusi: setiap navigasi internal kita catat ke History
+  // API → maju = pushState, tombol back = popstate memulihkan state sebelumnya.
+  const skipHistoryPush = useRef(false); // true = jangan push (sedang memulihkan)
+  const appEntryDone = useRef(false);    // penjaga agar entri akar dibuat sekali
+
+  // Saat masuk aplikasi (login/restore sesi): pasang dua "entri akar" sehingga
+  // dari beranda perlu tekan back dua kali untuk benar-benar meninggalkan situs.
+  useEffect(() => {
+    if (!activeUserId) { appEntryDone.current = false; return; }
+    if (appEntryDone.current) return;
+    appEntryDone.current = true;
+    const home = routeForRole(USERS[activeUserId]?.role);
+    const rootNav = { gdnNav: true, page: home };
+    skipHistoryPush.current = true; // setPage(home) sudah terjadi; hindari push ganda
+    window.history.replaceState(rootNav, "");
+    window.history.pushState(rootNav, "");
+  }, [activeUserId]);
+
+  // Maju: catat setiap perubahan navigasi sebagai entri history baru.
+  useEffect(() => {
+    if (!activeUserId || !page) return;
+    if (skipHistoryPush.current) { skipHistoryPush.current = false; return; }
+    window.history.pushState(
+      { gdnNav: true, page, selectedUnitId, selectedProjectId, selectedSubmissionId, formMode, formContext },
+      ""
+    );
+  }, [page, selectedUnitId, selectedProjectId, selectedSubmissionId, formMode, formContext, activeUserId]);
+
+  // Mundur: tombol back → pulihkan state sebelumnya tanpa meninggalkan situs.
+  useEffect(() => {
+    const onPopState = (e) => {
+      if (!activeUserId) return;           // di layar login: biarkan default
+      const s = e.state;
+      if (!s || !s.gdnNav) return;         // sudah melewati akar → biarkan keluar
+      skipHistoryPush.current = true;      // memulihkan, jangan push ulang
+      setSelectedUnitId(s.selectedUnitId ?? null);
+      setSelectedProjectId(s.selectedProjectId ?? null);
+      setSelectedSubmissionId(s.selectedSubmissionId ?? null);
+      setFormMode(s.formMode ?? null);
+      setFormContext(s.formContext ?? null);
+      setPage(s.page);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [activeUserId]);
+
   // Saat memulihkan sesi (reload dengan token tersimpan): tampilkan layar muat.
   if (restoring && !activeUserId) {
     return (
