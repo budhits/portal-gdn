@@ -3091,25 +3091,23 @@ function MarginCardSubRow({ entry }) {
 // Kartu total semua unit (sum all unit) untuk resume margin.
 // `gap` (opsional) menampilkan selisih realisasi−target (dipakai di halaman Margin).
 function MarginGrandTotalCard({ total, periodLabel, gap, label = "Total Semua Unit" }) {
-  // Gradient cerah berdasarkan capaian keseluruhan.
-  const grad = total.target === 0
-    ? "linear-gradient(135deg, #64748B, #475569)"
-    : total.percentage >= 100
-    ? "linear-gradient(135deg, #16A34A, #0D9488)"
-    : total.percentage >= 80
-    ? "linear-gradient(135deg, #0EA5E9, #0D9488)"
-    : "linear-gradient(135deg, #F59E0B, #EF4444)";
+  // Status capaian (untuk warna progress bar). Kartu memakai latar gelap brand
+  // dengan angka EMAS — lebih elegan daripada pita warna penuh.
+  const statusColor = total.target === 0 ? COLORS.textLight
+    : total.percentage >= 100 ? COLORS.success
+    : total.percentage >= 80 ? COLORS.info
+    : COLORS.warning;
   return (
     <div style={{
       padding: "18px 22px",
-      background: grad,
-      borderRadius: 14,
+      background: `linear-gradient(135deg, ${COLORS.dark}, ${COLORS.darker})`,
+      borderRadius: 16,
       color: COLORS.white,
       boxShadow: "0 8px 22px rgba(15,23,42,0.18)",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "rgba(255,255,255,0.7)" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: COLORS.gold }}>
             {label} · {periodLabel}
           </div>
           <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>
@@ -3124,12 +3122,12 @@ function MarginGrandTotalCard({ total, periodLabel, gap, label = "Total Semua Un
             )}
           </div>
         </div>
-        <div style={{ fontSize: 34, fontWeight: 800, color: COLORS.white }}>
+        <div style={{ fontFamily: FONTS.heading, fontSize: 36, fontWeight: 800, color: COLORS.gold, letterSpacing: -0.5, fontVariantNumeric: "tabular-nums" }}>
           {total.target > 0 ? `${total.percentage}%` : "—"}
         </div>
       </div>
       {total.target > 0 && (
-        <ProgressBar value={Math.min(total.percentage, 100)} color="rgba(255,255,255,0.92)" height={8} />
+        <ProgressBar value={Math.min(total.percentage, 100)} color={statusColor} height={8} />
       )}
     </div>
   );
@@ -4393,65 +4391,43 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
         </div>
       </Card>
 
-      {/* Tabel dipisah per status: Aktif vs Selesai (Closed) vs lainnya */}
+      {/* Satu tabel; grup status dipisah baris pemisah (header kolom sekali) */}
       {sorted.length === 0 ? (
         <Card style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 13 }}>
           Tidak ada submission yang sesuai filter
         </Card>
       ) : (
-        <div style={{ display: "grid", gap: 16 }}>
-          {groups.map(g => (
-            <KPISection
-              key={g.key}
-              label={g.label}
-              color={g.color}
-              count={g.rows.length}
-              rows={g.rows}
-              onSelectSubmission={onSelectSubmission}
-            />
-          ))}
-        </div>
+        <Card style={{ padding: 0 }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#F8FAFC" }}>
+                  {[["Periode","left"],["Unit","left"],["Sub Unit","left"],["Template","left"],["Skor","right"],["Margin","right"],["Status","left"],["Tanggal","left"]].map(([h, al]) => (
+                    <th key={h} style={{ padding: "11px 12px", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, textAlign: al, textTransform: "uppercase", letterSpacing: 0.4, whiteSpace: "nowrap" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {groups.filter(g => g.rows.length > 0).flatMap(g => [
+                  <tr key={`grp-${g.key}`}>
+                    <td colSpan={8} style={{ padding: "9px 12px", background: COLORS.bgMuted, borderTop: `1px solid ${COLORS.border}` }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 9, height: 9, borderRadius: 5, background: g.color }} />
+                        <span style={{ fontSize: 12.5, fontWeight: 800, color: COLORS.dark }}>{g.label}</span>
+                        <span style={{ fontSize: 12, color: COLORS.textMuted }}>({g.rows.length})</span>
+                      </span>
+                    </td>
+                  </tr>,
+                  ...g.rows.map(sub => (
+                    <KPIHistoryRow key={sub.id} submission={sub} onClick={() => onSelectSubmission && onSelectSubmission(sub.id)} />
+                  )),
+                ])}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
     </div>
-  );
-}
-
-// Satu seksi tabel KPI untuk satu status (Aktif / Selesai / lainnya).
-function KPISection({ label, color, count, rows, onSelectSubmission }) {
-  return (
-    <Card style={{ padding: 0 }}>
-      <div style={{ padding: "10px 14px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ width: 9, height: 9, borderRadius: 5, background: color, flexShrink: 0 }} />
-        <span style={{ fontSize: 13, fontWeight: 800, color: COLORS.dark }}>{label}</span>
-        <span style={{ fontSize: 12.5, color: COLORS.textMuted }}>({count})</span>
-      </div>
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: "#F8FAFC" }}>
-              {["Periode", "Sub Unit", "Template", "Skor", "Margin", "Status", "Tanggal"].map(h => (
-                <th key={h} style={{
-                  padding: "10px 12px",
-                  fontSize: 12, fontWeight: 700,
-                  color: COLORS.textMuted,
-                  textAlign: h === "Skor" || h === "Margin" ? "right" : "left",
-                  textTransform: "uppercase", letterSpacing: 0.4,
-                }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(sub => (
-              <KPIHistoryRow
-                key={sub.id}
-                submission={sub}
-                onClick={() => onSelectSubmission && onSelectSubmission(sub.id)}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
   );
 }
 
@@ -4493,21 +4469,26 @@ function KPIHistoryRow({ submission, onClick }) {
       onMouseEnter={e => e.currentTarget.style.background = "#FAFBFC"}
       onMouseLeave={e => e.currentTarget.style.background = "transparent"}
     >
-      <td style={{ padding: "10px 12px", color: COLORS.text }}>{submission.period}</td>
+      <td style={{ padding: "10px 12px", color: COLORS.text, whiteSpace: "nowrap" }}>{submission.period}</td>
+      {/* Unit */}
       <td style={{ padding: "10px 12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {unit && <Icon name={unit.icon} size={14} color={unit.color} />}
-          <span style={{ fontWeight: 700, color: COLORS.dark }}>{sub?.name || "—"}</span>
+          <span style={{ color: COLORS.textMuted }}>{unit?.name || "—"}</span>
         </div>
       </td>
+      {/* Sub Unit */}
+      <td style={{ padding: "10px 12px" }}>
+        <span style={{ fontWeight: 700, color: COLORS.dark }}>{sub?.name || "—"}</span>
+      </td>
       <td style={{ padding: "10px 12px", color: COLORS.textMuted }}>{template?.name}</td>
-      {/* Skor */}
+      {/* Skor: dot warna + angka */}
       <td style={{ padding: "10px 12px", textAlign: "right" }}>
         {perf.score !== null ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-            <span style={{ fontWeight: 800, color: scoreStatus.color }}>{perf.score}%</span>
-            <div style={{ width: 56 }}><ProgressBar value={perf.score} color={scoreStatus.color} height={4} /></div>
-          </div>
+          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 99, background: scoreStatus.color, flexShrink: 0 }} />
+            <span style={{ fontWeight: 800, color: scoreStatus.color, fontVariantNumeric: "tabular-nums" }}>{perf.score}%</span>
+          </span>
         ) : (
           <span style={{ color: COLORS.textLight, fontSize: 12.5 }}>—</span>
         )}
