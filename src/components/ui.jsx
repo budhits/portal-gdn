@@ -125,6 +125,32 @@ export function ProgressBar({ value, color, height = 8 }) {
   );
 }
 
+// Kartu statistik terpadu — satu gaya untuk Dashboard, Margin, KPI.
+// radius 16, garis aksen kiri 3px, angka besar Bricolage (tabular-nums).
+export function StatCard({ label, value, valueColor, accent = COLORS.primary, sub, valueSize = 30, children }) {
+  return (
+    <div style={{
+      background: COLORS.white,
+      border: `1px solid ${COLORS.border}`,
+      borderLeft: `3px solid ${accent}`,
+      borderRadius: RADIUS.lg,
+      padding: "14px 16px",
+      minWidth: 0,
+    }}>
+      <div style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</div>
+      {value !== undefined && value !== null && (
+        <div style={{
+          fontFamily: FONTS.heading, fontSize: valueSize, fontWeight: 800,
+          color: valueColor || accent, marginTop: 5, lineHeight: 1.05,
+          fontVariantNumeric: "tabular-nums", letterSpacing: -0.5, wordBreak: "break-word",
+        }}>{value}</div>
+      )}
+      {children && <div style={{ marginTop: 6 }}>{children}</div>}
+      {sub && <div style={{ fontSize: 12.5, color: COLORS.textLight, marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+}
+
 export function Button({ children, variant = "primary", onClick, disabled, size = "md", fullWidth }) {
   const VARIANTS = {
     primary:   { background: COLORS.primary, color: COLORS.white, border: "none" },

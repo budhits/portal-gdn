@@ -44,7 +44,7 @@ import { MONTHS_ID, formatDate, formatRupiah, formatRupiahFull, formatDateTime,
 import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser,
   loginWithGoogle as apiGoogleLogin, fetchConfig, changePassword as apiChangePassword } from "./api/auth.js";
 import { getToken } from "./api/client.js";
-import { Icon, Pill, Card, ProgressBar, Button, SectionHeader, InfoBanner } from "./components/ui.jsx";
+import { Icon, Pill, Card, ProgressBar, Button, SectionHeader, InfoBanner, StatCard } from "./components/ui.jsx";
 import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, deleteUser,
   fetchUnits, createUnit, updateUnit, deleteUnit,
   fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
@@ -2474,15 +2474,13 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
             ? `${onTrackCount}/${contributingUnits.length} unit on track`
             : "Belum ada closing di periode ini"
           }
-          icon=""
-          color={COLORS.primary}
+          accent={COLORS.primary}
         />
         <StatCard
           label="Project Aktif"
           value={totalProjects}
           sub={projectsAtRisk > 0 ? `${projectsAtRisk} butuh perhatian` : "Semua jalan baik"}
-          icon=""
-          color={COLORS.warning}
+          accent={COLORS.warning}
         />
         <StatCard
           label={`Realisasi Margin · ${selectedPeriod.label}`}
@@ -2491,8 +2489,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
             ? `${formatRupiah(grandTotalMargin.actual)} / ${formatRupiah(grandTotalMargin.target)}`
             : "Belum ada closing di periode ini"
           }
-          icon=""
-          color={COLORS.success}
+          accent={COLORS.success}
         />
       </div>
 
@@ -2648,27 +2645,6 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
       </div>
 
     </div>
-  );
-}
-
-function StatCard({ label, value, sub, icon, color }) {
-  return (
-    <Card style={{ padding: "14px 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
-          <div style={{
-            fontSize: 12,
-            color: COLORS.textLight,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: 0.5,
-          }}>{label}</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color, marginTop: 4 }}>{value}</div>
-          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>{sub}</div>
-        </div>
-        <div style={{ fontSize: 24, opacity: 0.35 }}>{icon}</div>
-      </div>
-    </Card>
   );
 }
 
@@ -4069,13 +4045,7 @@ function MarginDetailPage({ user, onSelectSubmission }) {
 
 // Kotak statistik kecil untuk strip ringkasan halaman Margin.
 function MarginStat({ k, v, s, accent, small }) {
-  return (
-    <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "13px 15px", borderLeft: `4px solid ${accent}` }}>
-      <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 0.4, color: COLORS.textMuted }}>{k}</div>
-      <div style={{ fontSize: small ? 15 : 21, fontWeight: 800, color: accent, marginTop: 4 }}>{v}</div>
-      <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>{s}</div>
-    </div>
-  );
+  return <StatCard label={k} value={v} sub={s} accent={accent} valueSize={small ? 18 : 28} />;
 }
 
 function MarginDetailUnitCard({ unit, onSelectSubmission }) {
@@ -4323,38 +4293,40 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
 
       {/* Summary cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginBottom: 16 }}>
-        <div style={{ padding: "14px 16px", background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, borderLeft: `4px solid ${COLORS.primary}` }}>
-          <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Rata-rata Skor</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: COLORS.primary, marginTop: 4 }}>
-            {summary.scoredCount > 0 ? `${summary.avgScore}%` : "—"}
+        <StatCard
+          label="Rata-rata Skor"
+          value={summary.scoredCount > 0 ? `${summary.avgScore}%` : "—"}
+          sub={`dari ${summary.scoredCount} KPI terskor`}
+          accent={COLORS.primary}
+        />
+        <StatCard label="Status Performa" accent={COLORS.success} sub="on-track / perhatian / di bawah">
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FONTS.heading, fontSize: 22, fontWeight: 800, color: COLORS.success }}>
+              <span style={{ width: 9, height: 9, borderRadius: 99, background: COLORS.success }} />{summary.onTrack}
+            </span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FONTS.heading, fontSize: 22, fontWeight: 800, color: COLORS.warning }}>
+              <span style={{ width: 9, height: 9, borderRadius: 99, background: COLORS.warning }} />{summary.attention}
+            </span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FONTS.heading, fontSize: 22, fontWeight: 800, color: COLORS.danger }}>
+              <span style={{ width: 9, height: 9, borderRadius: 99, background: COLORS.danger }} />{summary.below}
+            </span>
           </div>
-          <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>dari {summary.scoredCount} KPI terskor</div>
-        </div>
-        <div style={{ padding: "14px 16px", background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, borderLeft: `4px solid ${COLORS.success}` }}>
-          <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Status Performa</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: COLORS.dark, marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ color: COLORS.success }}>{summary.onTrack} ✓</span>
-            <span style={{ color: COLORS.warning }}>{summary.attention} ◐</span>
-            <span style={{ color: COLORS.danger }}>{summary.below} ✕</span>
-          </div>
-          <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>on-track / perhatian / di bawah</div>
-        </div>
-        <div style={{ padding: "14px 16px", background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, borderLeft: `4px solid ${COLORS.secondary}` }}>
-          <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Total Margin</div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: COLORS.secondary, marginTop: 4 }}>
-            {summary.marginActual > 0 ? formatRupiah(summary.marginActual) : "—"}
-          </div>
-          <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>
-            {summary.marginTarget > 0 ? `dari target ${formatRupiah(summary.marginTarget)}` : "belum ada closing"}
-          </div>
-        </div>
-        <div style={{ padding: "14px 16px", background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, borderLeft: `4px solid ${COLORS.info}` }}>
-          <div style={{ fontSize: 12, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>Status KPI</div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: COLORS.dark, marginTop: 4 }}>
-            {summary.active} aktif · {summary.closed} closed
-          </div>
-          <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 2 }}>{filtered.length} total terfilter</div>
-        </div>
+        </StatCard>
+        <StatCard
+          label="Total Margin"
+          value={summary.marginActual > 0 ? formatRupiah(summary.marginActual) : "—"}
+          valueSize={18}
+          accent={COLORS.secondary}
+          sub={summary.marginTarget > 0 ? `dari target ${formatRupiah(summary.marginTarget)}` : "belum ada closing"}
+        />
+        <StatCard
+          label="Status KPI"
+          value={`${summary.active} aktif · ${summary.closed} closed`}
+          valueSize={18}
+          valueColor={COLORS.dark}
+          accent={COLORS.info}
+          sub={`${filtered.length} total terfilter`}
+        />
       </div>
 
       {/* Filters */}
