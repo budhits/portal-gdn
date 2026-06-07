@@ -7887,13 +7887,74 @@ function AdminPanel({ user }) {
     ["users",       "User Manager"],
   ];
 
+  // Ekspor seluruh data KPI ke satu file JSON (untuk diskusi/analisis di luar app).
+  // Memakai data yang sudah dimuat aplikasi — tidak menyentuh database.
+  const handleExportKpi = () => {
+    const data = {
+      meta: { app: "Portal GDN", exportedAt: new Date().toISOString(), by: user?.name || null },
+      units: Object.values(UNITS).map(u => ({ id: u.id, name: u.name })),
+      subUnits: LIVE.subUnits.map(su => ({
+        id: su.id, name: su.name, unitId: su.unitId, unitName: UNITS[su.unitId]?.name || null,
+        weight: su.weight ?? LIVE.subUnitWeights?.[su.id] ?? null,
+      })),
+      templates: LIVE.templates.map(t => ({
+        id: t.id, name: t.name, frequency: t.frequency,
+        fields: (t.fields || []).map(f => ({
+          id: f.id, name: f.name, satuan: f.satuan, type: f.type, isMargin: !!f.isMargin,
+          defaultWeight: f.defaultWeight, direction: f.direction || null,
+          capPct: f.capPct ?? null, floorPct: f.floorPct ?? null, formulaExpr: f.formulaExpr || null,
+        })),
+      })),
+      submissions: LIVE.submissions.map(s => {
+        const tpl = getFormTemplate(s.templateId);
+        const su = LIVE.subUnits.find(x => x.id === s.subUnitId);
+        const perf = getSubmissionPerformance(s);
+        return {
+          id: s.id, period: s.period, status: s.status,
+          subUnitId: s.subUnitId, subUnitName: su?.name || null,
+          unitName: su ? (UNITS[su.unitId]?.name || null) : null,
+          templateId: s.templateId, templateName: tpl?.name || null,
+          marginInputMode: s.marginInputMode || null,
+          score: perf.score, marginTarget: perf.marginTarget, marginActual: perf.marginActual, hasMargin: perf.hasMargin,
+          fieldWeights: s.fieldWeights, estimatedValues: s.estimatedValues, actualValues: s.actualValues,
+          createdAt: s.createdAt, approvedAt: s.approvedAt, closedAt: s.closedAt, closingNote: s.closingNote || null,
+        };
+      }),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `portal-gdn-kpi-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px" }}>
-      <div style={{ marginBottom: 14 }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Admin Panel</h1>
-        <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
-          Kelola form template, sub unit, dan user. Untuk approval KPI, lihat menu Inbox.
-        </p>
+      <div style={{ marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ fontFamily: FONTS.heading, fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Admin Panel</h1>
+          <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "4px 0 0" }}>
+            Kelola form template, sub unit, dan user. Untuk approval KPI, lihat menu Inbox.
+          </p>
+        </div>
+        {canForms && (
+          <button
+            onClick={handleExportKpi}
+            type="button"
+            title="Unduh semua data KPI (template, sub-unit, submission, skor & margin) sebagai file JSON"
+            style={{
+              padding: "9px 14px", background: COLORS.white, color: COLORS.primary,
+              border: `1px solid ${COLORS.primary}`, borderRadius: 8, fontSize: 12, fontWeight: 700,
+              cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+            }}
+          >
+            <Icon name="upload" size={14} color={COLORS.primary} /> Ekspor Data KPI
+          </button>
+        )}
       </div>
 
       <div style={{ display: "flex", gap: 5, marginBottom: 16, flexWrap: "wrap" }}>
