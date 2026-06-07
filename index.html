@@ -5,12 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
-    <meta name="theme-color" content="#1b1d23" />
+    <meta name="theme-color" content="#1C2128" />
     <title>Portal GDN</title>
+
+    <!-- ── REVISI DESIGN SYSTEM ────────────────────────────────────────────
+         Muat font brand sungguhan. Tanpa ini, FONTS di constants.js jatuh ke
+         fallback Segoe UI (penyebab heading Bricolage tidak pernah tampil). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet" />
+
     <style>
-      /* Zoom global 110% — perbesar seluruh tampilan (teks, gambar, layout)
-         secara proporsional di semua halaman. Setara Ctrl++ di browser.
-         Fallback transform untuk Firefox yang belum mendukung `zoom`. */
+      /* Zoom global 110% — DIPERTAHANKAN UNTUK SEMENTARA.
+         Hapus baris zoom HANYA setelah skala tipografi base 14px diterapkan di
+         ui.jsx + halaman (lihat CHANGES.md §2). Menghapusnya lebih dulu akan
+         membuat tampilan mengecil karena komponen masih memakai 11–12px. */
       :root { --app-zoom: 1.1; }
       body { zoom: var(--app-zoom); }
       @supports not (zoom: 1) {

@@ -1,13 +1,17 @@
 // Konstanta & konfigurasi global aplikasi.
 // Dipisah dari App.jsx agar mudah ditemukan & dipakai ulang oleh modul lain.
+//
+// ── REVISI DESIGN SYSTEM (drop-in) ───────────────────────────────────────────
+// File ini adalah pengganti langsung untuk src/constants.js.
+// Perubahan: palet netral dihangatkan & dipertajam, ditambah `goldDeep`.
+// CATATAN: font (Bricolage Grotesque + Plus Jakarta Sans) kini DIMUAT di
+// index.html — tanpa itu, FONTS di bawah jatuh ke fallback Segoe UI.
 
 export const APP_CONFIG = {
   name: "Portal GDN",
   version: "2.0.0-prototype",
   period: "Mei 2026",
 };
-
-// (Logo GDN dipindah ke ./assets/logo.js — diimpor di atas)
 
 export const ROLES = {
   ADMIN: "admin",
@@ -48,26 +52,35 @@ export const COLORS = {
   info: "#3B7BC4",
   infoBg: "#E7F0F8",
 
-  // Charcoal (header/nav) — dari website GDN
-  dark: "#1E1E24",
-  darker: "#16161A",
-  text: "#2E2E36",
-  textMuted: "#6B6B76",
-  textLight: "#9C9CA6",
-  border: "#E4E4E7",
-  bg: "#FAFAF8",
-  bgMuted: "#F2F2EF",
+  // Charcoal (header/nav) — sedikit lebih hangat & dalam, selaras logo
+  dark: "#1C2128",
+  darker: "#12161C",
+  text: "#22262E",
+  textMuted: "#5E6573",
+  textLight: "#9298A6",
+  border: "#E6E7EB",
+  bg: "#F7F8F6",
+  bgMuted: "#EEF0EC",
   white: "#FFFFFF",
 
-  // Brand gold accent for nav/logo
+  // Brand gold accent — gold (utama), goldDeep (tekan/hover), goldLight (latar)
   gold: "#C9A45C",
-  goldLight: "#E8DCC0",
+  goldDeep: "#A8823F",
+  goldLight: "#EFE4CB",
 };
 
-// Brand typography
+// Brand typography (DIMUAT di index.html via Google Fonts)
 export const FONTS = {
   body: "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
   heading: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif",
+};
+
+// Skala radius (ringkas dari 7 nilai → 4) — dipakai oleh ui.jsx
+export const RADIUS = {
+  sm: 8,    // tombol · input · chip
+  md: 12,   // field · swatch · kontrol
+  lg: 16,   // card · panel · modal
+  pill: 999,
 };
 
 export const STATUS_THRESHOLDS = {
