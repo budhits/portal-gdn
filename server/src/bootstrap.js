@@ -56,6 +56,9 @@ async function runMigrations() {
   // 3. Kolom daily_margin untuk menyimpan input margin harian (idempoten).
   await pool.query("ALTER TABLE kpi_submissions ADD COLUMN IF NOT EXISTS daily_margin JSONB");
 
+  // 3b. Cara input realisasi margin dipilih di awal: 'daily' | 'monthly' (null = legacy).
+  await pool.query("ALTER TABLE kpi_submissions ADD COLUMN IF NOT EXISTS margin_input_mode TEXT");
+
   // 4. Kolom formula_expr untuk template buatan user (formula custom).
   await pool.query("ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS formula_expr TEXT");
 

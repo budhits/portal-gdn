@@ -65,10 +65,12 @@ async function respondEnriched(res, id) {
 // POST /api/submissions  { templateId, subUnitId, period, estimatedValues, subUnitWeight? }
 router.post("/", async (req, res, next) => {
   try {
-    const { templateId, subUnitId, period, estimatedValues = {}, subUnitWeight } = req.body || {};
+    const { templateId, subUnitId, period, estimatedValues = {}, subUnitWeight, marginInputMode } = req.body || {};
     if (!templateId || !subUnitId || !period) {
       return res.status(400).json({ error: "templateId, subUnitId, dan period wajib diisi." });
     }
+    // Cara input realisasi margin dipilih di awal: 'daily' | 'monthly' (atau null).
+    const mode = marginInputMode === "daily" || marginInputMode === "monthly" ? marginInputMode : null;
     const { rows: suRows } = await query("SELECT id, unit_id FROM sub_units WHERE id = $1", [subUnitId]);
     if (!suRows[0]) return res.status(400).json({ error: "Sub-unit tidak ditemukan." });
     const unitId = suRows[0].unit_id;
@@ -92,11 +94,11 @@ router.post("/", async (req, res, next) => {
     await query(
       `INSERT INTO kpi_submissions
         (id, template_id, sub_unit_id, unit_id, status, period,
-         estimated_values, actual_values, field_weights, sub_unit_weight, created_by)
-       VALUES ($1,$2,$3,$4,'estimated',$5,$6,NULL,$7,$8,$9)`,
+         estimated_values, actual_values, field_weights, sub_unit_weight, created_by, margin_input_mode)
+       VALUES ($1,$2,$3,$4,'estimated',$5,$6,NULL,$7,$8,$9,$10)`,
       [id, templateId, subUnitId, unitId, period,
        JSON.stringify(estimatedValues), JSON.stringify(fieldWeights),
-       Number.isFinite(subUnitWeight) ? subUnitWeight : 50, req.user.id]
+       Number.isFinite(subUnitWeight) ? subUnitWeight : 50, req.user.id, mode]
     );
     await logAudit({ actorId: req.user.id, action: "create", entityType: "kpi_submission",
       entityId: id, entityLabel: `Ajukan KPI ${period}`, unitId });
@@ -193,9 +195,9 @@ router.patch("/:id", async (req, res, next) => {
     const actor = await loadActor(req.user.id);
     if (!canWrite(actor, sub)) return res.status(403).json({ error: "Anda tidak berwenang mengubah KPI ini." });
 
-    const { actualValues, dailyMargin } = req.body || {};
-    if (actualValues === undefined && dailyMargin === undefined) {
-      return res.status(400).json({ error: "actualValues atau dailyMargin wajib diisi." });
+    const { actualValues, dailyMargin, marginInputMode } = req.body || {};
+    if (actualValues === undefined && dailyMargin === undefined && marginInputMode === undefined) {
+      return res.status(400).json({ error: "actualValues, dailyMargin, atau marginInputMode wajib diisi." });
     }
 
     const sets = [];
@@ -208,9 +210,20 @@ router.patch("/:id", async (req, res, next) => {
       params.push(JSON.stringify(dailyMargin));
       sets.push(`daily_margin = $${params.length}`);
     }
+    if (marginInputMode !== undefined) {
+      // Ganti cara input margin hanya boleh Admin/Owner.
+      if (actor.role !== "admin" && actor.role !== "owner") {
+        return res.status(403).json({ error: "Hanya Admin/Owner yang boleh mengubah cara input margin." });
+      }
+      const mode = marginInputMode === "daily" || marginInputMode === "monthly" ? marginInputMode : null;
+      params.push(mode);
+      sets.push(`margin_input_mode = $${params.length}`);
+    }
     await query(`UPDATE kpi_submissions SET ${sets.join(", ")} WHERE id = $1`, params);
 
-    const label = dailyMargin !== undefined && actualValues === undefined
+    const label = marginInputMode !== undefined && actualValues === undefined && dailyMargin === undefined
+      ? `Ganti cara input margin KPI ${sub.period}`
+      : dailyMargin !== undefined && actualValues === undefined
       ? `Input margin harian KPI ${sub.period}`
       : `Update realisasi KPI ${sub.period}`;
     await logAudit({ actorId: req.user.id, action: "update", entityType: "kpi_submission",

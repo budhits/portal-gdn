@@ -61,6 +61,9 @@ export const saveDailyMargin        = (id, dailyMargin) => apiFetch(`/submission
 // PATCH gabungan: simpan dailyMargin sekaligus perbarui actualValues (mis. total margin harian → realisasi field margin).
 export const saveDailyMarginAndActual = (id, dailyMargin, actualValues) =>
   apiFetch(`/submissions/${id}`, { method: "PATCH", body: { dailyMargin, actualValues } });
+// Ganti cara input margin ('daily' | 'monthly') — hanya Admin/Owner (divalidasi server).
+export const setMarginInputMode = (id, marginInputMode) =>
+  apiFetch(`/submissions/${id}`, { method: "PATCH", body: { marginInputMode } });
 
 /** Ubah array ber-`id` menjadi objek ter-index berdasarkan id (mis. UNITS[id]). */
 export function indexById(arr) {

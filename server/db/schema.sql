@@ -188,7 +188,8 @@ CREATE TABLE kpi_submissions (
   approved_at      TIMESTAMPTZ,
   closed_at        TIMESTAMPTZ,
   closing_note     TEXT,
-  daily_margin     JSONB                                  -- { "1": 1000000, "2": ... } input margin harian KPI bulanan
+  daily_margin     JSONB,                                 -- { "1": 1000000, "2": ... } input margin harian KPI bulanan
+  margin_input_mode TEXT                                   -- 'daily' | 'monthly' | NULL: cara input realisasi margin (dipilih di awal)
 );
 CREATE INDEX idx_submissions_sub_unit ON kpi_submissions(sub_unit_id);
 CREATE INDEX idx_submissions_unit     ON kpi_submissions(unit_id);

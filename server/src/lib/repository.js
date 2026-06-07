@@ -70,6 +70,7 @@ const submissionRowToApi = (r) => ({
   closedAt: r.closed_at,
   closingNote: r.closing_note,
   dailyMargin: r.daily_margin || null,
+  marginInputMode: r.margin_input_mode || null, // 'daily' | 'monthly' | null (legacy)
 });
 
 export async function getSubmissions(filters = {}) {

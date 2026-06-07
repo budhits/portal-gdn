@@ -50,7 +50,7 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
   fetchTemplates, createTemplate, updateTemplate, deleteTemplate,
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
-  closeSubmission, updateSubmissionActual, saveDailyMargin, saveDailyMarginAndActual, fetchAudit,
+  closeSubmission, updateSubmissionActual, saveDailyMargin, saveDailyMarginAndActual, setMarginInputMode, fetchAudit,
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
   createProject, updateProject, deleteProject,
   createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
@@ -5094,8 +5094,11 @@ function SubmitKPIForm({ user, context, onBack }) {
   const [period, setPeriod] = useState("");
   const [values, setValues] = useState({});
   const [expectedCloseAt, setExpectedCloseAt] = useState("");
+  const [marginMode, setMarginMode] = useState(null); // 'daily' | 'monthly' — dipilih di awal
 
   const template = selectedTemplateId ? getFormTemplate(selectedTemplateId) : null;
+  // KPI bulanan ber-field Margin perlu memilih cara input realisasi margin di awal.
+  const needsMarginChoice = !!template && template.frequency === "monthly" && template.fields.some(f => f.isMargin);
 
   // Compute auto-calculated values
   const computedValues = useMemo(() => {
@@ -5158,6 +5161,10 @@ function SubmitKPIForm({ user, context, onBack }) {
       alert("Tentukan tanggal closing yang diharapkan");
       return;
     }
+    if (needsMarginChoice && !marginMode) {
+      alert("Pilih cara input realisasi margin dulu: Margin Harian atau Update Total Bulanan.");
+      return;
+    }
     // Validate at least manual fields filled
     const manualFields = template.fields.filter(f => f.type !== "auto");
     const emptyManual = manualFields.filter(f => values[f.id] === undefined || values[f.id] === "" || values[f.id] === null);
@@ -5176,6 +5183,7 @@ function SubmitKPIForm({ user, context, onBack }) {
         period,
         estimatedValues: { ...values },
         subUnitWeight: subUnit.id in LIVE.subUnitWeights ? LIVE.subUnitWeights[subUnit.id] : 50,
+        marginInputMode: needsMarginChoice ? marginMode : null,
       });
       if (store) store.setSubmissions(await fetchSubmissions());
     } catch (e) {
@@ -5325,6 +5333,53 @@ function SubmitKPIForm({ user, context, onBack }) {
               />
             </div>
           </div>
+
+          {/* Pilih cara input realisasi margin DI AWAL (wajib, tanpa default) */}
+          {needsMarginChoice && (
+            <div style={{ border: `1px solid #FDE68A`, background: "#FFFBEB", borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#92400E", marginBottom: 4 }}>
+                Cara Input Realisasi Margin <span style={{ color: COLORS.danger }}>*</span>
+              </div>
+              <div style={{ fontSize: 11, color: "#92400E", opacity: 0.9, marginBottom: 10 }}>
+                Pilih satu sekarang. Selama KPI berjalan, realisasi margin hanya diisi lewat cara yang dipilih ini.
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
+                {[
+                  { key: "daily",   icon: "calendar", title: "Margin Harian", desc: "Isi margin per hari; total otomatis jadi realisasi bulan." },
+                  { key: "monthly", icon: "edit",     title: "Update Total Bulanan", desc: "Isi langsung angka total realisasi margin bulan." },
+                ].map(opt => {
+                  const active = marginMode === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setMarginMode(opt.key)}
+                      style={{
+                        textAlign: "left", cursor: "pointer", fontFamily: "inherit",
+                        border: `2px solid ${active ? COLORS.primary : COLORS.border}`,
+                        background: active ? COLORS.infoBg : COLORS.white,
+                        borderRadius: 10, padding: "11px 13px", display: "flex", gap: 10, alignItems: "flex-start",
+                      }}
+                    >
+                      <div style={{
+                        width: 18, height: 18, borderRadius: 99, flexShrink: 0, marginTop: 1,
+                        border: `2px solid ${active ? COLORS.primary : COLORS.border}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {active && <div style={{ width: 9, height: 9, borderRadius: 99, background: COLORS.primary }} />}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12.5, fontWeight: 800, color: COLORS.dark, display: "flex", alignItems: "center", gap: 6 }}>
+                          <Icon name={opt.icon} size={14} color={active ? COLORS.primary : COLORS.textMuted} /> {opt.title}
+                        </div>
+                        <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 3 }}>{opt.desc}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Fields */}
           <div style={{ borderTop: `1px solid ${COLORS.bgMuted}`, paddingTop: 14 }}>
@@ -7534,6 +7589,7 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
   const unit = subUnit ? UNITS[subUnit.unitId] : null;
   const submitter = submission ? getUser(submission.createdBy) : null;
   const [showDailyMargin, setShowDailyMargin] = useState(false);
+  const store = useDataStore();
 
   if (!submission || !template || !subUnit) {
     return (
@@ -7572,6 +7628,17 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
   const canClose = isMine && submission.status === "approved" && template.frequency !== "monthly";
   const canUpdate = isMine && submission.status === "approved" && template.frequency === "monthly";
 
+  // Cara input realisasi margin (dipilih saat KPI dibuat). 'daily' | 'monthly' | null (legacy).
+  const hasMarginField = template.fields.some(f => f.isMargin);
+  const marginMode = submission.marginInputMode;
+  const canChangeMode = isOwnerLevel(user.role); // hanya Admin/Owner boleh ganti cara
+  const changeMarginMode = async (mode) => {
+    try {
+      await setMarginInputMode(submission.id, mode);
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) { alert(e.message || "Gagal mengubah cara input margin."); }
+  };
+
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "20px 14px" }}>
       <button onClick={onBack} style={backButtonStyle}>← Kembali</button>
@@ -7604,19 +7671,42 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
       </div>
 
       {/* Action buttons */}
-      {(canClose || canUpdate) && (
+      {(canClose || canUpdate) && (() => {
+        // Cara yang dipilih di awal menentukan tombol mana yang tampil.
+        // Legacy (marginMode null & ada field margin) → tampilkan keduanya agar data lama tetap jalan.
+        const isLegacyBoth = canUpdate && hasMarginField && !marginMode;
+        const showDailyBtn  = canUpdate && hasMarginField && (marginMode === "daily" || isLegacyBoth);
+        const showUpdateBtn = canUpdate && (!hasMarginField || marginMode === "monthly" || isLegacyBoth);
+        const otherMode = marginMode === "daily" ? "monthly" : "daily";
+        const otherLabel = otherMode === "daily" ? "Margin Harian" : "Update Total Bulanan";
+        return (
         <Card style={{ padding: "14px 16px", marginBottom: 14, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-            <div style={{ fontSize: 12, color: "#92400E", maxWidth: 520 }}>
+            <div style={{ fontSize: 12, color: "#92400E", maxWidth: 560 }}>
               {canClose
                 ? "Siklus/event sudah berakhir? Klik tombol untuk closing KPI."
-                : (<>
+                : !hasMarginField
+                ? "Update realisasi (target vs aktual) bulan ini."
+                : isLegacyBoth
+                ? (<>
                     <strong>Pilih SATU cara input realisasi margin bulan ini:</strong><br />
                     <b>Margin Harian</b> — isi per hari, total otomatis jadi realisasi.
                     {"  •  "}
                     <b>Update Realisasi</b> — isi angka total bulan langsung.
-                    <br /><span style={{ opacity: 0.85 }}>Cukup pakai salah satu; cara terakhir yang disimpan menjadi nilai final.</span>
-                  </>)}
+                  </>)
+                : marginMode === "daily"
+                ? (<><strong>Cara input margin (dipilih di awal): Margin Harian.</strong><br />Isi margin per hari; total otomatis jadi realisasi bulan.</>)
+                : (<><strong>Cara input margin (dipilih di awal): Update Total Bulanan.</strong><br />Isi langsung angka total realisasi margin bulan.</>)}
+              {/* Ganti cara — hanya Admin/Owner, hanya bila cara sudah ditetapkan */}
+              {canUpdate && hasMarginField && marginMode && canChangeMode && (
+                <div style={{ marginTop: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => { if (confirm(`Ganti cara input margin ke "${otherLabel}"?`)) changeMarginMode(otherMode); }}
+                    style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: 700, color: COLORS.primary, textDecoration: "underline" }}
+                  >Ganti cara → {otherLabel}</button>
+                </div>
+              )}
             </div>
             {canClose && (
               <button
@@ -7625,10 +7715,9 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
                 style={{ padding: "8px 16px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
               >Tutup KPI Sekarang</button>
             )}
-            {canUpdate && (
-              <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                  <span style={{ fontSize: 9, fontWeight: 800, color: "#92400E", textTransform: "uppercase", letterSpacing: 0.4 }}>Cara A</span>
+            {(showDailyBtn || showUpdateBtn) && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                {showDailyBtn && (
                   <button
                     onClick={() => setShowDailyMargin(true)}
                     type="button"
@@ -7636,21 +7725,23 @@ function SubmissionDetailPage({ user, submissionId, onBack, onClose, onUpdate })
                   >
                     <Icon name="calendar" size={13} color={COLORS.white} style={{ pointerEvents: "none" }} /> Margin Harian
                   </button>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", color: "#92400E", fontSize: 11, fontWeight: 700, paddingTop: 14 }}>atau</div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                  <span style={{ fontSize: 9, fontWeight: 800, color: "#92400E", textTransform: "uppercase", letterSpacing: 0.4 }}>Cara B</span>
+                )}
+                {showDailyBtn && showUpdateBtn && (
+                  <span style={{ color: "#92400E", fontSize: 11, fontWeight: 700 }}>atau</span>
+                )}
+                {showUpdateBtn && (
                   <button
                     onClick={() => onUpdate(submission.id)}
                     type="button"
                     style={{ padding: "8px 16px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
                   >Update Realisasi</button>
-                </div>
+                )}
               </div>
             )}
           </div>
         </Card>
-      )}
+        );
+      })()}
 
       {showDailyMargin && (
         <DailyMarginPanel
