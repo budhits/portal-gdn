@@ -2515,7 +2515,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "16px 0 8px" }}>
               Resume per Unit
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 12, marginBottom: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(480px, 100%), 1fr))", gap: 12, marginBottom: 20 }}>
               {unitsWithMargin.map(unit => (
                 <MarginResumeChip key={unit.id} unit={unit} />
               ))}
@@ -2525,7 +2525,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "0 0 8px" }}>
               Detail Sub-Unit
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(480px, 100%), 1fr))", gap: 12 }}>
               {unitsWithMargin.map(unit => (
                 <MarginUnitCard key={unit.id} unit={unit} />
               ))}
@@ -2542,7 +2542,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
         />
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
           gap: 12,
         }}>
           {unitsWithScores.map(unit => (
@@ -2637,7 +2637,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
         ) : (
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(320px, 100%), 1fr))",
             gap: 12,
           }}>
             {unitsWithProjects.map(unit => (
@@ -3160,6 +3160,7 @@ function MarginGrandTotalCard({ total, periodLabel, gap, label = "Total Semua Un
 }
 
 function MarginUnitRow({ unit, isLast }) {
+  const isMobile = useIsMobile();
   const {
     target, actual, percentage,
     closedCount, closedEntries,
@@ -3223,7 +3224,7 @@ function MarginUnitRow({ unit, isLast }) {
         <>
           <div style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
             gap: 10,
             marginBottom: 8,
             fontSize: 11,
@@ -3728,6 +3729,7 @@ function SubUnitDetailCard({ subUnit, parentUnit, onSelect, effectiveWeight }) {
  * Owner sees all; Leader sees their unit; PIC sees their sub-unit.
  */
 function ProjectListPage({ user, onSelectProject, onNewProject }) {
+  const isMobile = useIsMobile();
   const store = useDataStore();
   const allProjects = useMemo(() => getProjectsForUser(user), [user, store?.projects]);
   const [filterUnit, setFilterUnit] = useState("all");
@@ -3860,6 +3862,7 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
 }
 
 function ProjectListItem({ project, onClick }) {
+  const isMobile = useIsMobile();
   const unit = UNITS[project.unitId];
   const subUnit = project.subUnitId ? LIVE.subUnits.find(su => su.id === project.subUnitId) : null;
   const { workProgress, budgetProgress } = calculateProjectProgress(project);
@@ -3884,7 +3887,7 @@ function ProjectListItem({ project, onClick }) {
             {unit.name}{subUnit && <> · {subUnit.name}</>} • {project.milestonesDone}/{project.milestonesTotal} milestone • {formatDate(project.startDate)} → {formatDate(project.endDate)}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
             {/* Work progress */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, marginBottom: 3 }}>
@@ -4055,7 +4058,7 @@ function MarginDetailPage({ user, onSelectSubmission }) {
       <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: COLORS.textMuted, margin: "0 0 8px" }}>
         Detail per Unit
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(480px, 100%), 1fr))", gap: 12 }}>
         {unitsWithMargin.map(unit => (
           <MarginDetailUnitCard key={unit.id} unit={unit} onSelectSubmission={onSelectSubmission} />
         ))}
@@ -4175,6 +4178,7 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
 }
 
 function MarginEntryRow({ entry, isPending, onSelectSubmission }) {
+  const isMobile = useIsMobile();
   const subUnitName = getSubUnitName(entry.subUnitId);
   const achieved = entry.targetMargin > 0
     ? Math.round((entry.actualMargin / entry.targetMargin) * 100)
@@ -4197,7 +4201,7 @@ function MarginEntryRow({ entry, isPending, onSelectSubmission }) {
       borderRadius: 7,
       marginBottom: 5,
       display: "grid",
-      gridTemplateColumns: "1.3fr 0.9fr 0.9fr 0.7fr",
+      gridTemplateColumns: isMobile ? "1fr 1fr" : "1.3fr 0.9fr 0.9fr 0.7fr",
       gap: 8,
       alignItems: "center",
       fontSize: 11,
@@ -5077,6 +5081,7 @@ function FormFieldInput({ field, value, onChange, disabled, computedValue }) {
  * Step 3: Submit
  */
 function SubmitKPIForm({ user, context, onBack }) {
+  const isMobile = useIsMobile();
   const store = useDataStore();
   // Admin/Owner bisa membuka form tanpa sub-unit -> pilih sub-unit dulu.
   const [pickedSubUnitId, setPickedSubUnitId] = useState(null);
@@ -5279,7 +5284,7 @@ function SubmitKPIForm({ user, context, onBack }) {
           </div>
 
           {/* Period & expected close */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 16 }}>
             <div>
               <label style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
                 Periode <span style={{ color: COLORS.danger }}>*</span>
@@ -5426,6 +5431,7 @@ function StepBadge({ num, label, active, done, onClick }) {
 // ──────────────────────────────────────────────────────────────────────────
 
 function CloseKPIForm({ user, context, onBack }) {
+  const isMobile = useIsMobile();
   const store = useDataStore();
   const submission = LIVE.submissions.find(s => s.id === context?.submissionId);
   const template = submission ? getFormTemplate(submission.templateId) : null;
@@ -5558,7 +5564,7 @@ function CloseKPIForm({ user, context, onBack }) {
                 )}
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
                 <div>
                   <div style={{ fontSize: 10, color: COLORS.textLight, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>
                     Estimasi
@@ -5800,6 +5806,7 @@ function UpdateMonthlyKPIForm({ user, context, onBack }) {
 // ──────────────────────────────────────────────────────────────────────────
 
 function AddExpenseForm({ user, context, onBack }) {
+  const isMobile = useIsMobile();
   const project = LIVE.projects.find(p => p.id === context?.projectId);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState(0);
@@ -5877,7 +5884,7 @@ function AddExpenseForm({ user, context, onBack }) {
           />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 12 }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, color: COLORS.dark, display: "block", marginBottom: 5 }}>
               Nominal (Rp) <span style={{ color: COLORS.danger }}>*</span>
@@ -5995,6 +6002,7 @@ const inputStyle = {
  * and requires Owner approval before work begins.
  */
 function SubmitProjectForm({ user, context, onBack }) {
+  const isMobile = useIsMobile();
   const store = useDataStore();
   // Determine which units/sub-units this user may propose a project for
   const availableUnits = useMemo(() => {
@@ -6119,7 +6127,7 @@ function SubmitProjectForm({ user, context, onBack }) {
         </InfoBanner>
 
         {/* Unit & Sub Unit */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 16, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginTop: 16, marginBottom: 12 }}>
           <div>
             <label style={labelStyle}>Unit <span style={{ color: COLORS.danger }}>*</span></label>
             <select
@@ -6191,7 +6199,7 @@ function SubmitProjectForm({ user, context, onBack }) {
         </div>
 
         {/* Dates */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
           <div>
             <label style={labelStyle}>Tanggal Mulai <span style={{ color: COLORS.danger }}>*</span></label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={inputStyle} />
@@ -6247,6 +6255,9 @@ function SubmitProjectForm({ user, context, onBack }) {
             </button>
           </div>
 
+          {/* HP: tabel milestone lebar → area geser horizontal */}
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", margin: isMobile ? "0 -2px" : 0 }}>
+          <div style={{ minWidth: isMobile ? 560 : "auto" }}>
           {/* Column headers */}
           <div style={{
             display: "grid",
@@ -6339,6 +6350,8 @@ function SubmitProjectForm({ user, context, onBack }) {
               </button>
             </div>
           ))}
+          </div>
+          </div>
 
           {/* Total allocation indicator */}
           {(() => {
@@ -6636,6 +6649,7 @@ function setUnitsData(map) { UNITS = map; }
 function setUsersData(map) { USERS = map; }
 
 function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
+  const isMobile = useIsMobile();
   const store = useDataStore();
   const project = LIVE.projects.find(p => p.id === projectId);
   const [milestones, setMilestones] = useState(LIVE.milestones[projectId] || []);
@@ -6839,7 +6853,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
         </div>
 
         {/* Dual progress */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginTop: 16 }}>
           <div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.75)", marginBottom: 4, fontWeight: 600 }}>Pekerjaan: {milestonesDone}/{milestones.length} milestone
             </div>
@@ -7053,7 +7067,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
               <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 10 }}>
                 {editingMsId === null ? "Milestone Baru" : "Edit Milestone"}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 130px 120px 120px", gap: 8, marginBottom: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 130px 120px 120px", gap: 8, marginBottom: 10 }}>
                 <div>
                   <label style={labelStyle}>Nama <span style={{ color: COLORS.danger }}>*</span></label>
                   <input
@@ -7189,7 +7203,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
                   style={inputStyle}
                 />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: 10, marginBottom: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 140px", gap: 10, marginBottom: 10 }}>
                 <div>
                   <label style={labelStyle}>Jumlah (Rp) <span style={{ color: COLORS.danger }}>*</span></label>
                   <input
@@ -7831,6 +7845,7 @@ function AdminPanel({ user }) {
  */
 function ApprovalInbox({ user } = {}) {
   const store = useDataStore();
+  const isMobile = useIsMobile();
   // Owner melihat semua estimasi; Leader hanya estimasi di unitnya.
   const allPending = useMemo(() => {
     const filters = { status: "estimated" };
@@ -7868,7 +7883,7 @@ function ApprovalInbox({ user } = {}) {
   const selected = pending.find(p => p.id === selectedId) || pending[0];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 320px) 1fr", gap: 14 }}>
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(280px, 320px) 1fr", gap: 14 }}>
       {/* List */}
       <Card style={{ padding: 0 }}>
         <div style={{
@@ -8289,6 +8304,7 @@ function templateToBuilderData(template) {
  * `initialData` (optional) pre-fills the builder, e.g. when duplicating a template.
  */
 function FormBuilder({ onClose, initialData }) {
+  const isMobile = useIsMobile();
   const store = useDataStore();
   const [name, setName] = useState(initialData?.name || "");
   const [desc, setDesc] = useState(initialData?.desc || "");
@@ -8589,7 +8605,7 @@ function FormBuilder({ onClose, initialData }) {
           <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.dark, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>
             1. Info Template
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 180px", gap: 12, marginBottom: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 180px", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={labelStyle}>Nama Template <span style={{ color: COLORS.danger }}>*</span></label>
               <input
@@ -8642,6 +8658,9 @@ function FormBuilder({ onClose, initialData }) {
             </div>
           </div>
 
+          {/* HP: tabel field lebar → bungkus dalam area geser horizontal */}
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", margin: isMobile ? "0 -2px" : 0 }}>
+          <div style={{ minWidth: isMobile ? 680 : "auto" }}>
           {/* Column headers */}
           <div style={{
             display: "grid",
@@ -9078,6 +9097,8 @@ function FormBuilder({ onClose, initialData }) {
             )}
             </div>
           ))}
+          </div>
+          </div>
 
           {/* Add field */}
           <button
@@ -9156,7 +9177,7 @@ function FormBuilder({ onClose, initialData }) {
                     <div style={{ fontSize: 10, fontWeight: 800, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
                       Input (Field Manual)
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8, marginBottom: 14 }}>
                       {manualFieldsList.map(f => (
                         <div key={f.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <label style={{ fontSize: 11, color: COLORS.text, flex: 1, fontWeight: 600 }}>
@@ -9279,6 +9300,7 @@ function FormBuilder({ onClose, initialData }) {
  */
 function FormLibrary() {
   const store = useDataStore(); // subscribe so new templates appear immediately
+  const isMobile = useIsMobile();
   const [selectedId, setSelectedId] = useState(LIVE.templates[0]?.id || null);
   const [showBuilder, setShowBuilder] = useState(false);
   const [builderInit, setBuilderInit] = useState(null); // null = blank new template
@@ -9295,7 +9317,7 @@ function FormLibrary() {
   };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "minmax(260px, 300px) 1fr", gap: 14 }}>
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(260px, 300px) 1fr", gap: 14 }}>
       {/* List */}
       <Card style={{ padding: 0 }}>
         <div style={{
@@ -9617,6 +9639,7 @@ const UNIT_COLOR_OPTIONS = [
 const UNIT_ICON_OPTIONS = ["fish", "water", "store", "signal", "cog", "chart", "building"];
 
 function UnitManager() {
+  const isMobile = useIsMobile();
   const store = useDataStore(); // subscribe agar hitungan dependensi ikut ter-update
   const [units, setUnits] = useState(() => Object.values(UNITS));
   const [showForm, setShowForm] = useState(false);
@@ -9772,7 +9795,7 @@ function UnitManager() {
           <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 12 }}>
             {editingId === null ? "Unit Baru" : "Edit Unit"}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={labelStyle}>Nama Unit <span style={{ color: COLORS.danger }}>*</span></label>
               <input
@@ -9970,6 +9993,7 @@ function UnitManager() {
 // ──────────────────────────────────────────────────────────────────────────
 
 function SubUnitManager() {
+  const isMobile = useIsMobile();
   const store = useDataStore();
   const [selectedUnitId, setSelectedUnitId] = useState("aquaculture");
   const [showForm, setShowForm] = useState(false);
@@ -10153,7 +10177,7 @@ function SubUnitManager() {
                     </select>
                   )}
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
                   <div>
                     <label style={labelStyle}>Nama Sub Unit <span style={{ color: COLORS.danger }}>*</span></label>
                     <input
@@ -10316,6 +10340,7 @@ function SubUnitManagerRow({ subUnit, parentUnit, isLast, kpiCount = 0, onEdit, 
 }
 
 function UserManager() {
+  const isMobile = useIsMobile();
   const [users, setUsers] = useState(() => Object.values(USERS));
   const [filterRole, setFilterRole] = useState("all");
   const [showForm, setShowForm] = useState(false);
@@ -10462,7 +10487,7 @@ function UserManager() {
               {error}
             </div>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={labelStyle}>Nama <span style={{ color: COLORS.danger }}>*</span></label>
               <input type="text" value={fName} onChange={e => setFName(e.target.value)} placeholder="Nama lengkap" style={inputStyle} />
@@ -10487,7 +10512,7 @@ function UserManager() {
               style={inputStyle}
             />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={labelStyle}>Role <span style={{ color: COLORS.danger }}>*</span></label>
               <select value={fRole} onChange={e => { setFRole(e.target.value); setFUnitId(""); setFSubUnitId(""); }} style={inputStyle}>
@@ -10836,6 +10861,7 @@ function daysInMonth(year, monthIdx) {
  * Two input modes: full month table + quick single-day entry.
  */
 function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
+  const isMobile = useIsMobile();
   const store = useDataStore();
   const { year, monthIdx } = parsePeriodLabel(periodLabel || submission?.period);
   const totalDays = daysInMonth(year, monthIdx);
@@ -10951,7 +10977,7 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
           background: COLORS.bgMuted,
           borderBottom: `1px solid ${COLORS.border}`,
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)",
           gap: 12,
         }}>
           <div>
@@ -11001,7 +11027,7 @@ function DailyMarginPanel({ submission, subUnitName, periodLabel, onClose }) {
               border: `1px solid #C5DBF0`,
               borderRadius: 10,
             }}>
-              <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 12, marginBottom: 12, alignItems: "end" }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "120px 1fr", gap: 12, marginBottom: 12, alignItems: "end" }}>
                 <div>
                   <label style={labelStyle}>Tanggal</label>
                   <select value={quickDay} onChange={e => setQuickDay(Number(e.target.value))} style={inputStyle}>

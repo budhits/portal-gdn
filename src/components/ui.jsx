@@ -94,6 +94,9 @@ export function Card({ children, style, onClick, hover }) {
         transition: "all 0.2s",
         cursor: onClick ? "pointer" : "default",
         transform: hovered ? "translateY(-2px)" : "translateY(0)",
+        // Izinkan Card menyusut di dalam grid/flex (cegah tabel lebar mendorong
+        // lebar halaman melebihi layar HP — overflow:auto di dalam baru berfungsi).
+        minWidth: 0,
         ...style,
       }}
     >
