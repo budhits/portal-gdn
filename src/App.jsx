@@ -1940,10 +1940,25 @@ function getNavItems(role) {
   }
 }
 
+// Deteksi layar sempit (HP) agar TopNav beralih ke menu hamburger.
+function useIsMobile(breakpoint = 760) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 function TopNav({ user, currentPage, onNavigate, onLogout }) {
   const navItems = getNavItems(user.role);
   const inboxCount = getInboxCount(user);
+  const isMobile = useIsMobile();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false); // drawer menu utama (HP)
   const [showChangePw, setShowChangePw] = useState(false);
 
   return (
@@ -1969,6 +1984,10 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
       </div>
       <span style={{ fontFamily: FONTS.heading, color: COLORS.white, fontWeight: 700, fontSize: 15, letterSpacing: -0.3 }}>{APP_CONFIG.name}</span>
 
+      {/* HP: menu utama disembunyikan ke drawer (hamburger); spacer agar akun tetap kanan */}
+      {isMobile && <div style={{ flex: 1, minWidth: 0 }} />}
+
+      {!isMobile && (
       <div style={{
         display: "flex",
         gap: 3,
@@ -2024,8 +2043,30 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
           );
         })}
       </div>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        {isMobile && (
+          <button
+            onClick={() => setNavOpen(o => !o)}
+            title="Menu utama"
+            style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              width: 38, height: 34, borderRadius: 8, flexShrink: 0,
+              background: navOpen ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", position: "relative",
+            }}
+          >
+            <Icon name={navOpen ? "x" : "menu"} size={20} color={COLORS.white} />
+            {!navOpen && inboxCount > 0 && (
+              <span style={{
+                position: "absolute", top: -5, right: -5, minWidth: 16, height: 16, padding: "0 4px",
+                borderRadius: 99, background: COLORS.danger, color: COLORS.white, fontSize: 9, fontWeight: 800,
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+              }}>{inboxCount}</span>
+            )}
+          </button>
+        )}
         <div style={{ position: "relative" }}>
           {/* Klik nama user untuk membuka menu akun (Ubah Password) */}
           <button
@@ -2053,10 +2094,12 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
                 ? <img src={user.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : user.name.charAt(0)}
             </div>
-            <div style={{ lineHeight: 1.1, textAlign: "left" }}>
-              <div style={{ color: COLORS.white, fontSize: 10, fontWeight: 700 }}>{user.name}</div>
-              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}>{ROLE_LABELS[user.role]}</div>
-            </div>
+            {!isMobile && (
+              <div style={{ lineHeight: 1.1, textAlign: "left" }}>
+                <div style={{ color: COLORS.white, fontSize: 10, fontWeight: 700 }}>{user.name}</div>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}>{ROLE_LABELS[user.role]}</div>
+              </div>
+            )}
           </button>
 
           {menuOpen && (
@@ -2107,9 +2150,51 @@ function TopNav({ user, currentPage, onNavigate, onLogout }) {
           }}
         >
           <Icon name="logout" size={13} color="rgba(255,255,255,0.7)" />
-          Keluar
+          {!isMobile && "Keluar"}
         </button>
       </div>
+
+      {/* HP: drawer menu utama yang muncul di bawah TopNav saat hamburger ditekan */}
+      {isMobile && navOpen && (
+        <>
+          <div onClick={() => setNavOpen(false)} style={{
+            position: "fixed", left: 0, right: 0, top: 56, bottom: 0,
+            background: "rgba(0,0,0,0.4)", zIndex: 150,
+          }} />
+          <div style={{
+            position: "absolute", left: 0, right: 0, top: "100%", zIndex: 151,
+            background: COLORS.dark, padding: 8, display: "flex", flexDirection: "column", gap: 2,
+            boxShadow: "0 14px 30px rgba(0,0,0,0.45)", borderTop: "1px solid rgba(255,255,255,0.08)",
+          }}>
+            {navItems.map(([key, label, iconName]) => {
+              const active = currentPage === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => { onNavigate(key); setNavOpen(false); }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12, width: "100%",
+                    padding: "13px 14px", borderRadius: 8, border: "none", cursor: "pointer",
+                    textAlign: "left", fontFamily: "inherit", fontSize: 15, fontWeight: 600,
+                    background: active ? "rgba(255,255,255,0.12)" : "transparent",
+                    color: active ? COLORS.white : "rgba(255,255,255,0.72)",
+                  }}
+                >
+                  <Icon name={iconName} size={19} color={active ? COLORS.gold : "rgba(255,255,255,0.6)"} />
+                  <span style={{ flex: 1 }}>{label}</span>
+                  {key === "inbox" && inboxCount > 0 && (
+                    <span style={{
+                      minWidth: 18, height: 18, padding: "0 5px", borderRadius: 99,
+                      background: COLORS.danger, color: COLORS.white, fontSize: 10, fontWeight: 800,
+                      display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    }}>{inboxCount}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
       {showChangePw && <ChangePasswordModal onClose={() => setShowChangePw(false)} />}
     </div>
   );
