@@ -7098,77 +7098,92 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
             </div>
           </div>
 
-          {/* Inline add/edit milestone form */}
+          {/* Add/edit milestone — popup di tengah layar (overlay) */}
           {showMsForm && (
-            <div style={{
-              padding: "14px 16px",
-              background: COLORS.infoBg,
-              border: `1px solid #C5DBF0`,
-              borderRadius: 10,
-              marginBottom: 12,
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 10 }}>
-                {editingMsId === null ? "Milestone Baru" : "Edit Milestone"}
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 130px 120px 120px", gap: 8, marginBottom: 10 }}>
-                <div>
-                  <label style={labelStyle}>Nama <span style={{ color: COLORS.danger }}>*</span></label>
-                  <input
-                    type="text"
-                    value={msFormName}
-                    onChange={e => setMsFormName(e.target.value)}
-                    placeholder="cth: Survey & izin lahan"
-                    style={inputStyle}
-                  />
+            <div
+              onClick={() => setShowMsForm(false)}
+              style={{
+                position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000,
+                display: "flex", alignItems: "flex-start", justifyContent: "center",
+                padding: "60px 16px", overflowY: "auto",
+              }}
+            >
+              <div
+                onClick={e => e.stopPropagation()}
+                style={{
+                  background: COLORS.white, borderRadius: 16, width: "100%", maxWidth: 520,
+                  boxShadow: "0 24px 70px rgba(0,0,0,0.35)", overflow: "hidden",
+                }}
+              >
+                {/* Header */}
+                <div style={{ padding: "16px 20px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, color: COLORS.dark }}>
+                    {editingMsId === null ? "Milestone Baru" : "Edit Milestone"}
+                  </div>
+                  <button onClick={() => setShowMsForm(false)} type="button" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}>
+                    <Icon name="x" size={18} color={COLORS.textMuted} />
+                  </button>
                 </div>
-                <div>
-                  <label style={labelStyle}>Target Tgl <span style={{ color: COLORS.danger }}>*</span></label>
-                  <input type="date" value={msFormDate} onChange={e => setMsFormDate(e.target.value)} style={inputStyle} />
+
+                {/* Body */}
+                <div style={{ padding: "18px 20px" }}>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={labelStyle}>Nama <span style={{ color: COLORS.danger }}>*</span></label>
+                    <input
+                      type="text"
+                      value={msFormName}
+                      onChange={e => setMsFormName(e.target.value)}
+                      placeholder="cth: Survey & izin lahan"
+                      style={inputStyle}
+                      autoFocus
+                    />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 14 }}>
+                    <div>
+                      <label style={labelStyle}>Target Tgl <span style={{ color: COLORS.danger }}>*</span></label>
+                      <input type="date" value={msFormDate} onChange={e => setMsFormDate(e.target.value)} style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Alokasi Budget</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={msFormBudget === "" ? "" : Number(msFormBudget).toLocaleString("id-ID")}
+                        onChange={e => {
+                          const raw = e.target.value.replace(/[^\d]/g, "");
+                          setMsFormBudget(raw === "" ? "" : Number(raw));
+                        }}
+                        placeholder="Rp"
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>PIC</label>
+                    <input
+                      type="text"
+                      value={msFormPic}
+                      onChange={e => setMsFormPic(e.target.value)}
+                      placeholder="opsional"
+                      style={inputStyle}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label style={labelStyle}>Alokasi Budget</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={msFormBudget === "" ? "" : Number(msFormBudget).toLocaleString("id-ID")}
-                    onChange={e => {
-                      const raw = e.target.value.replace(/[^\d]/g, "");
-                      setMsFormBudget(raw === "" ? "" : Number(raw));
+
+                {/* Footer */}
+                <div style={{ padding: "14px 20px", borderTop: `1px solid ${COLORS.bgMuted}`, background: COLORS.bg, display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                  <button onClick={() => setShowMsForm(false)} type="button" style={adminBtnStyle}>Batal</button>
+                  <button
+                    onClick={saveMilestone}
+                    type="button"
+                    style={{
+                      padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none",
+                      borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
                     }}
-                    placeholder="Rp"
-                    style={inputStyle}
-                  />
+                  >
+                    {editingMsId === null ? "Tambah" : "Simpan"}
+                  </button>
                 </div>
-                <div>
-                  <label style={labelStyle}>PIC</label>
-                  <input
-                    type="text"
-                    value={msFormPic}
-                    onChange={e => setMsFormPic(e.target.value)}
-                    placeholder="opsional"
-                    style={inputStyle}
-                  />
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button onClick={() => setShowMsForm(false)} type="button" style={adminBtnStyle}>Batal</button>
-                <button
-                  onClick={saveMilestone}
-                  type="button"
-                  style={{
-                    padding: "7px 16px",
-                    background: COLORS.primary,
-                    color: COLORS.white,
-                    border: "none",
-                    borderRadius: 7,
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {editingMsId === null ? "Tambah" : "Simpan"}
-                </button>
               </div>
             </div>
           )}
