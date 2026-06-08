@@ -62,7 +62,7 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchRoadmap, createRoadmapNode, updateRoadmapNode, deleteRoadmapNode,
   createRoadmapEdge, deleteRoadmapEdge,
   addRoadmapMilestone, updateRoadmapMilestone, deleteRoadmapMilestone,
-  createRoadmapCanvas, deleteRoadmapCanvas } from "./api/data.js";
+  createRoadmapCanvas, updateRoadmapCanvas, deleteRoadmapCanvas } from "./api/data.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
