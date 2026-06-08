@@ -39,6 +39,7 @@ import { APP_CONFIG, ROLES, ROLE_LABELS, COLORS, FONTS, STATUS_THRESHOLDS,
   OWNER_LEVEL_ROLES, isOwnerLevel } from "./constants.js";
 import { MONTHS_ID, formatDate, formatRupiah, formatRupiahFull, formatDateTime,
   getScoreStatus, getProjectStatusInfo, getAvailablePeriods, isDateInPeriod,
+  getCurrentPeriodKey, getCurrentPeriod,
   getAuditActionInfo, evalFormula, getFieldDirection, computeFieldAchievement,
   formatFieldValue } from "./utils/format.js";
 import { login as apiLogin, logout as apiLogout, fetchMe, getStoredUser,
@@ -1621,7 +1622,7 @@ function pendingProjectsForUser(user) {
 // They default to the current month (Mei 2026 in this prototype).
 // ──────────────────────────────────────────────────────────────────────────
 
-const DEFAULT_PERIOD = { key: "2026-05", label: "Mei 2026", type: "month" };
+const DEFAULT_PERIOD = getCurrentPeriod(); // bulan berjalan (mengikuti tanggal hari ini)
 
 /**
  * Get the KPI snapshot for a sub-unit (current period default).
@@ -1819,7 +1820,7 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
             </div>
             <div style={{ position: "relative", display: "flex", gap: 7, color: "rgba(255,255,255,0.4)", fontSize: 11, alignItems: "center" }}>
               <span style={{ width: 6, height: 6, borderRadius: 99, background: COLORS.success, boxShadow: `0 0 0 3px ${COLORS.success}22` }} />
-              Periode aktif · {APP_CONFIG.period}
+              Periode aktif · {getCurrentPeriod().label}
             </div>
           </div>
         )}
@@ -2299,7 +2300,7 @@ function ChangePasswordModal({ onClose }) {
 function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
   const store = useDataStore(); // subscribe to live in-session data so this page re-renders on changes
   const periods = useMemo(() => getAvailablePeriods(), []);
-  const [selectedPeriodKey, setSelectedPeriodKey] = useState("2026-05");
+  const [selectedPeriodKey, setSelectedPeriodKey] = useState(getCurrentPeriodKey());
   const selectedPeriod = periods.find(p => p.key === selectedPeriodKey) || periods[periods.length - 2];
 
   // Live data deps so memos recompute when store changes
@@ -2356,8 +2357,8 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
   const budgetSummary = useMemo(() => calculateBudgetSummary(selectedPeriod), [selectedPeriodKey, store?.milestones, store?.expenses, store?.projects]);
 
   // Quick-switch handlers
-  const setToCurrentMonth = () => setSelectedPeriodKey("2026-05");
-  const setToYTD = () => setSelectedPeriodKey("ytd-2026");
+  const setToCurrentMonth = () => setSelectedPeriodKey(getCurrentPeriodKey());
+  const setToYTD = () => setSelectedPeriodKey(`ytd-${new Date().getFullYear()}`);
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px" }}>
@@ -2421,9 +2422,9 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
             style={{
               padding: "7px 12px",
               borderRadius: 8,
-              border: `1px solid ${selectedPeriodKey === "2026-05" ? COLORS.primary : COLORS.border}`,
-              background: selectedPeriodKey === "2026-05" ? COLORS.primary : COLORS.white,
-              color: selectedPeriodKey === "2026-05" ? COLORS.white : COLORS.text,
+              border: `1px solid ${selectedPeriodKey === getCurrentPeriodKey() ? COLORS.primary : COLORS.border}`,
+              background: selectedPeriodKey === getCurrentPeriodKey() ? COLORS.primary : COLORS.white,
+              color: selectedPeriodKey === getCurrentPeriodKey() ? COLORS.white : COLORS.text,
               fontSize: 12.5,
               fontWeight: 600,
               cursor: "pointer",
@@ -2437,9 +2438,9 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
             style={{
               padding: "7px 12px",
               borderRadius: 8,
-              border: `1px solid ${selectedPeriodKey === "ytd-2026" ? COLORS.primary : COLORS.border}`,
-              background: selectedPeriodKey === "ytd-2026" ? COLORS.primary : COLORS.white,
-              color: selectedPeriodKey === "ytd-2026" ? COLORS.white : COLORS.text,
+              border: `1px solid ${selectedPeriodKey.startsWith("ytd-") ? COLORS.primary : COLORS.border}`,
+              background: selectedPeriodKey.startsWith("ytd-") ? COLORS.primary : COLORS.white,
+              color: selectedPeriodKey.startsWith("ytd-") ? COLORS.white : COLORS.text,
               fontSize: 12.5,
               fontWeight: 600,
               cursor: "pointer",
@@ -3935,7 +3936,7 @@ function ProjectListItem({ project, onClick }) {
 function MarginDetailPage({ user, onSelectSubmission }) {
   const store = useDataStore(); // subscribe to live in-session data so this page re-renders on changes
   const periods = useMemo(() => getAvailablePeriods(), []);
-  const [selectedPeriodKey, setSelectedPeriodKey] = useState("2026-05");
+  const [selectedPeriodKey, setSelectedPeriodKey] = useState(getCurrentPeriodKey());
   const selectedPeriod = periods.find(p => p.key === selectedPeriodKey) || periods[periods.length - 2];
 
   // Filter units based on user role

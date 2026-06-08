@@ -46,16 +46,31 @@ export function getProjectStatusInfo(status) {
   }
 }
 
+// Kunci & objek periode untuk BULAN BERJALAN (mengikuti tanggal hari ini).
+export function getCurrentPeriodKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+export function getCurrentPeriod() {
+  const now = new Date();
+  return { key: getCurrentPeriodKey(), label: `${MONTHS_ID[now.getMonth()]} ${now.getFullYear()}`, type: "month" };
+}
+
 export function getAvailablePeriods() {
-  // For prototype, hardcode based on mock data range (Feb 2026 → May 2026)
-  // In production, derive available periods from KPI_SUBMISSIONS closing dates.
-  return [
-    { key: "2026-02", label: "Feb 2026",       type: "month" },
-    { key: "2026-03", label: "Mar 2026",       type: "month" },
-    { key: "2026-04", label: "Apr 2026",       type: "month" },
-    { key: "2026-05", label: "Mei 2026",       type: "month" },
-    { key: "ytd-2026", label: "YTD 2026",      type: "ytd"   },
-  ];
+  // Dinamis: 12 bulan terakhir (terlama → terbaru) + YTD tahun berjalan.
+  // Bulan berjalan selalu ada & jadi default, jadi periode tidak pernah basi.
+  const now = new Date();
+  const out = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      label: `${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`,
+      type: "month",
+    });
+  }
+  out.push({ key: `ytd-${now.getFullYear()}`, label: `YTD ${now.getFullYear()}`, type: "ytd" });
+  return out;
 }
 
 export function isDateInPeriod(isoDate, period) {
