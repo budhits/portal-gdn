@@ -225,6 +225,8 @@ CREATE TABLE roadmap_canvases (
   id            TEXT PRIMARY KEY,
   owner_node_id TEXT,                                  -- node pemilik anak kanvas ini
   name          TEXT NOT NULL DEFAULT 'Anak Kanvas',
+  pos_x         DOUBLE PRECISION NOT NULL DEFAULT 0,   -- posisi box anak kanvas di kanvas induk
+  pos_y         DOUBLE PRECISION NOT NULL DEFAULT 0,
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 CREATE TABLE roadmap_nodes (

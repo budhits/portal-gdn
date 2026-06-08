@@ -17,7 +17,8 @@ const nodeToApi = (r) => ({
 const edgeToApi = (r) => ({ id: r.id, canvasId: r.canvas_id || null, sourceId: r.source_id, targetId: r.target_id });
 const msToApi = (r) => ({ id: r.id, nodeId: r.node_id, label: r.label, done: !!r.done,
   picUserId: r.pic_user_id || null, targetMonth: r.target_month || "" });
-const canvasToApi = (r) => ({ id: r.id, ownerNodeId: r.owner_node_id || null, name: r.name });
+const canvasToApi = (r) => ({ id: r.id, ownerNodeId: r.owner_node_id || null, name: r.name,
+  posX: Number(r.pos_x) || 0, posY: Number(r.pos_y) || 0 });
 
 const nid = () => `rn-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 const eid = () => `re-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -50,29 +51,23 @@ async function deleteNodeDeep(id) {
   await query("DELETE FROM roadmap_nodes WHERE id = $1", [id]);
 }
 
-// GET /api/roadmap?canvasId=  → { nodes, edges } satu kanvas (default: utama).
-// Tiap node dilengkapi milestones[] + childCanvases[] (anak kanvas yang dimiliki).
-router.get("/", async (req, res, next) => {
+// GET /api/roadmap → SELURUH pohon (semua node, edge, canvas) untuk dirender di
+// satu kanvas: anak kanvas tampil sebagai box dengan node di dalamnya.
+router.get("/", async (_req, res, next) => {
   try {
-    const canvasId = req.query.canvasId || null;
-    const cond = canvasId ? "canvas_id = $1" : "canvas_id IS NULL";
-    const params = canvasId ? [canvasId] : [];
-    const [n, e] = await Promise.all([
-      query(`SELECT * FROM roadmap_nodes WHERE ${cond} ORDER BY created_at`, params),
-      query(`SELECT * FROM roadmap_edges WHERE ${cond} ORDER BY created_at`, params),
+    const [n, e, c] = await Promise.all([
+      query("SELECT * FROM roadmap_nodes ORDER BY created_at"),
+      query("SELECT * FROM roadmap_edges ORDER BY created_at"),
+      query("SELECT * FROM roadmap_canvases ORDER BY created_at"),
     ]);
     const nodes = n.rows.map(nodeToApi);
     const ids = nodes.map((x) => x.id);
     if (ids.length) {
-      const [ms, cv] = await Promise.all([
-        query("SELECT * FROM roadmap_milestones WHERE node_id = ANY($1) ORDER BY sort_order, created_at", [ids]),
-        query("SELECT * FROM roadmap_canvases WHERE owner_node_id = ANY($1) ORDER BY created_at", [ids]),
-      ]);
+      const ms = await query("SELECT * FROM roadmap_milestones WHERE node_id = ANY($1) ORDER BY sort_order, created_at", [ids]);
       const byNode = {}; ms.rows.forEach((m) => { (byNode[m.node_id] = byNode[m.node_id] || []).push(msToApi(m)); });
-      const cvByNode = {}; cv.rows.forEach((c) => { (cvByNode[c.owner_node_id] = cvByNode[c.owner_node_id] || []).push(canvasToApi(c)); });
-      nodes.forEach((nd) => { nd.milestones = byNode[nd.id] || []; nd.childCanvases = cvByNode[nd.id] || []; });
+      nodes.forEach((nd) => { nd.milestones = byNode[nd.id] || []; });
     }
-    res.json({ nodes, edges: e.rows.map(edgeToApi) });
+    res.json({ nodes, edges: e.rows.map(edgeToApi), canvases: c.rows.map(canvasToApi) });
   } catch (err) { next(err); }
 });
 
@@ -150,23 +145,29 @@ router.delete("/edges/:id", async (req, res, next) => {
 router.post("/canvases", async (req, res, next) => {
   try {
     if (!(await guard(req, res))) return;
-    const { ownerNodeId, name } = req.body || {};
+    const { ownerNodeId, name, posX, posY } = req.body || {};
     if (!ownerNodeId) return res.status(400).json({ error: "ownerNodeId wajib." });
     const id = cid();
     const { rows } = await query(
-      "INSERT INTO roadmap_canvases (id, owner_node_id, name) VALUES ($1,$2,$3) RETURNING *",
-      [id, ownerNodeId, (name || "Anak Kanvas").trim()]
+      "INSERT INTO roadmap_canvases (id, owner_node_id, name, pos_x, pos_y) VALUES ($1,$2,$3,$4,$5) RETURNING *",
+      [id, ownerNodeId, (name || "Anak Kanvas").trim(), Number(posX) || 0, Number(posY) || 0]
     );
     res.status(201).json(canvasToApi(rows[0]));
   } catch (err) { next(err); }
 });
 
-// PATCH /api/roadmap/canvases/:id  { name }
+// PATCH /api/roadmap/canvases/:id  { name?, posX?, posY? }
 router.patch("/canvases/:id", async (req, res, next) => {
   try {
     if (!(await guard(req, res))) return;
-    const { rows } = await query("UPDATE roadmap_canvases SET name = $2 WHERE id = $1 RETURNING *",
-      [req.params.id, (req.body?.name || "Anak Kanvas").trim()]);
+    const map = { name: "name", posX: "pos_x", posY: "pos_y" };
+    const sets = []; const params = [];
+    for (const [k, col] of Object.entries(map)) {
+      if (req.body[k] !== undefined) { params.push(req.body[k]); sets.push(`${col} = $${params.length}`); }
+    }
+    if (!sets.length) return res.status(400).json({ error: "Tidak ada perubahan." });
+    params.push(req.params.id);
+    const { rows } = await query(`UPDATE roadmap_canvases SET ${sets.join(", ")} WHERE id = $${params.length} RETURNING *`, params);
     if (!rows[0]) return res.status(404).json({ error: "Anak kanvas tidak ditemukan." });
     res.json(canvasToApi(rows[0]));
   } catch (err) { next(err); }

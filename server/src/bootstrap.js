@@ -65,8 +65,12 @@ async function runMigrations() {
     id TEXT PRIMARY KEY,
     owner_node_id TEXT,
     name TEXT NOT NULL DEFAULT 'Anak Kanvas',
+    pos_x DOUBLE PRECISION NOT NULL DEFAULT 0,
+    pos_y DOUBLE PRECISION NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT now()
   )`);
+  await pool.query("ALTER TABLE roadmap_canvases ADD COLUMN IF NOT EXISTS pos_x DOUBLE PRECISION NOT NULL DEFAULT 0");
+  await pool.query("ALTER TABLE roadmap_canvases ADD COLUMN IF NOT EXISTS pos_y DOUBLE PRECISION NOT NULL DEFAULT 0");
   await pool.query(`CREATE TABLE IF NOT EXISTS roadmap_nodes (
     id TEXT PRIMARY KEY,
     canvas_id TEXT,

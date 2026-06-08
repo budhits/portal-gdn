@@ -11662,30 +11662,43 @@ function RoadmapNodeCard({ data }) {
             </div>
           </div>
         )}
-        {((data.childCanvases && data.childCanvases.length > 0) || data.canEdit) && (
-          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 5 }}>
-            {(data.childCanvases || []).map(cv => (
-              <button key={cv.id} className="nodrag"
-                onClick={(e) => { e.stopPropagation(); data.onOpenCanvas && data.onOpenCanvas(cv.id, cv.name); }}
-                style={{ width: "100%", padding: "6px 9px", background: "#FFFDF7", border: `1.5px dashed ${COLORS.gold}`, color: COLORS.goldDeep, borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}>
-                ⤓ {cv.name}
-              </button>
-            ))}
-            {data.canEdit && (
-              <button className="nodrag"
-                onClick={(e) => { e.stopPropagation(); data.onAddCanvas && data.onAddCanvas(data.nodeId); }}
-                style={{ width: "100%", padding: "5px 9px", background: "transparent", border: `1px dashed ${COLORS.border}`, color: COLORS.textMuted, borderRadius: 8, fontSize: 10.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                + anak kanvas
-              </button>
-            )}
-          </div>
+        {data.canEdit && (
+          <button className="nodrag"
+            onClick={(e) => { e.stopPropagation(); data.onAddCanvas && data.onAddCanvas(data.nodeId); }}
+            title="Buat anak kanvas (project lebih kecil) di bawah node ini"
+            style={{ marginTop: 10, width: "100%", padding: "6px 9px", background: "#FFFDF7", border: `1.5px dashed ${COLORS.gold}`, color: COLORS.goldDeep, borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            ⤓ + Anak kanvas
+          </button>
         )}
       </div>
       <Handle type="source" position={Position.Right} style={{ background: COLORS.primary, width: 9, height: 9 }} />
+      <Handle type="source" position={Position.Bottom} id="b" style={{ background: COLORS.gold, width: 9, height: 9 }} />
     </div>
   );
 }
-const roadmapNodeTypes = { gdn: RoadmapNodeCard };
+// Box "anak kanvas" (group node React Flow): bingkai emas + header + node di dalamnya.
+function RoadmapCanvasBox({ data }) {
+  const mini = { background: "transparent", border: "none", cursor: "pointer", padding: 2, display: "inline-flex", fontFamily: "inherit" };
+  return (
+    <div style={{ width: "100%", height: "100%", border: `2px solid ${COLORS.gold}`, borderRadius: 14, background: "rgba(246,238,221,0.30)", boxShadow: "0 6px 18px rgba(168,130,63,.10)" }}>
+      <Handle type="target" position={Position.Top} id="t" style={{ background: COLORS.goldDeep, width: 10, height: 10 }} />
+      <div className="nodrag" style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "linear-gradient(90deg,#F6EEDD,#EFE4CB)", borderBottom: `1px solid ${COLORS.gold}`, borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
+        <span style={{ fontSize: 11.5, fontWeight: 800, color: COLORS.goldDeep, letterSpacing: 0.2, fontFamily: FONTS.heading }}>🗂 {data.name}</span>
+        <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 0.4, background: COLORS.goldDeep, color: "#fff", padding: "2px 7px", borderRadius: 99 }}>ANAK KANVAS</span>
+        {data.canEdit && (
+          <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8, alignItems: "center" }}>
+            <button className="nodrag" style={{ ...mini, fontSize: 10.5, fontWeight: 800, color: COLORS.goldDeep }} title="Tambah node di anak kanvas ini" onClick={(e) => { e.stopPropagation(); data.onAddNodeIn(data.canvasId); }}>+ node</button>
+            <button className="nodrag" style={mini} title="Ganti nama" onClick={(e) => { e.stopPropagation(); data.onRename(data.canvasId, data.name); }}><Icon name="edit" size={12} color={COLORS.goldDeep} /></button>
+            <button className="nodrag" style={mini} title="Hapus anak kanvas" onClick={(e) => { e.stopPropagation(); data.onDeleteCanvas(data.canvasId, data.name); }}><Icon name="trash" size={12} color={COLORS.danger} /></button>
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+const roadmapNodeTypes = { gdn: RoadmapNodeCard, canvasBox: RoadmapCanvasBox };
+
+const RM_NODE_W = 224, RM_NODE_H = 250, RM_BOX_PAD = 24;
 
 function RoadmapPage({ user }) {
   const canEdit = isOwnerLevel(user.role) || user.role === ROLES.LEADER;
@@ -11693,26 +11706,9 @@ function RoadmapPage({ user }) {
   const [rfEdges, setRfEdges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
-  const [path, setPath] = useState([]); // [{id,label}] — [] = kanvas utama
   const apiNodesRef = useRef({});
   const flowWrapRef = useRef(null);
   const rfInst = useRef(null);
-
-  const currentCanvasId = path.length ? path[path.length - 1].canvasId : null;
-  const pathKey = path.map(p => p.canvasId).join("/");
-
-  const openCanvas = useCallback((canvasId, label) => setPath(p => [...p, { canvasId, label }]), []);
-  const addCanvas = useCallback(async (nodeId) => {
-    const name = (prompt("Nama anak kanvas baru:", "Anak Kanvas") || "").trim();
-    if (!name) return;
-    try {
-      const cv = await createRoadmapCanvas({ ownerNodeId: nodeId, name });
-      const api = apiNodesRef.current[nodeId];
-      if (api) api.childCanvases = [...(api.childCanvases || []), cv];
-      setRfNodes(nds => nds.map(x => x.id === nodeId
-        ? { ...x, data: { ...x.data, childCanvases: [...(x.data.childCanvases || []), cv] } } : x));
-    } catch (e) { alert(e.message || "Gagal menambah anak kanvas."); }
-  }, []);
 
   const buildData = (n) => {
     const pic = n.picUserId ? USERS[n.picUserId] : null;
@@ -11723,71 +11719,131 @@ function RoadmapPage({ user }) {
       picName: pic?.name || null, picRole: pic ? ROLE_LABELS[pic.role] : null,
       picInitial: pic?.name?.charAt(0) || null, projectName: proj?.name || null,
       msDone: ms.filter(m => m.done).length, msTotal: ms.length,
-      childCanvases: n.childCanvases || [],
-      nodeId: n.id, onOpenCanvas: openCanvas, onAddCanvas: addCanvas, canEdit,
+      nodeId: n.id, onAddCanvas: addCanvas, canEdit,
     };
   };
-  const toRf = (n) => ({ id: n.id, type: "gdn", position: { x: n.posX, y: n.posY }, data: buildData(n) });
-  const toRfEdge = (e) => ({ id: e.id, source: e.sourceId, target: e.targetId,
-    markerEnd: { type: MarkerType.ArrowClosed, color: "#9298A6" }, style: { stroke: "#9298A6", strokeWidth: 2 } });
 
-  const load = async (canvasId) => {
+  // Susun seluruh pohon jadi node/edge React Flow: anak kanvas = box (group node)
+  // berisi node-nya; panah vertikal (emas) dari node induk ke box.
+  const assemble = ({ nodes, edges, canvases }) => {
+    const nodeById = {}; nodes.forEach(n => { nodeById[n.id] = n; }); apiNodesRef.current = nodeById;
+    const canvasById = {}; canvases.forEach(c => { canvasById[c.id] = c; });
+    const nodesByCanvas = {}; nodes.forEach(n => { const k = n.canvasId || "__main__"; (nodesByCanvas[k] = nodesByCanvas[k] || []).push(n); });
+    const ownerCanvasOf = (c) => (nodeById[c.ownerNodeId]?.canvasId) || null; // null = utama
+    const canvasesByParent = {}; canvases.forEach(c => { const k = ownerCanvasOf(c) || "__main__"; (canvasesByParent[k] = canvasesByParent[k] || []).push(c); });
+
+    const sizeMemo = {};
+    const sizeOf = (cId) => {
+      if (sizeMemo[cId]) return sizeMemo[cId];
+      sizeMemo[cId] = { w: 360, h: 200 }; // cegah rekursi tak hingga
+      let maxR = 0, maxB = 0;
+      (nodesByCanvas[cId] || []).forEach(n => { maxR = Math.max(maxR, (n.posX || 0) + RM_NODE_W); maxB = Math.max(maxB, (n.posY || 0) + RM_NODE_H); });
+      (canvasesByParent[cId] || []).forEach(cc => { const s = sizeOf(cc.id); maxR = Math.max(maxR, (cc.posX || 0) + s.w); maxB = Math.max(maxB, (cc.posY || 0) + s.h); });
+      const sz = { w: Math.max(360, maxR + RM_BOX_PAD), h: Math.max(190, maxB + RM_BOX_PAD) };
+      sizeMemo[cId] = sz; return sz;
+    };
+    const depthOf = (c) => { let d = 0, cur = c, seen = new Set(); while (true) { const pc = ownerCanvasOf(cur); if (!pc) break; const par = canvasById[pc]; if (!par || seen.has(par.id)) break; seen.add(par.id); cur = par; d++; } return d; };
+
+    const gdnRf = (n) => ({ id: n.id, type: "gdn", position: { x: n.posX, y: n.posY }, draggable: canEdit,
+      parentId: n.canvasId ? "cv-" + n.canvasId : undefined, extent: n.canvasId ? "parent" : undefined, data: buildData(n) });
+    const boxRf = (c) => { const sz = sizeOf(c.id); const oc = ownerCanvasOf(c); return {
+      id: "cv-" + c.id, type: "canvasBox", position: { x: c.posX, y: c.posY }, draggable: canEdit, selectable: canEdit,
+      parentId: oc ? "cv-" + oc : undefined, extent: oc ? "parent" : undefined, style: { width: sz.w, height: sz.h },
+      data: { name: c.name, canvasId: c.id, canEdit, onAddNodeIn, onRename: renameCanvas, onDeleteCanvas } }; };
+
+    const rfN = [];
+    (nodesByCanvas["__main__"] || []).forEach(n => rfN.push(gdnRf(n)));
+    [...canvases].sort((a, b) => depthOf(a) - depthOf(b)).forEach(c => {
+      rfN.push(boxRf(c));
+      (nodesByCanvas[c.id] || []).forEach(n => rfN.push(gdnRf(n)));
+    });
+
+    const rfE = [];
+    edges.forEach(e => rfE.push({ id: e.id, source: e.sourceId, target: e.targetId,
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#9298A6" }, style: { stroke: "#9298A6", strokeWidth: 2 } }));
+    canvases.forEach(c => { if (c.ownerNodeId) rfE.push({ id: "cve-" + c.id, source: c.ownerNodeId, sourceHandle: "b",
+      target: "cv-" + c.id, targetHandle: "t", markerEnd: { type: MarkerType.ArrowClosed, color: COLORS.goldDeep },
+      style: { stroke: COLORS.goldDeep, strokeWidth: 2, strokeDasharray: "5 4" } }); });
+
+    setRfNodes(rfN); setRfEdges(rfE);
+  };
+
+  const load = async () => {
     setLoading(true);
-    try {
-      const { nodes, edges } = await fetchRoadmap(canvasId || undefined);
-      apiNodesRef.current = {}; nodes.forEach(n => { apiNodesRef.current[n.id] = n; });
-      setRfNodes(nodes.map(toRf));
-      setRfEdges(edges.map(toRfEdge));
-    } catch { /* ignore */ }
+    try { assemble(await fetchRoadmap()); } catch { /* ignore */ }
     setLoading(false);
   };
-  // Muat ulang setiap pindah kanvas (utama ⇄ anak kanvas).
-  useEffect(() => { load(currentCanvasId); /* eslint-disable-next-line */ }, [pathKey]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
-  const onNodesChange = useCallback((ch) => setRfNodes(nds => applyNodeChanges(ch, nds)), []);
-  const onEdgesChange = useCallback((ch) => setRfEdges(eds => applyEdgeChanges(ch, eds)), []);
-  const onNodeDragStop = useCallback(async (_e, node) => {
+  const onNodesChange = (ch) => setRfNodes(nds => applyNodeChanges(ch, nds));
+  const onEdgesChange = (ch) => setRfEdges(eds => applyEdgeChanges(ch, eds));
+  const onNodeDragStop = async (_e, node) => {
     if (!canEdit) return;
-    try { await updateRoadmapNode(node.id, { posX: Math.round(node.position.x), posY: Math.round(node.position.y) }); } catch { /* */ }
-  }, [canEdit]);
-  const onConnect = useCallback(async (conn) => {
-    if (!canEdit || !conn.source || !conn.target) return;
+    const pos = { posX: Math.round(node.position.x), posY: Math.round(node.position.y) };
     try {
-      const e = await createRoadmapEdge({ canvasId: currentCanvasId, sourceId: conn.source, targetId: conn.target });
-      setRfEdges(eds => [...eds, toRfEdge(e)]);
+      if (node.id.startsWith("cv-")) await updateRoadmapCanvas(node.id.slice(3), pos);
+      else await updateRoadmapNode(node.id, pos);
+    } catch { /* */ }
+  };
+  const onConnect = async (conn) => {
+    if (!canEdit || !conn.source || !conn.target || conn.source.startsWith("cv-") || conn.target.startsWith("cv-")) return;
+    try {
+      const canvasId = apiNodesRef.current[conn.source]?.canvasId || null;
+      await createRoadmapEdge({ canvasId, sourceId: conn.source, targetId: conn.target });
+      load();
     } catch (err) { alert(err.message || "Gagal menyambung."); }
-  }, [canEdit, currentCanvasId]);
-  const onEdgesDelete = useCallback(async (eds) => {
+  };
+  const onEdgesDelete = async (eds) => {
     if (!canEdit) return;
-    for (const e of eds) { try { await deleteRoadmapEdge(e.id); } catch { /* */ } }
-  }, [canEdit]);
-  const onNodeClick = useCallback((_e, node) => {
-    if (!canEdit) return;
+    for (const e of eds) { if (!String(e.id).startsWith("cve-")) { try { await deleteRoadmapEdge(e.id); } catch { /* */ } } }
+  };
+  const onNodeClick = (_e, node) => {
+    if (!canEdit || node.id.startsWith("cv-")) return;
     const api = apiNodesRef.current[node.id];
     if (api) setEditing({ ...api });
-  }, [canEdit]);
+  };
 
   const addNode = async () => {
     try {
-      const n = await createRoadmapNode({ canvasId: currentCanvasId, label: "Inisiatif baru", status: "planned",
-        posX: Math.round(60 + Math.random() * 160), posY: Math.round(60 + Math.random() * 140) });
-      apiNodesRef.current[n.id] = n;
-      setRfNodes(nds => [...nds, toRf(n)]);
-      setEditing({ ...n });
+      await createRoadmapNode({ label: "Inisiatif baru", status: "planned",
+        posX: Math.round(60 + Math.random() * 160), posY: Math.round(60 + Math.random() * 120) });
+      load();
     } catch (e) { alert(e.message || "Gagal menambah node."); }
   };
+  const addCanvas = async (nodeId) => {
+    const name = (prompt("Nama anak kanvas (project lebih kecil):", "Anak Kanvas") || "").trim();
+    if (!name) return;
+    try {
+      const n = apiNodesRef.current[nodeId];
+      await createRoadmapCanvas({ ownerNodeId: nodeId, name, posX: Math.round(n?.posX || 40), posY: Math.round((n?.posY || 0) + 300) });
+      load();
+    } catch (e) { alert(e.message || "Gagal menambah anak kanvas."); }
+  };
+  const onAddNodeIn = async (canvasId) => {
+    try { await createRoadmapNode({ canvasId, label: "Tugas/inisiatif", status: "planned", posX: 30, posY: 56 }); load(); }
+    catch (e) { alert(e.message || "Gagal."); }
+  };
+  const renameCanvas = async (canvasId, cur) => {
+    const name = (prompt("Ganti nama anak kanvas:", cur || "") || "").trim();
+    if (!name) return;
+    try { await updateRoadmapCanvas(canvasId, { name }); load(); } catch (e) { alert(e.message || "Gagal."); }
+  };
+  const onDeleteCanvas = async (canvasId, name) => {
+    if (!confirm(`Hapus anak kanvas "${name}" beserta seluruh isinya?`)) return;
+    try { await deleteRoadmapCanvas(canvasId); load(); } catch (e) { alert(e.message || "Gagal."); }
+  };
+
   const exportPng = async () => {
     try {
       rfInst.current?.fitView({ padding: 0.15, duration: 0 });
       await new Promise(r => setTimeout(r, 350));
-      const el = flowWrapRef.current;
-      const dataUrl = await toPng(el, { backgroundColor: "#FCFCFB", pixelRatio: 2,
+      const dataUrl = await toPng(flowWrapRef.current, { backgroundColor: "#FCFCFB", pixelRatio: 2,
         filter: (node) => !(node?.classList && (node.classList.contains("react-flow__controls") || node.classList.contains("react-flow__attribution"))) });
       const a = document.createElement("a"); a.href = dataUrl;
       a.download = `peta-jalan-gdn-${new Date().toISOString().slice(0, 10)}.png`; a.click();
     } catch { alert("Gagal export gambar."); }
   };
-  const closeEditor = () => { setEditing(null); load(currentCanvasId); };
+  const closeEditor = () => { setEditing(null); load(); };
   const saveEditing = async (patch) => {
     try { await updateRoadmapNode(editing.id, patch); closeEditor(); }
     catch (e) { alert(e.message || "Gagal menyimpan."); }
@@ -11799,27 +11855,13 @@ function RoadmapPage({ user }) {
   };
 
   const legend = (c, t) => <span><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 99, background: c, marginRight: 5, verticalAlign: "middle" }} />{t}</span>;
-  const inChild = path.length > 0;
 
   return (
     <div style={{ height: "calc(100vh - 56px)", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${COLORS.border}`,
-        background: inChild ? "linear-gradient(90deg, #F6EEDD, #FCFBF7)" : COLORS.white, flexWrap: "wrap" }}>
+      <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${COLORS.border}`, background: COLORS.white, flexWrap: "wrap" }}>
         <div style={{ minWidth: 0 }}>
-          {/* Breadcrumb */}
-          <div style={{ fontSize: 12, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => setPath([])} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 700, color: inChild ? COLORS.primary : COLORS.textMuted }}>Kanvas Utama</button>
-            {path.map((p, i) => (
-              <span key={p.canvasId} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <span>/</span>
-                <button type="button" onClick={() => setPath(path.slice(0, i + 1))} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: FONTS.heading, fontSize: 12.5, fontWeight: 700, color: COLORS.text }}>{p.label}</button>
-              </span>
-            ))}
-          </div>
-          <h1 style={{ fontFamily: FONTS.heading, fontSize: 19, fontWeight: 700, color: COLORS.dark, margin: "2px 0 0", display: "flex", alignItems: "center", gap: 9 }}>
-            {inChild ? path[path.length - 1].label : "Peta Jalan GDN"}
-            {inChild && <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.4, background: COLORS.goldDeep, color: "#fff", padding: "3px 9px", borderRadius: 99 }}>ANAK KANVAS</span>}
-          </h1>
+          <h1 style={{ fontFamily: FONTS.heading, fontSize: 20, fontWeight: 700, color: COLORS.dark, margin: 0 }}>Peta Jalan GDN</h1>
+          <div style={{ fontSize: 12, color: COLORS.textMuted }}>Grand Plan · panah mendatar = urutan · panah emas ke bawah = anak kanvas (project lebih kecil)</div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center", fontSize: 12, color: COLORS.textMuted, flexWrap: "wrap" }}>
           {legend(COLORS.success, "Selesai")}{legend(COLORS.primary, "Berjalan")}{legend(COLORS.textLight, "Rencana")}
@@ -11827,12 +11869,11 @@ function RoadmapPage({ user }) {
           {canEdit && <button onClick={addNode} type="button" style={{ padding: "8px 14px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="plus" size={14} color={COLORS.white} /> Tambah Node</button>}
         </div>
       </div>
-      <div ref={flowWrapRef} style={{ flex: 1, position: "relative", background: COLORS.bg, boxShadow: inChild ? `inset 0 0 0 3px ${COLORS.gold}` : "none" }}>
+      <div ref={flowWrapRef} style={{ flex: 1, position: "relative", background: COLORS.bg }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>Memuat peta…</div>
         ) : (
           <ReactFlow
-            key={pathKey}
             onInit={(inst) => { rfInst.current = inst; }}
             nodes={rfNodes} edges={rfEdges} nodeTypes={roadmapNodeTypes}
             onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
@@ -11847,7 +11888,7 @@ function RoadmapPage({ user }) {
         )}
         {!loading && rfNodes.length === 0 && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", color: COLORS.textLight, fontSize: 13, textAlign: "center" }}>
-            {canEdit ? (inChild ? "Anak kanvas kosong. Klik “Tambah Node” untuk rincian project lebih kecil." : "Belum ada node. Klik “Tambah Node” untuk mulai.") : "Belum disusun."}
+            {canEdit ? "Belum ada node. Klik “Tambah Node” untuk mulai." : "Peta Jalan belum disusun."}
           </div>
         )}
       </div>
