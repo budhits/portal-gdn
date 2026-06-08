@@ -11643,7 +11643,16 @@ function RoadmapNodeCard({ data }) {
       <div style={{ padding: "11px 13px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
           <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 9px", borderRadius: 99, background: st.bg, color: st.color, textTransform: "uppercase", letterSpacing: 0.3 }}>{st.label}{hasMs ? ` · ${data.msDone}/${data.msTotal}` : ""}</span>
-          {data.targetMonth ? <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.goldDeep, background: "#F6EEDD", padding: "3px 8px", borderRadius: 99 }}>{data.targetMonth}</span> : null}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {data.targetMonth ? <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.goldDeep, background: "#F6EEDD", padding: "3px 8px", borderRadius: 99 }}>{data.targetMonth}</span> : null}
+            {data.canEdit && (
+              <button className="nodrag" title="Hapus node ini"
+                onClick={(e) => { e.stopPropagation(); data.onDelete && data.onDelete(data.nodeId, data.label); }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 3, lineHeight: 0, borderRadius: 6, display: "inline-flex" }}>
+                <Icon name="trash" size={13} color={COLORS.textLight} />
+              </button>
+            )}
+          </span>
         </div>
         <div style={{ fontFamily: FONTS.heading, fontSize: 14, fontWeight: 700, color: COLORS.text, margin: "8px 0 4px", lineHeight: 1.2 }}>{data.label}</div>
         {data.description ? <div style={{ fontSize: 11, color: COLORS.textMuted, lineHeight: 1.35, margin: "0 0 8px" }}>{data.description}</div> : <div style={{ height: 4 }} />}
@@ -11722,7 +11731,7 @@ function RoadmapPage({ user }) {
       picName: pic?.name || null, picRole: pic ? ROLE_LABELS[pic.role] : null,
       picInitial: pic?.name?.charAt(0) || null, projectName: proj?.name || null,
       msDone: ms.filter(m => m.done).length, msTotal: ms.length,
-      nodeId: n.id, onAddCanvas: addCanvas, canEdit,
+      nodeId: n.id, onAddCanvas: addCanvas, onDelete: deleteNode, canEdit,
     };
   };
 
@@ -11812,6 +11821,10 @@ function RoadmapPage({ user }) {
         posX: Math.round(60 + Math.random() * 160), posY: Math.round(60 + Math.random() * 120) });
       load();
     } catch (e) { alert(e.message || "Gagal menambah node."); }
+  };
+  const deleteNode = async (nodeId, label) => {
+    if (!confirm(`Hapus node "${label || "ini"}"? Panah, milestone & anak kanvas terkait ikut terhapus.`)) return;
+    try { await deleteRoadmapNode(nodeId); load(); } catch (e) { alert(e.message || "Gagal menghapus node."); }
   };
   const addCanvas = async (nodeId) => {
     const name = (prompt("Nama anak kanvas (project lebih kecil):", "Anak Kanvas") || "").trim();
