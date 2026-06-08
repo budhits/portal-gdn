@@ -7198,6 +7198,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
               onToggle={() => toggleMilestone(ms.id)}
               onEdit={() => openEditMilestone(ms)}
               onDelete={() => deleteMilestone(ms)}
+              onAddOpex={() => openExpenseForm(ms.id)}
             />
           ))}
         </Card>
@@ -7240,102 +7241,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
           </div>
 
           {/* Inline expense / realisasi form */}
-          {showExpenseForm && (
-            <div style={{
-              padding: "14px 16px",
-              background: COLORS.infoBg,
-              border: `1px solid #C5DBF0`,
-              borderRadius: 10,
-              marginBottom: 14,
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.primaryDark, marginBottom: 10 }}>
-                Input Realisasi Budget
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={labelStyle}>Keterangan <span style={{ color: COLORS.danger }}>*</span></label>
-                <input
-                  type="text"
-                  value={exName}
-                  onChange={e => setExName(e.target.value)}
-                  placeholder="cth: Beli pipa PVC + sambungan"
-                  style={inputStyle}
-                />
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 140px", gap: 10, marginBottom: 10 }}>
-                <div>
-                  <label style={labelStyle}>Jumlah (Rp) <span style={{ color: COLORS.danger }}>*</span></label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={exAmount === "" ? "" : Number(exAmount).toLocaleString("id-ID")}
-                    onChange={e => {
-                      const raw = e.target.value.replace(/[^\d]/g, "");
-                      setExAmount(raw === "" ? "" : Number(raw));
-                    }}
-                    placeholder="cth: 9.300.000"
-                    style={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>Tanggal <span style={{ color: COLORS.danger }}>*</span></label>
-                  <input type="date" value={exDate} onChange={e => setExDate(e.target.value)} style={inputStyle} />
-                </div>
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={labelStyle}>Kaitkan ke Milestone</label>
-                <select value={exMilestoneId} onChange={e => setExMilestoneId(e.target.value)} style={inputStyle}>
-                  <option value="">— Tidak terkait milestone tertentu —</option>
-                  {milestones.map(m => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div
-                onClick={() => setExHasReceipt(!exHasReceipt)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 9,
-                  padding: "9px 12px",
-                  background: exHasReceipt ? COLORS.successBg : COLORS.white,
-                  border: `1px solid ${exHasReceipt ? COLORS.success : COLORS.border}`,
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  marginBottom: 12,
-                }}
-              >
-                <div style={{
-                  width: 18, height: 18, borderRadius: 5, flexShrink: 0,
-                  border: `2px solid ${exHasReceipt ? COLORS.success : COLORS.textLight}`,
-                  background: exHasReceipt ? COLORS.success : COLORS.white,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  {exHasReceipt && <Icon name="check" size={11} color={COLORS.white} strokeWidth={3} />}
-                </div>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.dark }}>
-                  Bukti/nota terlampir <span style={{ color: COLORS.danger }}>*</span> (wajib untuk realisasi)
-                </span>
-              </div>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button onClick={() => setShowExpenseForm(false)} type="button" style={adminBtnStyle}>Batal</button>
-                <button
-                  onClick={saveExpense}
-                  type="button"
-                  style={{
-                    padding: "8px 18px",
-                    background: COLORS.primary,
-                    color: COLORS.white,
-                    border: "none",
-                    borderRadius: 8,
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  Simpan Realisasi
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Form realisasi/OpEx kini berupa popup terpusat (lihat akhir komponen). */}
 
           {expenses.length === 0 ? (
             <div style={{ padding: 30, textAlign: "center", color: COLORS.textLight, fontSize: 13 }}>
@@ -7347,6 +7253,76 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
             ))
           )}
         </Card>
+      )}
+
+      {/* Popup Update OpEx / Realisasi Budget — terpusat, bisa dibuka dari tab
+          Milestone (tombol "Update OpEx" per milestone) maupun tab Expense. */}
+      {showExpenseForm && (
+        <div
+          onClick={() => setShowExpenseForm(false)}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000,
+            display: "flex", alignItems: "flex-start", justifyContent: "center",
+            padding: "60px 16px", overflowY: "auto",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: COLORS.white, borderRadius: 16, width: "100%", maxWidth: 520, boxShadow: "0 24px 70px rgba(0,0,0,0.35)", overflow: "hidden" }}
+          >
+            <div style={{ padding: "16px 20px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, color: COLORS.dark, display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <Icon name="money" size={17} color={COLORS.secondary} /> Update OpEx (Realisasi Budget)
+              </div>
+              <button onClick={() => setShowExpenseForm(false)} type="button" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}>
+                <Icon name="x" size={18} color={COLORS.textMuted} />
+              </button>
+            </div>
+            <div style={{ padding: "18px 20px" }}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Kaitkan ke Milestone</label>
+                <select value={exMilestoneId} onChange={e => setExMilestoneId(e.target.value)} style={inputStyle}>
+                  <option value="">— Tidak terkait milestone tertentu —</option>
+                  {milestones.map(m => (<option key={m.id} value={m.id}>{m.name}</option>))}
+                </select>
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Keterangan <span style={{ color: COLORS.danger }}>*</span></label>
+                <input type="text" value={exName} onChange={e => setExName(e.target.value)} placeholder="cth: Beli pipa PVC + sambungan" style={inputStyle} autoFocus />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 14 }}>
+                <div>
+                  <label style={labelStyle}>Jumlah (Rp) <span style={{ color: COLORS.danger }}>*</span></label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={exAmount === "" ? "" : Number(exAmount).toLocaleString("id-ID")}
+                    onChange={e => { const raw = e.target.value.replace(/[^\d]/g, ""); setExAmount(raw === "" ? "" : Number(raw)); }}
+                    placeholder="cth: 9.300.000"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Tanggal <span style={{ color: COLORS.danger }}>*</span></label>
+                  <input type="date" value={exDate} onChange={e => setExDate(e.target.value)} style={inputStyle} />
+                </div>
+              </div>
+              <div
+                onClick={() => setExHasReceipt(!exHasReceipt)}
+                style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", background: exHasReceipt ? COLORS.successBg : COLORS.white, border: `1px solid ${exHasReceipt ? COLORS.success : COLORS.border}`, borderRadius: 8, cursor: "pointer" }}
+              >
+                <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, border: `2px solid ${exHasReceipt ? COLORS.success : COLORS.textLight}`, background: exHasReceipt ? COLORS.success : COLORS.white, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {exHasReceipt && <Icon name="check" size={11} color={COLORS.white} strokeWidth={3} />}
+                </div>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.dark }}>Bukti/nota terlampir <span style={{ color: COLORS.danger }}>*</span> (wajib untuk realisasi)</span>
+              </div>
+            </div>
+            <div style={{ padding: "14px 20px", borderTop: `1px solid ${COLORS.bgMuted}`, background: COLORS.bg, display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button onClick={() => setShowExpenseForm(false)} type="button" style={adminBtnStyle}>Batal</button>
+              <button onClick={saveExpense} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan Realisasi</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -7368,7 +7344,7 @@ function StatBox({ label, value, color }) {
   );
 }
 
-function MilestoneRow({ milestone, spent = 0, isLast, canEdit, onToggle, onEdit, onDelete }) {
+function MilestoneRow({ milestone, spent = 0, isLast, canEdit, onToggle, onEdit, onDelete, onAddOpex }) {
   const allocated = milestone.budgetAllocated || 0;
   const hasBudget = allocated > 0;
   const pct = hasBudget ? Math.round((spent / allocated) * 100) : 0;
@@ -7506,6 +7482,24 @@ function MilestoneRow({ milestone, spent = 0, isLast, canEdit, onToggle, onEdit,
             <Icon name="trash" size={13} color={COLORS.danger} />
           </button>
         </div>
+      )}
+
+      {/* Update OpEx — catat realisasi biaya langsung untuk milestone ini */}
+      {canEdit && onAddOpex && (
+        <button
+          onClick={onAddOpex}
+          type="button"
+          title="Catat realisasi OpEx/biaya untuk milestone ini"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "6px 11px", background: COLORS.white,
+            border: `1px solid ${COLORS.secondary}`, color: COLORS.goldDeep,
+            borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: "pointer",
+            fontFamily: "inherit", whiteSpace: "nowrap",
+          }}
+        >
+          <Icon name="money" size={13} color={COLORS.goldDeep} /> Update OpEx
+        </button>
       )}
       </div>
     </div>
