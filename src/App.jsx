@@ -11645,7 +11645,8 @@ function RoadmapNodeCard({ data }) {
           <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 9px", borderRadius: 99, background: st.bg, color: st.color, textTransform: "uppercase", letterSpacing: 0.3 }}>{st.label}{hasMs ? ` · ${data.msDone}/${data.msTotal}` : ""}</span>
           {data.targetMonth ? <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.goldDeep, background: "#F6EEDD", padding: "3px 8px", borderRadius: 99 }}>{data.targetMonth}</span> : null}
         </div>
-        <div style={{ fontFamily: FONTS.heading, fontSize: 14, fontWeight: 700, color: COLORS.text, margin: "8px 0 8px", lineHeight: 1.2 }}>{data.label}</div>
+        <div style={{ fontFamily: FONTS.heading, fontSize: 14, fontWeight: 700, color: COLORS.text, margin: "8px 0 4px", lineHeight: 1.2 }}>{data.label}</div>
+        {data.description ? <div style={{ fontSize: 11, color: COLORS.textMuted, lineHeight: 1.35, margin: "0 0 8px" }}>{data.description}</div> : <div style={{ height: 4 }} />}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 24, height: 24, borderRadius: 99, background: COLORS.gold, color: "#2A2410", fontWeight: 800, fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{data.picInitial || "—"}</div>
           <div style={{ minWidth: 0 }}>
@@ -11717,7 +11718,7 @@ function RoadmapPage({ user }) {
     const proj = n.projectId ? LIVE.projects.find(p => p.id === n.projectId) : null;
     const ms = n.milestones || [];
     return {
-      label: n.label, status: deriveRoadmapStatus(n), targetMonth: n.targetMonth,
+      label: n.label, description: n.description, status: deriveRoadmapStatus(n), targetMonth: n.targetMonth,
       picName: pic?.name || null, picRole: pic ? ROLE_LABELS[pic.role] : null,
       picInitial: pic?.name?.charAt(0) || null, projectName: proj?.name || null,
       msDone: ms.filter(m => m.done).length, msTotal: ms.length,
@@ -11901,6 +11902,7 @@ function RoadmapPage({ user }) {
 
 function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
   const [label, setLabel] = useState(node.label || "");
+  const [description, setDescription] = useState(node.description || "");
   const [status, setStatus] = useState(node.status || "planned");
   const [targetMonth, setTargetMonth] = useState(node.targetMonth || "");
   const [picUserId, setPicUserId] = useState(node.picUserId || "");
@@ -11935,6 +11937,8 @@ function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
         </div>
         <div style={{ padding: "18px 20px", display: "grid", gap: 13 }}>
           <div><label style={lbl}>Nama inisiatif</label><input style={inp} value={label} onChange={e => setLabel(e.target.value)} disabled={!canEdit} autoFocus /></div>
+          <div><label style={lbl}>Deskripsi <span style={{ fontWeight: 500, color: COLORS.textLight }}>(opsional)</span></label>
+            <textarea style={{ ...inp, minHeight: 60, resize: "vertical", lineHeight: 1.4 }} value={description} onChange={e => setDescription(e.target.value)} placeholder="Keterangan singkat inisiatif ini…" disabled={!canEdit} /></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div><label style={lbl}>Status {hasMs && <span style={{ fontWeight: 500, color: COLORS.textLight }}>(otomatis)</span>}</label>
               <select style={{ ...inp, opacity: hasMs ? 0.6 : 1 }} value={hasMs ? deriveRoadmapStatus({ milestones: ms, status }) : status} onChange={e => setStatus(e.target.value)} disabled={!canEdit || hasMs}>
@@ -11982,7 +11986,7 @@ function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
             <button onClick={onDelete} type="button" style={{ padding: "9px 14px", background: COLORS.white, color: COLORS.danger, border: `1px solid ${COLORS.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Hapus</button>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={onClose} type="button" style={adminBtnStyle}>Tutup</button>
-              <button onClick={() => onSave({ label: label.trim(), status, targetMonth, picUserId, projectId })} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan</button>
+              <button onClick={() => onSave({ label: label.trim(), description: description.trim(), status, targetMonth, picUserId, projectId })} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan</button>
             </div>
           </div>
         )}

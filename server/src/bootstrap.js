@@ -102,6 +102,7 @@ async function runMigrations() {
   )`);
   // Kompatibilitas bila tabel lama (parent_id) sudah terlanjur dibuat.
   await pool.query("ALTER TABLE roadmap_nodes ADD COLUMN IF NOT EXISTS canvas_id TEXT");
+  await pool.query("ALTER TABLE roadmap_nodes ADD COLUMN IF NOT EXISTS description TEXT");
   await pool.query("ALTER TABLE roadmap_edges ADD COLUMN IF NOT EXISTS canvas_id TEXT");
 
   // 4. Kolom formula_expr untuk template buatan user (formula custom).
