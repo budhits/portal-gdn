@@ -36,6 +36,7 @@
 import { useState, useMemo, useEffect, useRef, createContext, useContext, useCallback } from "react";
 import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, MarkerType, Handle, Position } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { toPng } from "html-to-image";
 import { GDN_LOGO } from "./assets/logo.js";
 import { APP_CONFIG, ROLES, ROLE_LABELS, COLORS, FONTS, STATUS_THRESHOLDS,
   OWNER_LEVEL_ROLES, isOwnerLevel } from "./constants.js";
@@ -60,7 +61,8 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   createExpense,
   fetchRoadmap, createRoadmapNode, updateRoadmapNode, deleteRoadmapNode,
   createRoadmapEdge, deleteRoadmapEdge,
-  addRoadmapMilestone, updateRoadmapMilestone, deleteRoadmapMilestone } from "./api/data.js";
+  addRoadmapMilestone, updateRoadmapMilestone, deleteRoadmapMilestone,
+  createRoadmapCanvas, deleteRoadmapCanvas } from "./api/data.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -11660,14 +11662,23 @@ function RoadmapNodeCard({ data }) {
             </div>
           </div>
         )}
-        {(data.canEdit || data.childCount > 0) && (
-          <button
-            className="nodrag"
-            onClick={(e) => { e.stopPropagation(); data.onOpenChild && data.onOpenChild(data.nodeId, data.label); }}
-            style={{ marginTop: 10, width: "100%", padding: "6px 9px", background: "#FFFDF7", border: `1.5px dashed ${COLORS.gold}`, color: COLORS.goldDeep, borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-          >
-            ⤓ Anak kanvas{data.childCount > 0 ? ` · ${data.childCount}` : ""}
-          </button>
+        {((data.childCanvases && data.childCanvases.length > 0) || data.canEdit) && (
+          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 5 }}>
+            {(data.childCanvases || []).map(cv => (
+              <button key={cv.id} className="nodrag"
+                onClick={(e) => { e.stopPropagation(); data.onOpenCanvas && data.onOpenCanvas(cv.id, cv.name); }}
+                style={{ width: "100%", padding: "6px 9px", background: "#FFFDF7", border: `1.5px dashed ${COLORS.gold}`, color: COLORS.goldDeep, borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                ⤓ {cv.name}
+              </button>
+            ))}
+            {data.canEdit && (
+              <button className="nodrag"
+                onClick={(e) => { e.stopPropagation(); data.onAddCanvas && data.onAddCanvas(data.nodeId); }}
+                style={{ width: "100%", padding: "5px 9px", background: "transparent", border: `1px dashed ${COLORS.border}`, color: COLORS.textMuted, borderRadius: 8, fontSize: 10.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                + anak kanvas
+              </button>
+            )}
+          </div>
         )}
       </div>
       <Handle type="source" position={Position.Right} style={{ background: COLORS.primary, width: 9, height: 9 }} />
@@ -11684,11 +11695,24 @@ function RoadmapPage({ user }) {
   const [editing, setEditing] = useState(null);
   const [path, setPath] = useState([]); // [{id,label}] — [] = kanvas utama
   const apiNodesRef = useRef({});
+  const flowWrapRef = useRef(null);
+  const rfInst = useRef(null);
 
-  const currentParentId = path.length ? path[path.length - 1].id : null;
-  const pathKey = path.map(p => p.id).join("/");
+  const currentCanvasId = path.length ? path[path.length - 1].canvasId : null;
+  const pathKey = path.map(p => p.canvasId).join("/");
 
-  const openChild = useCallback((id, label) => setPath(p => [...p, { id, label }]), []);
+  const openCanvas = useCallback((canvasId, label) => setPath(p => [...p, { canvasId, label }]), []);
+  const addCanvas = useCallback(async (nodeId) => {
+    const name = (prompt("Nama anak kanvas baru:", "Anak Kanvas") || "").trim();
+    if (!name) return;
+    try {
+      const cv = await createRoadmapCanvas({ ownerNodeId: nodeId, name });
+      const api = apiNodesRef.current[nodeId];
+      if (api) api.childCanvases = [...(api.childCanvases || []), cv];
+      setRfNodes(nds => nds.map(x => x.id === nodeId
+        ? { ...x, data: { ...x.data, childCanvases: [...(x.data.childCanvases || []), cv] } } : x));
+    } catch (e) { alert(e.message || "Gagal menambah anak kanvas."); }
+  }, []);
 
   const buildData = (n) => {
     const pic = n.picUserId ? USERS[n.picUserId] : null;
@@ -11698,18 +11722,19 @@ function RoadmapPage({ user }) {
       label: n.label, status: deriveRoadmapStatus(n), targetMonth: n.targetMonth,
       picName: pic?.name || null, picRole: pic ? ROLE_LABELS[pic.role] : null,
       picInitial: pic?.name?.charAt(0) || null, projectName: proj?.name || null,
-      msDone: ms.filter(m => m.done).length, msTotal: ms.length, childCount: n.childCount || 0,
-      nodeId: n.id, onOpenChild: openChild, canEdit,
+      msDone: ms.filter(m => m.done).length, msTotal: ms.length,
+      childCanvases: n.childCanvases || [],
+      nodeId: n.id, onOpenCanvas: openCanvas, onAddCanvas: addCanvas, canEdit,
     };
   };
   const toRf = (n) => ({ id: n.id, type: "gdn", position: { x: n.posX, y: n.posY }, data: buildData(n) });
   const toRfEdge = (e) => ({ id: e.id, source: e.sourceId, target: e.targetId,
     markerEnd: { type: MarkerType.ArrowClosed, color: "#9298A6" }, style: { stroke: "#9298A6", strokeWidth: 2 } });
 
-  const load = async (parentId) => {
+  const load = async (canvasId) => {
     setLoading(true);
     try {
-      const { nodes, edges } = await fetchRoadmap(parentId || undefined);
+      const { nodes, edges } = await fetchRoadmap(canvasId || undefined);
       apiNodesRef.current = {}; nodes.forEach(n => { apiNodesRef.current[n.id] = n; });
       setRfNodes(nodes.map(toRf));
       setRfEdges(edges.map(toRfEdge));
@@ -11717,7 +11742,7 @@ function RoadmapPage({ user }) {
     setLoading(false);
   };
   // Muat ulang setiap pindah kanvas (utama ⇄ anak kanvas).
-  useEffect(() => { load(currentParentId); /* eslint-disable-next-line */ }, [pathKey]);
+  useEffect(() => { load(currentCanvasId); /* eslint-disable-next-line */ }, [pathKey]);
 
   const onNodesChange = useCallback((ch) => setRfNodes(nds => applyNodeChanges(ch, nds)), []);
   const onEdgesChange = useCallback((ch) => setRfEdges(eds => applyEdgeChanges(ch, eds)), []);
@@ -11728,10 +11753,10 @@ function RoadmapPage({ user }) {
   const onConnect = useCallback(async (conn) => {
     if (!canEdit || !conn.source || !conn.target) return;
     try {
-      const e = await createRoadmapEdge({ parentId: currentParentId, sourceId: conn.source, targetId: conn.target });
+      const e = await createRoadmapEdge({ canvasId: currentCanvasId, sourceId: conn.source, targetId: conn.target });
       setRfEdges(eds => [...eds, toRfEdge(e)]);
     } catch (err) { alert(err.message || "Gagal menyambung."); }
-  }, [canEdit, currentParentId]);
+  }, [canEdit, currentCanvasId]);
   const onEdgesDelete = useCallback(async (eds) => {
     if (!canEdit) return;
     for (const e of eds) { try { await deleteRoadmapEdge(e.id); } catch { /* */ } }
@@ -11744,14 +11769,25 @@ function RoadmapPage({ user }) {
 
   const addNode = async () => {
     try {
-      const n = await createRoadmapNode({ parentId: currentParentId, label: "Inisiatif baru", status: "planned",
+      const n = await createRoadmapNode({ canvasId: currentCanvasId, label: "Inisiatif baru", status: "planned",
         posX: Math.round(60 + Math.random() * 160), posY: Math.round(60 + Math.random() * 140) });
       apiNodesRef.current[n.id] = n;
       setRfNodes(nds => [...nds, toRf(n)]);
       setEditing({ ...n });
     } catch (e) { alert(e.message || "Gagal menambah node."); }
   };
-  const closeEditor = () => { setEditing(null); load(currentParentId); };
+  const exportPng = async () => {
+    try {
+      rfInst.current?.fitView({ padding: 0.15, duration: 0 });
+      await new Promise(r => setTimeout(r, 350));
+      const el = flowWrapRef.current;
+      const dataUrl = await toPng(el, { backgroundColor: "#FCFCFB", pixelRatio: 2,
+        filter: (node) => !(node?.classList && (node.classList.contains("react-flow__controls") || node.classList.contains("react-flow__attribution"))) });
+      const a = document.createElement("a"); a.href = dataUrl;
+      a.download = `peta-jalan-gdn-${new Date().toISOString().slice(0, 10)}.png`; a.click();
+    } catch { alert("Gagal export gambar."); }
+  };
+  const closeEditor = () => { setEditing(null); load(currentCanvasId); };
   const saveEditing = async (patch) => {
     try { await updateRoadmapNode(editing.id, patch); closeEditor(); }
     catch (e) { alert(e.message || "Gagal menyimpan."); }
@@ -11774,7 +11810,7 @@ function RoadmapPage({ user }) {
           <div style={{ fontSize: 12, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <button type="button" onClick={() => setPath([])} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 700, color: inChild ? COLORS.primary : COLORS.textMuted }}>Kanvas Utama</button>
             {path.map((p, i) => (
-              <span key={p.id} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <span key={p.canvasId} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <span>/</span>
                 <button type="button" onClick={() => setPath(path.slice(0, i + 1))} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: FONTS.heading, fontSize: 12.5, fontWeight: 700, color: COLORS.text }}>{p.label}</button>
               </span>
@@ -11785,17 +11821,19 @@ function RoadmapPage({ user }) {
             {inChild && <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.4, background: COLORS.goldDeep, color: "#fff", padding: "3px 9px", borderRadius: 99 }}>ANAK KANVAS</span>}
           </h1>
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 14, alignItems: "center", fontSize: 12, color: COLORS.textMuted }}>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center", fontSize: 12, color: COLORS.textMuted, flexWrap: "wrap" }}>
           {legend(COLORS.success, "Selesai")}{legend(COLORS.primary, "Berjalan")}{legend(COLORS.textLight, "Rencana")}
+          <button onClick={exportPng} type="button" title="Unduh gambar peta (PNG)" style={{ padding: "8px 12px", background: COLORS.white, color: COLORS.text, border: `1px solid ${COLORS.border}`, borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="upload" size={14} color={COLORS.textMuted} /> Export</button>
           {canEdit && <button onClick={addNode} type="button" style={{ padding: "8px 14px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="plus" size={14} color={COLORS.white} /> Tambah Node</button>}
         </div>
       </div>
-      <div style={{ flex: 1, position: "relative", background: COLORS.bg, boxShadow: inChild ? `inset 0 0 0 3px ${COLORS.gold}` : "none" }}>
+      <div ref={flowWrapRef} style={{ flex: 1, position: "relative", background: COLORS.bg, boxShadow: inChild ? `inset 0 0 0 3px ${COLORS.gold}` : "none" }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>Memuat peta…</div>
         ) : (
           <ReactFlow
             key={pathKey}
+            onInit={(inst) => { rfInst.current = inst; }}
             nodes={rfNodes} edges={rfEdges} nodeTypes={roadmapNodeTypes}
             onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
             onNodeDragStop={onNodeDragStop} onConnect={onConnect} onEdgesDelete={onEdgesDelete}

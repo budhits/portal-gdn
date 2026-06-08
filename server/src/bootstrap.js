@@ -59,10 +59,17 @@ async function runMigrations() {
   // 3b. Cara input realisasi margin dipilih di awal: 'daily' | 'monthly' (null = legacy).
   await pool.query("ALTER TABLE kpi_submissions ADD COLUMN IF NOT EXISTS margin_input_mode TEXT");
 
-  // 3c. Peta Jalan / Grand Plan: node & koneksi (panah). Idempoten.
+  // 3c. Peta Jalan / Grand Plan. Model "canvas": satu node bisa punya >1 anak
+  // kanvas bernama. node/edge berada di sebuah canvas (canvas_id NULL = utama).
+  await pool.query(`CREATE TABLE IF NOT EXISTS roadmap_canvases (
+    id TEXT PRIMARY KEY,
+    owner_node_id TEXT,
+    name TEXT NOT NULL DEFAULT 'Anak Kanvas',
+    created_at TIMESTAMPTZ DEFAULT now()
+  )`);
   await pool.query(`CREATE TABLE IF NOT EXISTS roadmap_nodes (
     id TEXT PRIMARY KEY,
-    parent_id TEXT,
+    canvas_id TEXT,
     label TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'planned',
     target_month TEXT,
@@ -74,7 +81,7 @@ async function runMigrations() {
   )`);
   await pool.query(`CREATE TABLE IF NOT EXISTS roadmap_edges (
     id TEXT PRIMARY KEY,
-    parent_id TEXT,
+    canvas_id TEXT,
     source_id TEXT NOT NULL,
     target_id TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now()
@@ -89,6 +96,9 @@ async function runMigrations() {
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT now()
   )`);
+  // Kompatibilitas bila tabel lama (parent_id) sudah terlanjur dibuat.
+  await pool.query("ALTER TABLE roadmap_nodes ADD COLUMN IF NOT EXISTS canvas_id TEXT");
+  await pool.query("ALTER TABLE roadmap_edges ADD COLUMN IF NOT EXISTS canvas_id TEXT");
 
   // 4. Kolom formula_expr untuk template buatan user (formula custom).
   await pool.query("ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS formula_expr TEXT");

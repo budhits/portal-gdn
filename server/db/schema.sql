@@ -215,12 +215,21 @@ CREATE INDEX idx_audit_ts    ON audit_log(ts DESC);
 CREATE INDEX idx_audit_actor ON audit_log(actor_id);
 
 -- ── roadmap (Peta Jalan / Grand Plan) ────────────────────────────────────────
--- Node strategis (gambaran besar) + anak kanvas (parent_id) + koneksi/panah.
+-- Model "canvas": node/edge berada di sebuah canvas (canvas_id NULL = utama).
+-- Satu node bisa memiliki >1 anak kanvas (roadmap_canvases.owner_node_id).
+DROP TABLE IF EXISTS roadmap_milestones CASCADE;
 DROP TABLE IF EXISTS roadmap_edges CASCADE;
 DROP TABLE IF EXISTS roadmap_nodes CASCADE;
+DROP TABLE IF EXISTS roadmap_canvases CASCADE;
+CREATE TABLE roadmap_canvases (
+  id            TEXT PRIMARY KEY,
+  owner_node_id TEXT,                                  -- node pemilik anak kanvas ini
+  name          TEXT NOT NULL DEFAULT 'Anak Kanvas',
+  created_at    TIMESTAMPTZ DEFAULT now()
+);
 CREATE TABLE roadmap_nodes (
   id           TEXT PRIMARY KEY,
-  parent_id    TEXT,                                  -- NULL = kanvas utama; else id node induk (anak kanvas)
+  canvas_id    TEXT,                                  -- NULL = kanvas utama; else id anak kanvas
   label        TEXT NOT NULL DEFAULT '',
   status       TEXT NOT NULL DEFAULT 'planned',       -- planned|running|done
   target_month TEXT,                                  -- 'Jun 2026' / 'YYYY-MM'
@@ -232,15 +241,16 @@ CREATE TABLE roadmap_nodes (
 );
 CREATE TABLE roadmap_edges (
   id         TEXT PRIMARY KEY,
-  parent_id  TEXT,
+  canvas_id  TEXT,
   source_id  TEXT NOT NULL,
   target_id  TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
-CREATE INDEX idx_roadmap_nodes_parent ON roadmap_nodes(parent_id);
-CREATE INDEX idx_roadmap_edges_parent ON roadmap_edges(parent_id);
+CREATE INDEX idx_roadmap_nodes_canvas ON roadmap_nodes(canvas_id);
+CREATE INDEX idx_roadmap_edges_canvas ON roadmap_edges(canvas_id);
+CREATE INDEX idx_roadmap_canvases_owner ON roadmap_canvases(owner_node_id);
 
-DROP TABLE IF EXISTS roadmap_milestones CASCADE;
+
 CREATE TABLE roadmap_milestones (
   id           TEXT PRIMARY KEY,
   node_id      TEXT NOT NULL,

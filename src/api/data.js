@@ -66,7 +66,10 @@ export const setMarginInputMode = (id, marginInputMode) =>
   apiFetch(`/submissions/${id}`, { method: "PATCH", body: { marginInputMode } });
 
 // ── Peta Jalan / Grand Plan (roadmap) ────────────────────────────────────────
-export const fetchRoadmap       = (parentId) => apiFetch(`/roadmap${parentId ? `?parentId=${encodeURIComponent(parentId)}` : ""}`);
+export const fetchRoadmap       = (canvasId) => apiFetch(`/roadmap${canvasId ? `?canvasId=${encodeURIComponent(canvasId)}` : ""}`);
+export const createRoadmapCanvas = (body)     => apiFetch("/roadmap/canvases", { method: "POST", body });
+export const updateRoadmapCanvas = (id, body) => apiFetch(`/roadmap/canvases/${id}`, { method: "PATCH", body });
+export const deleteRoadmapCanvas = (id)       => apiFetch(`/roadmap/canvases/${id}`, { method: "DELETE" });
 export const createRoadmapNode  = (body)      => apiFetch("/roadmap/nodes", { method: "POST", body });
 export const updateRoadmapNode  = (id, body)  => apiFetch(`/roadmap/nodes/${id}`, { method: "PATCH", body });
 export const deleteRoadmapNode  = (id)        => apiFetch(`/roadmap/nodes/${id}`, { method: "DELETE" });
