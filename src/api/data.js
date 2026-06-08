@@ -65,6 +65,14 @@ export const saveDailyMarginAndActual = (id, dailyMargin, actualValues) =>
 export const setMarginInputMode = (id, marginInputMode) =>
   apiFetch(`/submissions/${id}`, { method: "PATCH", body: { marginInputMode } });
 
+// ── Peta Jalan / Grand Plan (roadmap) ────────────────────────────────────────
+export const fetchRoadmap       = (parentId) => apiFetch(`/roadmap${parentId ? `?parentId=${encodeURIComponent(parentId)}` : ""}`);
+export const createRoadmapNode  = (body)      => apiFetch("/roadmap/nodes", { method: "POST", body });
+export const updateRoadmapNode  = (id, body)  => apiFetch(`/roadmap/nodes/${id}`, { method: "PATCH", body });
+export const deleteRoadmapNode  = (id)        => apiFetch(`/roadmap/nodes/${id}`, { method: "DELETE" });
+export const createRoadmapEdge  = (body)      => apiFetch("/roadmap/edges", { method: "POST", body });
+export const deleteRoadmapEdge  = (id)        => apiFetch(`/roadmap/edges/${id}`, { method: "DELETE" });
+
 /** Ubah array ber-`id` menjadi objek ter-index berdasarkan id (mis. UNITS[id]). */
 export function indexById(arr) {
   const map = {};

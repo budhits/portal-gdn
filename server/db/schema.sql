@@ -213,3 +213,29 @@ CREATE TABLE audit_log (
 CREATE INDEX idx_audit_unit  ON audit_log(unit_id);
 CREATE INDEX idx_audit_ts    ON audit_log(ts DESC);
 CREATE INDEX idx_audit_actor ON audit_log(actor_id);
+
+-- ── roadmap (Peta Jalan / Grand Plan) ────────────────────────────────────────
+-- Node strategis (gambaran besar) + anak kanvas (parent_id) + koneksi/panah.
+DROP TABLE IF EXISTS roadmap_edges CASCADE;
+DROP TABLE IF EXISTS roadmap_nodes CASCADE;
+CREATE TABLE roadmap_nodes (
+  id           TEXT PRIMARY KEY,
+  parent_id    TEXT,                                  -- NULL = kanvas utama; else id node induk (anak kanvas)
+  label        TEXT NOT NULL DEFAULT '',
+  status       TEXT NOT NULL DEFAULT 'planned',       -- planned|running|done
+  target_month TEXT,                                  -- 'Jun 2026' / 'YYYY-MM'
+  pic_user_id  TEXT,
+  project_id   TEXT,
+  pos_x        DOUBLE PRECISION NOT NULL DEFAULT 0,
+  pos_y        DOUBLE PRECISION NOT NULL DEFAULT 0,
+  created_at   TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE roadmap_edges (
+  id         TEXT PRIMARY KEY,
+  parent_id  TEXT,
+  source_id  TEXT NOT NULL,
+  target_id  TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_roadmap_nodes_parent ON roadmap_nodes(parent_id);
+CREATE INDEX idx_roadmap_edges_parent ON roadmap_edges(parent_id);

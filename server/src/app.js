@@ -18,6 +18,7 @@ import templatesRoutes from "./routes/templates.js";
 import submissionsRoutes from "./routes/submissions.js";
 import auditRoutes from "./routes/audit.js";
 import dashboardRoutes from "./routes/dashboard.js";
+import roadmapRoutes from "./routes/roadmap.js";
 
 export function createApp() {
   const app = express();
@@ -78,6 +79,7 @@ export function createApp() {
   app.use("/api/submissions", submissionsRoutes);
   app.use("/api/audit", auditRoutes);
   app.use("/api/dashboard", dashboardRoutes);
+  app.use("/api/roadmap", roadmapRoutes);
 
   // 404 untuk rute API yang tidak dikenal
   app.use("/api", (_req, res) => {

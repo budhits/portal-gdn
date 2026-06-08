@@ -33,7 +33,9 @@
  *       utils/
  */
 
-import { useState, useMemo, useEffect, useRef, createContext, useContext } from "react";
+import { useState, useMemo, useEffect, useRef, createContext, useContext, useCallback } from "react";
+import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, MarkerType, Handle, Position } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { GDN_LOGO } from "./assets/logo.js";
 import { APP_CONFIG, ROLES, ROLE_LABELS, COLORS, FONTS, STATUS_THRESHOLDS,
   OWNER_LEVEL_ROLES, isOwnerLevel } from "./constants.js";
@@ -55,7 +57,9 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
   createProject, updateProject, deleteProject,
   createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
-  createExpense } from "./api/data.js";
+  createExpense,
+  fetchRoadmap, createRoadmapNode, updateRoadmapNode, deleteRoadmapNode,
+  createRoadmapEdge, deleteRoadmapEdge } from "./api/data.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1895,6 +1899,13 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
  * Each menu maps to a page key handled in App router.
  */
 function getNavItems(role) {
+  // Semua role bisa melihat Peta Jalan; ditambahkan ke setiap daftar non-kosong.
+  const base = getBaseNavItems(role);
+  if (base.length) base.push(["roadmap", "Peta Jalan", "pin"]);
+  return base;
+}
+
+function getBaseNavItems(role) {
   switch (role) {
     case ROLES.ADMIN:
     case ROLES.OWNER:
@@ -11600,6 +11611,219 @@ function DataStoreProvider({ children }) {
 
 
 // ════════════════════════════════════════════════════════════════════════════
+// §11.5 PETA JALAN / GRAND PLAN (kanvas interaktif)
+// ════════════════════════════════════════════════════════════════════════════
+
+const RM_STATUS = {
+  planned: { label: "Rencana", color: COLORS.textLight, bg: COLORS.bgMuted },
+  running: { label: "Berjalan", color: COLORS.primary, bg: COLORS.infoBg },
+  done:    { label: "Selesai",  color: COLORS.success, bg: COLORS.successBg },
+};
+
+// Node React Flow: kartu inisiatif (status, bulan, judul, PIC, tautan project).
+function RoadmapNodeCard({ data }) {
+  const st = RM_STATUS[data.status] || RM_STATUS.planned;
+  return (
+    <div style={{ width: 220, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, boxShadow: "0 4px 14px rgba(20,30,50,.08)", overflow: "hidden" }}>
+      <Handle type="target" position={Position.Left} style={{ background: COLORS.textLight, width: 8, height: 8 }} />
+      <div style={{ height: 4, background: st.color }} />
+      <div style={{ padding: "11px 13px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 9px", borderRadius: 99, background: st.bg, color: st.color, textTransform: "uppercase", letterSpacing: 0.3 }}>{st.label}</span>
+          {data.targetMonth ? <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.goldDeep, background: "#F6EEDD", padding: "3px 8px", borderRadius: 99 }}>{data.targetMonth}</span> : null}
+        </div>
+        <div style={{ fontFamily: FONTS.heading, fontSize: 14, fontWeight: 700, color: COLORS.text, margin: "8px 0 8px", lineHeight: 1.2 }}>{data.label}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 24, height: 24, borderRadius: 99, background: COLORS.gold, color: "#2A2410", fontWeight: 800, fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{data.picInitial || "—"}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.text, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{data.picName || "Tanpa PIC"}</div>
+            {data.projectName
+              ? <div style={{ fontSize: 9.5, color: COLORS.primary }}>🔗 {data.projectName}</div>
+              : (data.picRole ? <div style={{ fontSize: 9.5, color: COLORS.textMuted }}>{data.picRole}</div> : null)}
+          </div>
+        </div>
+      </div>
+      <Handle type="source" position={Position.Right} style={{ background: COLORS.primary, width: 9, height: 9 }} />
+    </div>
+  );
+}
+const roadmapNodeTypes = { gdn: RoadmapNodeCard };
+
+function RoadmapPage({ user }) {
+  const canEdit = isOwnerLevel(user.role) || user.role === ROLES.LEADER;
+  const [rfNodes, setRfNodes] = useState([]);
+  const [rfEdges, setRfEdges] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null);
+  const apiNodesRef = useRef({});
+
+  const buildData = (n) => {
+    const pic = n.picUserId ? USERS[n.picUserId] : null;
+    const proj = n.projectId ? LIVE.projects.find(p => p.id === n.projectId) : null;
+    return {
+      label: n.label, status: n.status, targetMonth: n.targetMonth,
+      picName: pic?.name || null, picRole: pic ? ROLE_LABELS[pic.role] : null,
+      picInitial: pic?.name?.charAt(0) || null, projectName: proj?.name || null,
+    };
+  };
+  const toRf = (n) => ({ id: n.id, type: "gdn", position: { x: n.posX, y: n.posY }, data: buildData(n) });
+  const toRfEdge = (e) => ({ id: e.id, source: e.sourceId, target: e.targetId,
+    markerEnd: { type: MarkerType.ArrowClosed, color: "#9298A6" }, style: { stroke: "#9298A6", strokeWidth: 2 } });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { nodes, edges } = await fetchRoadmap();
+      apiNodesRef.current = {}; nodes.forEach(n => { apiNodesRef.current[n.id] = n; });
+      setRfNodes(nodes.map(toRf));
+      setRfEdges(edges.map(toRfEdge));
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const onNodesChange = useCallback((ch) => setRfNodes(nds => applyNodeChanges(ch, nds)), []);
+  const onEdgesChange = useCallback((ch) => setRfEdges(eds => applyEdgeChanges(ch, eds)), []);
+  const onNodeDragStop = useCallback(async (_e, node) => {
+    if (!canEdit) return;
+    try { await updateRoadmapNode(node.id, { posX: Math.round(node.position.x), posY: Math.round(node.position.y) }); } catch { /* */ }
+  }, [canEdit]);
+  const onConnect = useCallback(async (conn) => {
+    if (!canEdit || !conn.source || !conn.target) return;
+    try {
+      const e = await createRoadmapEdge({ sourceId: conn.source, targetId: conn.target });
+      setRfEdges(eds => [...eds, toRfEdge(e)]);
+    } catch (err) { alert(err.message || "Gagal menyambung."); }
+  }, [canEdit]);
+  const onEdgesDelete = useCallback(async (eds) => {
+    if (!canEdit) return;
+    for (const e of eds) { try { await deleteRoadmapEdge(e.id); } catch { /* */ } }
+  }, [canEdit]);
+  const onNodeClick = useCallback((_e, node) => {
+    if (!canEdit) return;
+    const api = apiNodesRef.current[node.id];
+    if (api) setEditing({ ...api });
+  }, [canEdit]);
+
+  const addNode = async () => {
+    try {
+      const n = await createRoadmapNode({ label: "Inisiatif baru", status: "planned",
+        posX: Math.round(60 + Math.random() * 160), posY: Math.round(60 + Math.random() * 140) });
+      apiNodesRef.current[n.id] = n;
+      setRfNodes(nds => [...nds, toRf(n)]);
+      setEditing({ ...n });
+    } catch (e) { alert(e.message || "Gagal menambah node."); }
+  };
+  const saveEditing = async (patch) => {
+    try {
+      const n = await updateRoadmapNode(editing.id, patch);
+      apiNodesRef.current[n.id] = n;
+      setRfNodes(nds => nds.map(x => x.id === n.id ? { ...x, data: buildData(n) } : x));
+      setEditing(null);
+    } catch (e) { alert(e.message || "Gagal menyimpan."); }
+  };
+  const removeEditing = async () => {
+    if (!confirm(`Hapus node "${editing.label}"? Panah terkait ikut terhapus.`)) return;
+    try {
+      await deleteRoadmapNode(editing.id);
+      setRfNodes(nds => nds.filter(x => x.id !== editing.id));
+      setRfEdges(eds => eds.filter(e => e.source !== editing.id && e.target !== editing.id));
+      setEditing(null);
+    } catch (e) { alert(e.message || "Gagal menghapus."); }
+  };
+
+  const legend = (c, t) => <span><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 99, background: c, marginRight: 5, verticalAlign: "middle" }} />{t}</span>;
+
+  return (
+    <div style={{ height: "calc(100vh - 56px)", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${COLORS.border}`, background: COLORS.white, flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ fontFamily: FONTS.heading, fontSize: 20, fontWeight: 700, color: COLORS.dark, margin: 0 }}>Peta Jalan GDN</h1>
+          <div style={{ fontSize: 12, color: COLORS.textMuted }}>Grand Plan · inisiatif strategis & urutan proses</div>
+        </div>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 14, alignItems: "center", fontSize: 12, color: COLORS.textMuted }}>
+          {legend(COLORS.success, "Selesai")}{legend(COLORS.primary, "Berjalan")}{legend(COLORS.textLight, "Rencana")}
+          {canEdit && <button onClick={addNode} type="button" style={{ padding: "8px 14px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="plus" size={14} color={COLORS.white} /> Tambah Node</button>}
+        </div>
+      </div>
+      <div style={{ flex: 1, position: "relative", background: COLORS.bg }}>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>Memuat peta…</div>
+        ) : (
+          <ReactFlow
+            nodes={rfNodes} edges={rfEdges} nodeTypes={roadmapNodeTypes}
+            onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
+            onNodeDragStop={onNodeDragStop} onConnect={onConnect} onEdgesDelete={onEdgesDelete}
+            onNodeClick={onNodeClick}
+            nodesDraggable={canEdit} nodesConnectable={canEdit} elementsSelectable
+            fitView proOptions={{ hideAttribution: true }}
+          >
+            <Background gap={22} color="#E6E7EB" />
+            <Controls showInteractive={false} />
+          </ReactFlow>
+        )}
+        {!loading && rfNodes.length === 0 && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", color: COLORS.textLight, fontSize: 13 }}>
+            {canEdit ? "Belum ada node. Klik “Tambah Node” untuk mulai." : "Peta Jalan belum disusun."}
+          </div>
+        )}
+      </div>
+      {editing && <RoadmapNodeEditor node={editing} onSave={saveEditing} onDelete={removeEditing} onClose={() => setEditing(null)} />}
+    </div>
+  );
+}
+
+function RoadmapNodeEditor({ node, onSave, onDelete, onClose }) {
+  const [label, setLabel] = useState(node.label || "");
+  const [status, setStatus] = useState(node.status || "planned");
+  const [targetMonth, setTargetMonth] = useState(node.targetMonth || "");
+  const [picUserId, setPicUserId] = useState(node.picUserId || "");
+  const [projectId, setProjectId] = useState(node.projectId || "");
+  const inp = { width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13.5, border: `1.5px solid ${COLORS.border}`, outline: "none", fontFamily: "inherit", background: COLORS.bg, boxSizing: "border-box" };
+  const lbl = { fontSize: 12, fontWeight: 700, color: COLORS.text, display: "block", marginBottom: 5 };
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "60px 16px", overflowY: "auto" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: COLORS.white, borderRadius: 16, width: "100%", maxWidth: 460, boxShadow: "0 24px 70px rgba(0,0,0,0.35)", overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, color: COLORS.dark }}>Edit Node</div>
+          <button onClick={onClose} type="button" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4 }}><Icon name="x" size={18} color={COLORS.textMuted} /></button>
+        </div>
+        <div style={{ padding: "18px 20px", display: "grid", gap: 13 }}>
+          <div><label style={lbl}>Nama inisiatif</label><input style={inp} value={label} onChange={e => setLabel(e.target.value)} autoFocus /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div><label style={lbl}>Status</label>
+              <select style={inp} value={status} onChange={e => setStatus(e.target.value)}>
+                <option value="planned">Rencana</option><option value="running">Berjalan</option><option value="done">Selesai</option>
+              </select>
+            </div>
+            <div><label style={lbl}>Target bulan</label><input style={inp} value={targetMonth} onChange={e => setTargetMonth(e.target.value)} placeholder="cth: Jun 2026" /></div>
+          </div>
+          <div><label style={lbl}>Penanggung jawab (PIC)</label>
+            <select style={inp} value={picUserId} onChange={e => setPicUserId(e.target.value)}>
+              <option value="">— Pilih user —</option>
+              {Object.values(USERS).map(u => <option key={u.id} value={u.id}>{u.name} · {ROLE_LABELS[u.role]}</option>)}
+            </select>
+          </div>
+          <div><label style={lbl}>Tautkan ke Project (opsional)</label>
+            <select style={inp} value={projectId} onChange={e => setProjectId(e.target.value)}>
+              <option value="">— Tidak ditautkan —</option>
+              {LIVE.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{ padding: "14px 20px", borderTop: `1px solid ${COLORS.bgMuted}`, background: COLORS.bg, display: "flex", gap: 8, justifyContent: "space-between" }}>
+          <button onClick={onDelete} type="button" style={{ padding: "9px 14px", background: COLORS.white, color: COLORS.danger, border: `1px solid ${COLORS.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Hapus</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={onClose} type="button" style={adminBtnStyle}>Batal</button>
+            <button onClick={() => onSave({ label: label.trim(), status, targetMonth, picUserId, projectId })} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // §12 APP ROUTER / MAIN
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -11873,6 +12097,9 @@ function AppInner() {
     }
     if (page === "audit") {
       return <AuditLogPage user={user} />;
+    }
+    if (page === "roadmap") {
+      return <RoadmapPage user={user} />;
     }
 
     // ─── Owner / Finance / HR ───────────────────────────────────────────

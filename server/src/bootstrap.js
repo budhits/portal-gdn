@@ -59,6 +59,27 @@ async function runMigrations() {
   // 3b. Cara input realisasi margin dipilih di awal: 'daily' | 'monthly' (null = legacy).
   await pool.query("ALTER TABLE kpi_submissions ADD COLUMN IF NOT EXISTS margin_input_mode TEXT");
 
+  // 3c. Peta Jalan / Grand Plan: node & koneksi (panah). Idempoten.
+  await pool.query(`CREATE TABLE IF NOT EXISTS roadmap_nodes (
+    id TEXT PRIMARY KEY,
+    parent_id TEXT,
+    label TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'planned',
+    target_month TEXT,
+    pic_user_id TEXT,
+    project_id TEXT,
+    pos_x DOUBLE PRECISION NOT NULL DEFAULT 0,
+    pos_y DOUBLE PRECISION NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT now()
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS roadmap_edges (
+    id TEXT PRIMARY KEY,
+    parent_id TEXT,
+    source_id TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+  )`);
+
   // 4. Kolom formula_expr untuk template buatan user (formula custom).
   await pool.query("ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS formula_expr TEXT");
 
