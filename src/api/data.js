@@ -72,6 +72,9 @@ export const updateRoadmapNode  = (id, body)  => apiFetch(`/roadmap/nodes/${id}`
 export const deleteRoadmapNode  = (id)        => apiFetch(`/roadmap/nodes/${id}`, { method: "DELETE" });
 export const createRoadmapEdge  = (body)      => apiFetch("/roadmap/edges", { method: "POST", body });
 export const deleteRoadmapEdge  = (id)        => apiFetch(`/roadmap/edges/${id}`, { method: "DELETE" });
+export const addRoadmapMilestone    = (nodeId, body) => apiFetch(`/roadmap/nodes/${nodeId}/milestones`, { method: "POST", body });
+export const updateRoadmapMilestone = (msId, body)   => apiFetch(`/roadmap/milestones/${msId}`, { method: "PATCH", body });
+export const deleteRoadmapMilestone = (msId)         => apiFetch(`/roadmap/milestones/${msId}`, { method: "DELETE" });
 
 /** Ubah array ber-`id` menjadi objek ter-index berdasarkan id (mis. UNITS[id]). */
 export function indexById(arr) {

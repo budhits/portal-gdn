@@ -59,7 +59,8 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
   createExpense,
   fetchRoadmap, createRoadmapNode, updateRoadmapNode, deleteRoadmapNode,
-  createRoadmapEdge, deleteRoadmapEdge } from "./api/data.js";
+  createRoadmapEdge, deleteRoadmapEdge,
+  addRoadmapMilestone, updateRoadmapMilestone, deleteRoadmapMilestone } from "./api/data.js";
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -11620,16 +11621,26 @@ const RM_STATUS = {
   done:    { label: "Selesai",  color: COLORS.success, bg: COLORS.successBg },
 };
 
-// Node React Flow: kartu inisiatif (status, bulan, judul, PIC, tautan project).
+// Status node OTOMATIS dari milestone bila ada (none→planned, sebagian→running, semua→done).
+function deriveRoadmapStatus(n) {
+  const ms = n.milestones || [];
+  if (!ms.length) return n.status;
+  const done = ms.filter(m => m.done).length;
+  return done === 0 ? "planned" : done === ms.length ? "done" : "running";
+}
+
+// Node React Flow: kartu inisiatif (status, bulan, judul, PIC, progres milestone, anak kanvas).
 function RoadmapNodeCard({ data }) {
   const st = RM_STATUS[data.status] || RM_STATUS.planned;
+  const hasMs = data.msTotal > 0;
+  const pct = hasMs ? Math.round((data.msDone / data.msTotal) * 100) : 0;
   return (
-    <div style={{ width: 220, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, boxShadow: "0 4px 14px rgba(20,30,50,.08)", overflow: "hidden" }}>
+    <div style={{ width: 224, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, boxShadow: "0 4px 14px rgba(20,30,50,.08)", overflow: "hidden" }}>
       <Handle type="target" position={Position.Left} style={{ background: COLORS.textLight, width: 8, height: 8 }} />
       <div style={{ height: 4, background: st.color }} />
       <div style={{ padding: "11px 13px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 9px", borderRadius: 99, background: st.bg, color: st.color, textTransform: "uppercase", letterSpacing: 0.3 }}>{st.label}</span>
+          <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 9px", borderRadius: 99, background: st.bg, color: st.color, textTransform: "uppercase", letterSpacing: 0.3 }}>{st.label}{hasMs ? ` · ${data.msDone}/${data.msTotal}` : ""}</span>
           {data.targetMonth ? <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.goldDeep, background: "#F6EEDD", padding: "3px 8px", borderRadius: 99 }}>{data.targetMonth}</span> : null}
         </div>
         <div style={{ fontFamily: FONTS.heading, fontSize: 14, fontWeight: 700, color: COLORS.text, margin: "8px 0 8px", lineHeight: 1.2 }}>{data.label}</div>
@@ -11642,6 +11653,22 @@ function RoadmapNodeCard({ data }) {
               : (data.picRole ? <div style={{ fontSize: 9.5, color: COLORS.textMuted }}>{data.picRole}</div> : null)}
           </div>
         </div>
+        {hasMs && (
+          <div style={{ marginTop: 9 }}>
+            <div style={{ height: 5, background: COLORS.bgMuted, borderRadius: 99, overflow: "hidden" }}>
+              <div style={{ width: `${pct}%`, height: "100%", background: st.color, borderRadius: 99 }} />
+            </div>
+          </div>
+        )}
+        {(data.canEdit || data.childCount > 0) && (
+          <button
+            className="nodrag"
+            onClick={(e) => { e.stopPropagation(); data.onOpenChild && data.onOpenChild(data.nodeId, data.label); }}
+            style={{ marginTop: 10, width: "100%", padding: "6px 9px", background: "#FFFDF7", border: `1.5px dashed ${COLORS.gold}`, color: COLORS.goldDeep, borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+          >
+            ⤓ Anak kanvas{data.childCount > 0 ? ` · ${data.childCount}` : ""}
+          </button>
+        )}
       </div>
       <Handle type="source" position={Position.Right} style={{ background: COLORS.primary, width: 9, height: 9 }} />
     </div>
@@ -11655,32 +11682,42 @@ function RoadmapPage({ user }) {
   const [rfEdges, setRfEdges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
+  const [path, setPath] = useState([]); // [{id,label}] — [] = kanvas utama
   const apiNodesRef = useRef({});
+
+  const currentParentId = path.length ? path[path.length - 1].id : null;
+  const pathKey = path.map(p => p.id).join("/");
+
+  const openChild = useCallback((id, label) => setPath(p => [...p, { id, label }]), []);
 
   const buildData = (n) => {
     const pic = n.picUserId ? USERS[n.picUserId] : null;
     const proj = n.projectId ? LIVE.projects.find(p => p.id === n.projectId) : null;
+    const ms = n.milestones || [];
     return {
-      label: n.label, status: n.status, targetMonth: n.targetMonth,
+      label: n.label, status: deriveRoadmapStatus(n), targetMonth: n.targetMonth,
       picName: pic?.name || null, picRole: pic ? ROLE_LABELS[pic.role] : null,
       picInitial: pic?.name?.charAt(0) || null, projectName: proj?.name || null,
+      msDone: ms.filter(m => m.done).length, msTotal: ms.length, childCount: n.childCount || 0,
+      nodeId: n.id, onOpenChild: openChild, canEdit,
     };
   };
   const toRf = (n) => ({ id: n.id, type: "gdn", position: { x: n.posX, y: n.posY }, data: buildData(n) });
   const toRfEdge = (e) => ({ id: e.id, source: e.sourceId, target: e.targetId,
     markerEnd: { type: MarkerType.ArrowClosed, color: "#9298A6" }, style: { stroke: "#9298A6", strokeWidth: 2 } });
 
-  const load = useCallback(async () => {
+  const load = async (parentId) => {
     setLoading(true);
     try {
-      const { nodes, edges } = await fetchRoadmap();
+      const { nodes, edges } = await fetchRoadmap(parentId || undefined);
       apiNodesRef.current = {}; nodes.forEach(n => { apiNodesRef.current[n.id] = n; });
       setRfNodes(nodes.map(toRf));
       setRfEdges(edges.map(toRfEdge));
     } catch { /* ignore */ }
     setLoading(false);
-  }, []);
-  useEffect(() => { load(); }, [load]);
+  };
+  // Muat ulang setiap pindah kanvas (utama ⇄ anak kanvas).
+  useEffect(() => { load(currentParentId); /* eslint-disable-next-line */ }, [pathKey]);
 
   const onNodesChange = useCallback((ch) => setRfNodes(nds => applyNodeChanges(ch, nds)), []);
   const onEdgesChange = useCallback((ch) => setRfEdges(eds => applyEdgeChanges(ch, eds)), []);
@@ -11691,10 +11728,10 @@ function RoadmapPage({ user }) {
   const onConnect = useCallback(async (conn) => {
     if (!canEdit || !conn.source || !conn.target) return;
     try {
-      const e = await createRoadmapEdge({ sourceId: conn.source, targetId: conn.target });
+      const e = await createRoadmapEdge({ parentId: currentParentId, sourceId: conn.source, targetId: conn.target });
       setRfEdges(eds => [...eds, toRfEdge(e)]);
     } catch (err) { alert(err.message || "Gagal menyambung."); }
-  }, [canEdit]);
+  }, [canEdit, currentParentId]);
   const onEdgesDelete = useCallback(async (eds) => {
     if (!canEdit) return;
     for (const e of eds) { try { await deleteRoadmapEdge(e.id); } catch { /* */ } }
@@ -11707,50 +11744,58 @@ function RoadmapPage({ user }) {
 
   const addNode = async () => {
     try {
-      const n = await createRoadmapNode({ label: "Inisiatif baru", status: "planned",
+      const n = await createRoadmapNode({ parentId: currentParentId, label: "Inisiatif baru", status: "planned",
         posX: Math.round(60 + Math.random() * 160), posY: Math.round(60 + Math.random() * 140) });
       apiNodesRef.current[n.id] = n;
       setRfNodes(nds => [...nds, toRf(n)]);
       setEditing({ ...n });
     } catch (e) { alert(e.message || "Gagal menambah node."); }
   };
+  const closeEditor = () => { setEditing(null); load(currentParentId); };
   const saveEditing = async (patch) => {
-    try {
-      const n = await updateRoadmapNode(editing.id, patch);
-      apiNodesRef.current[n.id] = n;
-      setRfNodes(nds => nds.map(x => x.id === n.id ? { ...x, data: buildData(n) } : x));
-      setEditing(null);
-    } catch (e) { alert(e.message || "Gagal menyimpan."); }
+    try { await updateRoadmapNode(editing.id, patch); closeEditor(); }
+    catch (e) { alert(e.message || "Gagal menyimpan."); }
   };
   const removeEditing = async () => {
-    if (!confirm(`Hapus node "${editing.label}"? Panah terkait ikut terhapus.`)) return;
-    try {
-      await deleteRoadmapNode(editing.id);
-      setRfNodes(nds => nds.filter(x => x.id !== editing.id));
-      setRfEdges(eds => eds.filter(e => e.source !== editing.id && e.target !== editing.id));
-      setEditing(null);
-    } catch (e) { alert(e.message || "Gagal menghapus."); }
+    if (!confirm(`Hapus node "${editing.label}"? Panah, milestone & anak kanvas terkait ikut terhapus.`)) return;
+    try { await deleteRoadmapNode(editing.id); closeEditor(); }
+    catch (e) { alert(e.message || "Gagal menghapus."); }
   };
 
   const legend = (c, t) => <span><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 99, background: c, marginRight: 5, verticalAlign: "middle" }} />{t}</span>;
+  const inChild = path.length > 0;
 
   return (
     <div style={{ height: "calc(100vh - 56px)", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${COLORS.border}`, background: COLORS.white, flexWrap: "wrap" }}>
-        <div>
-          <h1 style={{ fontFamily: FONTS.heading, fontSize: 20, fontWeight: 700, color: COLORS.dark, margin: 0 }}>Peta Jalan GDN</h1>
-          <div style={{ fontSize: 12, color: COLORS.textMuted }}>Grand Plan · inisiatif strategis & urutan proses</div>
+      <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${COLORS.border}`,
+        background: inChild ? "linear-gradient(90deg, #F6EEDD, #FCFBF7)" : COLORS.white, flexWrap: "wrap" }}>
+        <div style={{ minWidth: 0 }}>
+          {/* Breadcrumb */}
+          <div style={{ fontSize: 12, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <button type="button" onClick={() => setPath([])} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 700, color: inChild ? COLORS.primary : COLORS.textMuted }}>Kanvas Utama</button>
+            {path.map((p, i) => (
+              <span key={p.id} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <span>/</span>
+                <button type="button" onClick={() => setPath(path.slice(0, i + 1))} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: FONTS.heading, fontSize: 12.5, fontWeight: 700, color: COLORS.text }}>{p.label}</button>
+              </span>
+            ))}
+          </div>
+          <h1 style={{ fontFamily: FONTS.heading, fontSize: 19, fontWeight: 700, color: COLORS.dark, margin: "2px 0 0", display: "flex", alignItems: "center", gap: 9 }}>
+            {inChild ? path[path.length - 1].label : "Peta Jalan GDN"}
+            {inChild && <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.4, background: COLORS.goldDeep, color: "#fff", padding: "3px 9px", borderRadius: 99 }}>ANAK KANVAS</span>}
+          </h1>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 14, alignItems: "center", fontSize: 12, color: COLORS.textMuted }}>
           {legend(COLORS.success, "Selesai")}{legend(COLORS.primary, "Berjalan")}{legend(COLORS.textLight, "Rencana")}
           {canEdit && <button onClick={addNode} type="button" style={{ padding: "8px 14px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="plus" size={14} color={COLORS.white} /> Tambah Node</button>}
         </div>
       </div>
-      <div style={{ flex: 1, position: "relative", background: COLORS.bg }}>
+      <div style={{ flex: 1, position: "relative", background: COLORS.bg, boxShadow: inChild ? `inset 0 0 0 3px ${COLORS.gold}` : "none" }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>Memuat peta…</div>
         ) : (
           <ReactFlow
+            key={pathKey}
             nodes={rfNodes} edges={rfEdges} nodeTypes={roadmapNodeTypes}
             onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
             onNodeDragStop={onNodeDragStop} onConnect={onConnect} onEdgesDelete={onEdgesDelete}
@@ -11763,61 +11808,103 @@ function RoadmapPage({ user }) {
           </ReactFlow>
         )}
         {!loading && rfNodes.length === 0 && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", color: COLORS.textLight, fontSize: 13 }}>
-            {canEdit ? "Belum ada node. Klik “Tambah Node” untuk mulai." : "Peta Jalan belum disusun."}
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", color: COLORS.textLight, fontSize: 13, textAlign: "center" }}>
+            {canEdit ? (inChild ? "Anak kanvas kosong. Klik “Tambah Node” untuk rincian project lebih kecil." : "Belum ada node. Klik “Tambah Node” untuk mulai.") : "Belum disusun."}
           </div>
         )}
       </div>
-      {editing && <RoadmapNodeEditor node={editing} onSave={saveEditing} onDelete={removeEditing} onClose={() => setEditing(null)} />}
+      {editing && <RoadmapNodeEditor node={editing} canEdit={canEdit} onSave={saveEditing} onDelete={removeEditing} onClose={closeEditor} />}
     </div>
   );
 }
 
-function RoadmapNodeEditor({ node, onSave, onDelete, onClose }) {
+function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
   const [label, setLabel] = useState(node.label || "");
   const [status, setStatus] = useState(node.status || "planned");
   const [targetMonth, setTargetMonth] = useState(node.targetMonth || "");
   const [picUserId, setPicUserId] = useState(node.picUserId || "");
   const [projectId, setProjectId] = useState(node.projectId || "");
+  const [ms, setMs] = useState(node.milestones || []);
+  const [newMs, setNewMs] = useState("");
   const inp = { width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13.5, border: `1.5px solid ${COLORS.border}`, outline: "none", fontFamily: "inherit", background: COLORS.bg, boxSizing: "border-box" };
   const lbl = { fontSize: 12, fontWeight: 700, color: COLORS.text, display: "block", marginBottom: 5 };
+  const hasMs = ms.length > 0;
+  const msDone = ms.filter(m => m.done).length;
+
+  const addMs = async () => {
+    if (!newMs.trim()) return;
+    try { const m = await addRoadmapMilestone(node.id, { label: newMs.trim() }); setMs([...ms, m]); setNewMs(""); }
+    catch (e) { alert(e.message || "Gagal menambah milestone."); }
+  };
+  const toggleMs = async (m) => {
+    try { const u = await updateRoadmapMilestone(m.id, { done: !m.done }); setMs(ms.map(x => x.id === m.id ? u : x)); }
+    catch (e) { alert(e.message || "Gagal."); }
+  };
+  const delMs = async (m) => {
+    try { await deleteRoadmapMilestone(m.id); setMs(ms.filter(x => x.id !== m.id)); }
+    catch (e) { alert(e.message || "Gagal."); }
+  };
+
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "60px 16px", overflowY: "auto" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: COLORS.white, borderRadius: 16, width: "100%", maxWidth: 460, boxShadow: "0 24px 70px rgba(0,0,0,0.35)", overflow: "hidden" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "48px 16px", overflowY: "auto" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: COLORS.white, borderRadius: 16, width: "100%", maxWidth: 470, boxShadow: "0 24px 70px rgba(0,0,0,0.35)", overflow: "hidden" }}>
         <div style={{ padding: "16px 20px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, color: COLORS.dark }}>Edit Node</div>
+          <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, color: COLORS.dark }}>{canEdit ? "Edit Node" : "Detail Node"}</div>
           <button onClick={onClose} type="button" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4 }}><Icon name="x" size={18} color={COLORS.textMuted} /></button>
         </div>
         <div style={{ padding: "18px 20px", display: "grid", gap: 13 }}>
-          <div><label style={lbl}>Nama inisiatif</label><input style={inp} value={label} onChange={e => setLabel(e.target.value)} autoFocus /></div>
+          <div><label style={lbl}>Nama inisiatif</label><input style={inp} value={label} onChange={e => setLabel(e.target.value)} disabled={!canEdit} autoFocus /></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div><label style={lbl}>Status</label>
-              <select style={inp} value={status} onChange={e => setStatus(e.target.value)}>
+            <div><label style={lbl}>Status {hasMs && <span style={{ fontWeight: 500, color: COLORS.textLight }}>(otomatis)</span>}</label>
+              <select style={{ ...inp, opacity: hasMs ? 0.6 : 1 }} value={hasMs ? deriveRoadmapStatus({ milestones: ms, status }) : status} onChange={e => setStatus(e.target.value)} disabled={!canEdit || hasMs}>
                 <option value="planned">Rencana</option><option value="running">Berjalan</option><option value="done">Selesai</option>
               </select>
             </div>
-            <div><label style={lbl}>Target bulan</label><input style={inp} value={targetMonth} onChange={e => setTargetMonth(e.target.value)} placeholder="cth: Jun 2026" /></div>
+            <div><label style={lbl}>Target bulan</label><input style={inp} value={targetMonth} onChange={e => setTargetMonth(e.target.value)} placeholder="cth: Jun 2026" disabled={!canEdit} /></div>
           </div>
           <div><label style={lbl}>Penanggung jawab (PIC)</label>
-            <select style={inp} value={picUserId} onChange={e => setPicUserId(e.target.value)}>
+            <select style={inp} value={picUserId} onChange={e => setPicUserId(e.target.value)} disabled={!canEdit}>
               <option value="">— Pilih user —</option>
               {Object.values(USERS).map(u => <option key={u.id} value={u.id}>{u.name} · {ROLE_LABELS[u.role]}</option>)}
             </select>
           </div>
           <div><label style={lbl}>Tautkan ke Project (opsional)</label>
-            <select style={inp} value={projectId} onChange={e => setProjectId(e.target.value)}>
+            <select style={inp} value={projectId} onChange={e => setProjectId(e.target.value)} disabled={!canEdit}>
               <option value="">— Tidak ditautkan —</option>
               {LIVE.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
-        </div>
-        <div style={{ padding: "14px 20px", borderTop: `1px solid ${COLORS.bgMuted}`, background: COLORS.bg, display: "flex", gap: 8, justifyContent: "space-between" }}>
-          <button onClick={onDelete} type="button" style={{ padding: "9px 14px", background: COLORS.white, color: COLORS.danger, border: `1px solid ${COLORS.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Hapus</button>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={onClose} type="button" style={adminBtnStyle}>Batal</button>
-            <button onClick={() => onSave({ label: label.trim(), status, targetMonth, picUserId, projectId })} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan</button>
+
+          {/* Milestone kecil */}
+          <div style={{ borderTop: `1px dashed ${COLORS.border}`, paddingTop: 12 }}>
+            <label style={lbl}>Milestone kecil {hasMs ? <span style={{ fontWeight: 500, color: COLORS.textMuted }}>({msDone}/{ms.length})</span> : ""}</label>
+            {ms.map(m => (
+              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "7px 9px", border: `1px solid ${m.done ? "#CDE3C2" : COLORS.border}`, background: m.done ? COLORS.successBg : "#FAFBFC", borderRadius: 8, marginBottom: 6 }}>
+                <button type="button" onClick={() => canEdit && toggleMs(m)} disabled={!canEdit} style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, border: `2px solid ${m.done ? COLORS.success : COLORS.textLight}`, background: m.done ? COLORS.success : COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", cursor: canEdit ? "pointer" : "default", padding: 0 }}>
+                  {m.done && <Icon name="check" size={11} color={COLORS.white} strokeWidth={3} />}
+                </button>
+                <span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: m.done ? "#3F6E31" : COLORS.text, textDecoration: m.done ? "line-through" : "none" }}>{m.label}</span>
+                {canEdit && <button type="button" onClick={() => delMs(m)} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2 }}><Icon name="trash" size={13} color={COLORS.danger} /></button>}
+              </div>
+            ))}
+            {!hasMs && <div style={{ fontSize: 11.5, color: COLORS.textLight, fontStyle: "italic", marginBottom: 6 }}>Belum ada milestone.</div>}
+            {canEdit && (
+              <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
+                <input style={{ ...inp, flex: 1 }} value={newMs} onChange={e => setNewMs(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addMs(); }} placeholder="Tambah milestone…" />
+                <button type="button" onClick={addMs} style={{ padding: "0 14px", background: COLORS.secondary, color: "#2A2410", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>+ Tugas</button>
+              </div>
+            )}
           </div>
         </div>
+        {canEdit && (
+          <div style={{ padding: "14px 20px", borderTop: `1px solid ${COLORS.bgMuted}`, background: COLORS.bg, display: "flex", gap: 8, justifyContent: "space-between" }}>
+            <button onClick={onDelete} type="button" style={{ padding: "9px 14px", background: COLORS.white, color: COLORS.danger, border: `1px solid ${COLORS.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Hapus</button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={onClose} type="button" style={adminBtnStyle}>Tutup</button>
+              <button onClick={() => onSave({ label: label.trim(), status, targetMonth, picUserId, projectId })} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

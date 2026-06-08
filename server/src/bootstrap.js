@@ -79,6 +79,16 @@ async function runMigrations() {
     target_id TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now()
   )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS roadmap_milestones (
+    id TEXT PRIMARY KEY,
+    node_id TEXT NOT NULL,
+    label TEXT NOT NULL DEFAULT '',
+    done BOOLEAN NOT NULL DEFAULT false,
+    pic_user_id TEXT,
+    target_month TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT now()
+  )`);
 
   // 4. Kolom formula_expr untuk template buatan user (formula custom).
   await pool.query("ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS formula_expr TEXT");

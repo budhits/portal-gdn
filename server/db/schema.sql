@@ -239,3 +239,16 @@ CREATE TABLE roadmap_edges (
 );
 CREATE INDEX idx_roadmap_nodes_parent ON roadmap_nodes(parent_id);
 CREATE INDEX idx_roadmap_edges_parent ON roadmap_edges(parent_id);
+
+DROP TABLE IF EXISTS roadmap_milestones CASCADE;
+CREATE TABLE roadmap_milestones (
+  id           TEXT PRIMARY KEY,
+  node_id      TEXT NOT NULL,
+  label        TEXT NOT NULL DEFAULT '',
+  done         BOOLEAN NOT NULL DEFAULT false,
+  pic_user_id  TEXT,
+  target_month TEXT,
+  sort_order   INTEGER NOT NULL DEFAULT 0,
+  created_at   TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_roadmap_ms_node ON roadmap_milestones(node_id);
