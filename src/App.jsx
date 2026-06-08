@@ -11637,9 +11637,9 @@ function RoadmapNodeCard({ data }) {
   const hasMs = data.msTotal > 0;
   const pct = hasMs ? Math.round((data.msDone / data.msTotal) * 100) : 0;
   return (
-    <div style={{ width: 224, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, boxShadow: "0 4px 14px rgba(20,30,50,.08)", overflow: "hidden" }}>
+    <div style={{ width: 224, background: "linear-gradient(180deg,#FFFFFF 0%,#FBFBFD 100%)", border: `1px solid ${COLORS.border}`, borderRadius: 16, boxShadow: "0 10px 26px rgba(20,30,50,.12), 0 2px 6px rgba(20,30,50,.06)", overflow: "hidden" }}>
       <Handle type="target" position={Position.Left} style={{ background: COLORS.textLight, width: 8, height: 8 }} />
-      <div style={{ height: 4, background: st.color }} />
+      <div style={{ height: 5, background: `linear-gradient(90deg, ${st.color}, ${st.color}99)` }} />
       <div style={{ padding: "11px 13px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
           <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 9px", borderRadius: 99, background: st.bg, color: st.color, textTransform: "uppercase", letterSpacing: 0.3 }}>{st.label}{hasMs ? ` · ${data.msDone}/${data.msTotal}` : ""}</span>
@@ -11666,29 +11666,31 @@ function RoadmapNodeCard({ data }) {
           <button className="nodrag"
             onClick={(e) => { e.stopPropagation(); data.onAddCanvas && data.onAddCanvas(data.nodeId); }}
             title="Buat anak kanvas (project lebih kecil) di bawah node ini"
-            style={{ marginTop: 10, width: "100%", padding: "6px 9px", background: "#FFFDF7", border: `1.5px dashed ${COLORS.gold}`, color: COLORS.goldDeep, borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            style={{ marginTop: 10, width: "100%", padding: "6px 9px", background: COLORS.bg, border: `1.5px dashed ${COLORS.textLight}`, color: COLORS.textMuted, borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
             ⤓ + Anak kanvas
           </button>
         )}
       </div>
       <Handle type="source" position={Position.Right} style={{ background: COLORS.primary, width: 9, height: 9 }} />
-      <Handle type="source" position={Position.Bottom} id="b" style={{ background: COLORS.gold, width: 9, height: 9 }} />
+      <Handle type="source" position={Position.Bottom} id="b" style={{ background: COLORS.textLight, width: 9, height: 9 }} />
     </div>
   );
 }
-// Box "anak kanvas" (group node React Flow): bingkai emas + header + node di dalamnya.
+// Box "anak kanvas" (group node React Flow): bingkai netral & bersahaja —
+// sengaja dibuat lebih sederhana dari kanvas utama (ini "project lebih kecil").
+// Tanpa warna emas; emas dikhususkan untuk kanvas utama.
 function RoadmapCanvasBox({ data }) {
   const mini = { background: "transparent", border: "none", cursor: "pointer", padding: 2, display: "inline-flex", fontFamily: "inherit" };
   return (
-    <div style={{ width: "100%", height: "100%", border: `2px solid ${COLORS.gold}`, borderRadius: 14, background: "rgba(246,238,221,0.30)", boxShadow: "0 6px 18px rgba(168,130,63,.10)" }}>
-      <Handle type="target" position={Position.Top} id="t" style={{ background: COLORS.goldDeep, width: 10, height: 10 }} />
-      <div className="nodrag" style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "linear-gradient(90deg,#F6EEDD,#EFE4CB)", borderBottom: `1px solid ${COLORS.gold}`, borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
-        <span style={{ fontSize: 11.5, fontWeight: 800, color: COLORS.goldDeep, letterSpacing: 0.2, fontFamily: FONTS.heading }}>🗂 {data.name}</span>
-        <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 0.4, background: COLORS.goldDeep, color: "#fff", padding: "2px 7px", borderRadius: 99 }}>ANAK KANVAS</span>
+    <div style={{ width: "100%", height: "100%", border: `1.5px dashed ${COLORS.textLight}`, borderRadius: 12, background: "rgba(238,240,236,0.55)" }}>
+      <Handle type="target" position={Position.Top} id="t" style={{ background: COLORS.textLight, width: 9, height: 9 }} />
+      <div className="nodrag" style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 10px", background: COLORS.bgMuted, borderBottom: `1px solid ${COLORS.border}`, borderTopLeftRadius: 11, borderTopRightRadius: 11 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 0.2, fontFamily: FONTS.heading }}>🗂 {data.name}</span>
+        <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: 0.4, background: COLORS.white, color: COLORS.textLight, border: `1px solid ${COLORS.border}`, padding: "2px 6px", borderRadius: 99, textTransform: "uppercase" }}>anak kanvas</span>
         {data.canEdit && (
           <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8, alignItems: "center" }}>
-            <button className="nodrag" style={{ ...mini, fontSize: 10.5, fontWeight: 800, color: COLORS.goldDeep }} title="Tambah node di anak kanvas ini" onClick={(e) => { e.stopPropagation(); data.onAddNodeIn(data.canvasId); }}>+ node</button>
-            <button className="nodrag" style={mini} title="Ganti nama" onClick={(e) => { e.stopPropagation(); data.onRename(data.canvasId, data.name); }}><Icon name="edit" size={12} color={COLORS.goldDeep} /></button>
+            <button className="nodrag" style={{ ...mini, fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted }} title="Tambah node di anak kanvas ini" onClick={(e) => { e.stopPropagation(); data.onAddNodeIn(data.canvasId); }}>+ node</button>
+            <button className="nodrag" style={mini} title="Ganti nama" onClick={(e) => { e.stopPropagation(); data.onRename(data.canvasId, data.name); }}><Icon name="edit" size={12} color={COLORS.textMuted} /></button>
             <button className="nodrag" style={mini} title="Hapus anak kanvas" onClick={(e) => { e.stopPropagation(); data.onDeleteCanvas(data.canvasId, data.name); }}><Icon name="trash" size={12} color={COLORS.danger} /></button>
           </span>
         )}
@@ -11762,8 +11764,8 @@ function RoadmapPage({ user }) {
     edges.forEach(e => rfE.push({ id: e.id, source: e.sourceId, target: e.targetId,
       markerEnd: { type: MarkerType.ArrowClosed, color: "#9298A6" }, style: { stroke: "#9298A6", strokeWidth: 2 } }));
     canvases.forEach(c => { if (c.ownerNodeId) rfE.push({ id: "cve-" + c.id, source: c.ownerNodeId, sourceHandle: "b",
-      target: "cv-" + c.id, targetHandle: "t", markerEnd: { type: MarkerType.ArrowClosed, color: COLORS.goldDeep },
-      style: { stroke: COLORS.goldDeep, strokeWidth: 2, strokeDasharray: "5 4" } }); });
+      target: "cv-" + c.id, targetHandle: "t", markerEnd: { type: MarkerType.ArrowClosed, color: COLORS.textLight },
+      style: { stroke: COLORS.textLight, strokeWidth: 1.5, strokeDasharray: "5 4" } }); });
 
     setRfNodes(rfN); setRfEdges(rfE);
   };
@@ -11861,7 +11863,7 @@ function RoadmapPage({ user }) {
       <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${COLORS.border}`, background: COLORS.white, flexWrap: "wrap" }}>
         <div style={{ minWidth: 0 }}>
           <h1 style={{ fontFamily: FONTS.heading, fontSize: 20, fontWeight: 700, color: COLORS.dark, margin: 0 }}>Peta Jalan GDN</h1>
-          <div style={{ fontSize: 12, color: COLORS.textMuted }}>Grand Plan · panah mendatar = urutan · panah emas ke bawah = anak kanvas (project lebih kecil)</div>
+          <div style={{ fontSize: 12, color: COLORS.textMuted }}>Grand Plan · panah mendatar = urutan · panah putus-putus ke bawah = anak kanvas (project lebih kecil)</div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center", fontSize: 12, color: COLORS.textMuted, flexWrap: "wrap" }}>
           {legend(COLORS.success, "Selesai")}{legend(COLORS.primary, "Berjalan")}{legend(COLORS.textLight, "Rencana")}
