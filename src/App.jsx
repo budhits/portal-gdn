@@ -3822,6 +3822,8 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
 
   // Finance/HR are read-only; Owner, Leader, PIC may propose projects
   const canPropose = [ROLES.ADMIN, ROLES.OWNER, ROLES.LEADER, ROLES.PIC].includes(user.role);
+  // Ringkasan budget = informasi finansial → untuk owner-level, finance, hr, leader.
+  const showBudget = isOwnerLevel(user.role) || [ROLES.FINANCE, ROLES.HR, ROLES.LEADER].includes(user.role);
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px" }}>
@@ -3886,6 +3888,9 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
           );
         })}
       </div>
+
+      {/* Ringkasan Budget Project (finansial) */}
+      {showBudget && <ProjectBudgetSummary />}
 
       {/* Filters */}
       <Card style={{ padding: "12px 16px", marginBottom: 16 }}>
@@ -3961,6 +3966,99 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
       {editingProject && (
         <EditProjectModal project={editingProject} onClose={() => setEditingProject(null)} onSaved={onProjectSaved} />
       )}
+    </div>
+  );
+}
+
+// Ringkasan Budget Project — periode terpilih + akumulasi semua periode.
+// Dipakai di halaman Project (dan dashboard). Mengatur periode sendiri.
+function ProjectBudgetSummary() {
+  const store = useDataStore();
+  const periods = useMemo(() => getAvailablePeriods(), []);
+  const [selectedPeriodKey, setSelectedPeriodKey] = useState(getCurrentPeriodKey());
+  const selectedPeriod = periods.find(p => p.key === selectedPeriodKey) || periods[periods.length - 2];
+  const budgetSummary = useMemo(() => calculateBudgetSummary(selectedPeriod), [selectedPeriodKey, store?.milestones, store?.expenses, store?.projects]);
+
+  return (
+    <div style={{ marginBottom: 22 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 7 }}>
+          <Icon name="money" size={14} color={COLORS.secondary} />
+          Ringkasan Budget Project
+        </div>
+        <select
+          value={selectedPeriodKey}
+          onChange={e => setSelectedPeriodKey(e.target.value)}
+          style={{ padding: "6px 11px", border: `1px solid ${COLORS.border}`, borderRadius: 8, background: COLORS.white, fontSize: 12.5, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}
+        >
+          <optgroup label="Per Bulan">
+            {periods.filter(p => p.type === "month").map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+          </optgroup>
+          <optgroup label="Akumulasi">
+            {periods.filter(p => p.type === "ytd").map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+          </optgroup>
+        </select>
+      </div>
+
+      {/* Row 1: periode terpilih */}
+      <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
+        {selectedPeriod.label}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, marginBottom: 14 }}>
+        <BudgetBox
+          label={`Kebutuhan · ${selectedPeriod.label}`}
+          value={budgetSummary.needThisMonth}
+          accent={COLORS.primary}
+          sub="Rencana — by tanggal target milestone"
+        />
+        <BudgetBox
+          label={`Realisasi · ${selectedPeriod.label}`}
+          value={budgetSummary.realisasiThisMonth}
+          accent={COLORS.warning}
+          sub="Aktual — by tanggal pembayaran"
+        />
+        <BudgetBox
+          label={`Sisa · ${selectedPeriod.label}`}
+          value={budgetSummary.sisaThisMonth}
+          accent={budgetSummary.sisaThisMonth >= 0 ? COLORS.success : COLORS.danger}
+          sub={
+            budgetSummary.needThisMonth === 0 && budgetSummary.realisasiThisMonth === 0
+              ? "Tidak ada aktivitas bulan ini"
+              : budgetSummary.sisaThisMonth > 0
+                ? `${formatRupiah(budgetSummary.sisaThisMonth)} rencana belum terbayar`
+                : budgetSummary.sisaThisMonth < 0
+                  ? `Realisasi ${formatRupiah(-budgetSummary.sisaThisMonth)} dari bulan lain`
+                  : "Tepat sesuai jadwal"
+          }
+        />
+      </div>
+
+      {/* Row 2: all periode */}
+      <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textLight, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
+        All Periode
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
+        <BudgetBox
+          label="Kebutuhan All Periode"
+          value={budgetSummary.needAllPeriod}
+          accent={COLORS.secondary}
+          sub="Total semua milestone project"
+        />
+        <BudgetBox
+          label="Realisasi All Periode"
+          value={budgetSummary.realisasiAllPeriod}
+          accent={COLORS.warning}
+          sub={budgetSummary.needAllPeriod > 0
+            ? `${Math.round((budgetSummary.realisasiAllPeriod / budgetSummary.needAllPeriod) * 100)}% dari total kebutuhan`
+            : "Belum ada realisasi"}
+        />
+        <BudgetBox
+          label="Sisa All Periode"
+          value={budgetSummary.sisaAllPeriod}
+          accent={budgetSummary.sisaAllPeriod >= 0 ? COLORS.success : COLORS.danger}
+          sub={budgetSummary.sisaAllPeriod >= 0 ? "Belum terpakai" : "Realisasi melebihi rencana"}
+        />
+      </div>
     </div>
   );
 }
