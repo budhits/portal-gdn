@@ -8184,6 +8184,7 @@ function AdminPanel({ user }) {
     ["units",       "Unit Manager"],
     ["subunits",    "Sub Unit Manager"],
     ["users",       "User Manager"],
+    ...(user?.role === ROLES.ADMIN ? [["access", "Hak Akses"]] : []),
   ];
 
   // Ekspor seluruh data KPI ke satu file JSON (untuk diskusi/analisis di luar app).
@@ -8282,6 +8283,151 @@ function AdminPanel({ user }) {
       {section === "units"     && <UnitManager />}
       {section === "subunits"  && <SubUnitManager />}
       {section === "users"     && <UserManager />}
+      {section === "access"    && <AccessControlPage />}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Admin: Hak Akses (matriks role × fitur + kelola role user) — khusus Admin
+// ──────────────────────────────────────────────────────────────────────────
+const AC_ROLES = [ROLES.OWNER, ROLES.ADMIN, ROLES.FINANCE, ROLES.HR, ROLES.LEADER, ROLES.PIC];
+const AC_ACTIONS = {
+  view:    { label: "Lihat",   color: COLORS.textMuted, bg: COLORS.bgMuted },
+  create:  { label: "Buat",    color: COLORS.primaryDark, bg: COLORS.infoBg },
+  edit:    { label: "Edit",    color: COLORS.goldDeep,  bg: "#F6EEDD" },
+  del:     { label: "Hapus",   color: COLORS.danger,    bg: COLORS.dangerBg },
+  approve: { label: "Approve", color: COLORS.success,   bg: COLORS.successBg },
+};
+// Matriks sesuai aturan yang BERLAKU di sistem (hardcoded di kode).
+const AC_MATRIX = [
+  { f: "Dashboard / Workspace", c: { owner: ["view"], admin: ["view"], finance: ["view"], hr: ["view"], leader: ["view"], pic: ["view"] } },
+  { f: "Project",               c: { owner: ["view", "create"], admin: ["view", "create", "edit", "del"], finance: ["view"], hr: ["view"], leader: ["view", "create"], pic: ["view", "create"] } },
+  { f: "Milestone & Realisasi Biaya", c: { owner: ["edit"], admin: ["edit"], finance: [], hr: [], leader: ["edit"], pic: ["edit"] } },
+  { f: "KPI",                   c: { owner: ["view", "create", "approve"], admin: ["view", "create", "edit", "del", "approve"], finance: ["view"], hr: ["view"], leader: ["view", "create", "approve"], pic: ["view", "create"] } },
+  { f: "Margin",                c: { owner: ["view"], admin: ["view"], finance: ["view"], hr: ["view"], leader: [], pic: [] } },
+  { f: "Inbox / Approval",      c: { owner: ["view", "approve"], admin: ["view", "approve"], finance: [], hr: [], leader: ["view", "approve"], pic: ["view"] } },
+  { f: "Audit Log",             c: { owner: ["view"], admin: ["view"], finance: [], hr: [], leader: ["view"], pic: [] } },
+  { f: "Peta Jalan",            c: { owner: ["view", "edit"], admin: ["view", "edit"], finance: ["view"], hr: ["view"], leader: ["view", "edit"], pic: ["view"] } },
+  { f: "Admin Panel",           c: { owner: ["view"], admin: ["view"], finance: [], hr: ["view"], leader: [], pic: [] } },
+  { f: "Kelola User",           c: { owner: ["edit"], admin: ["edit"], finance: [], hr: ["edit"], leader: [], pic: [] } },
+  { f: "Hak Akses (halaman ini)", c: { owner: [], admin: ["view", "edit"], finance: [], hr: [], leader: [], pic: [] } },
+];
+const AC_ROLE_KEY = { [ROLES.OWNER]: "owner", [ROLES.ADMIN]: "admin", [ROLES.FINANCE]: "finance", [ROLES.HR]: "hr", [ROLES.LEADER]: "leader", [ROLES.PIC]: "pic" };
+
+function AccessControlPage() {
+  const [users, setUsers] = useState(() => Object.values(USERS));
+  const [savingId, setSavingId] = useState(null);
+  const reload = async () => { const list = await fetchUsers(); setUsersData(indexById(list)); setUsers(list); };
+
+  const changeRole = async (u, role) => {
+    if (role === u.role) return;
+    if (!confirm(`Ubah role "${u.name}"\ndari ${ROLE_LABELS[u.role]} → ${ROLE_LABELS[role]}?`)) return;
+    const body = { role };
+    if (![ROLES.LEADER, ROLES.PIC].includes(role)) { body.unitId = null; body.subUnitId = null; }
+    else if (role === ROLES.LEADER) { body.subUnitId = null; }
+    setSavingId(u.id);
+    try { await updateUser(u.id, body); await reload(); }
+    catch (e) { alert(e.message || "Gagal mengubah role."); }
+    finally { setSavingId(null); }
+  };
+
+  const chip = (a) => {
+    const m = AC_ACTIONS[a];
+    return <span key={a} style={{ fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 99, background: m.bg, color: m.color, whiteSpace: "nowrap" }}>{m.label}</span>;
+  };
+  const th = { padding: "10px 10px", fontSize: 11.5, fontWeight: 800, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, textAlign: "center", whiteSpace: "nowrap", borderBottom: `1px solid ${COLORS.border}` };
+
+  const sortedUsers = [...users].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      {/* Matriks role × fitur */}
+      <Card style={{ padding: 0 }}>
+        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${COLORS.bgMuted}` }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>Matriks Hak Akses</h3>
+          <p style={{ margin: "3px 0 0", fontSize: 12.5, color: COLORS.textMuted }}>
+            Apa yang boleh dilakukan tiap role di setiap fitur portal. Mengikuti aturan yang berlaku di sistem.
+          </p>
+        </div>
+        <div style={{ padding: "8px 10px 4px", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {Object.keys(AC_ACTIONS).map(a => chip(a))}
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr>
+                <th style={{ ...th, textAlign: "left", paddingLeft: 18 }}>Fitur</th>
+                {AC_ROLES.map(r => <th key={r} style={th}>{ROLE_LABELS[r]}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {AC_MATRIX.map((row, i) => (
+                <tr key={row.f} style={{ borderTop: i ? `1px solid ${COLORS.bgMuted}` : "none" }}>
+                  <td style={{ padding: "10px 10px 10px 18px", fontWeight: 700, color: COLORS.dark, whiteSpace: "nowrap" }}>{row.f}</td>
+                  {AC_ROLES.map(r => {
+                    const acts = row.c[AC_ROLE_KEY[r]] || [];
+                    return (
+                      <td key={r} style={{ padding: "8px 10px", textAlign: "center", verticalAlign: "middle" }}>
+                        {acts.length === 0
+                          ? <span style={{ color: COLORS.textLight }}>—</span>
+                          : <span style={{ display: "inline-flex", gap: 3, flexWrap: "wrap", justifyContent: "center" }}>{acts.map(a => chip(a))}</span>}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* Kelola role per user */}
+      <Card style={{ padding: 0 }}>
+        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${COLORS.bgMuted}` }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>Kelola Role User</h3>
+          <p style={{ margin: "3px 0 0", fontSize: 12.5, color: COLORS.textMuted }}>
+            Ubah role tiap user di sini. Penempatan Unit/Sub-unit detail diatur di tab <b>User Manager</b>.
+          </p>
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr>
+                <th style={{ ...th, textAlign: "left", paddingLeft: 18 }}>Nama</th>
+                <th style={{ ...th, textAlign: "left" }}>Email</th>
+                <th style={{ ...th, textAlign: "left" }}>Unit / Sub Unit</th>
+                <th style={{ ...th, textAlign: "left" }}>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedUsers.map((u, i) => {
+                const su = u.subUnitId ? LIVE.subUnits.find(s => s.id === u.subUnitId) : null;
+                const unitName = u.unitId ? (UNITS[u.unitId]?.name) : (su ? UNITS[su.unitId]?.name : null);
+                return (
+                  <tr key={u.id} style={{ borderTop: i ? `1px solid ${COLORS.bgMuted}` : "none" }}>
+                    <td style={{ padding: "10px 10px 10px 18px", fontWeight: 700, color: COLORS.dark, whiteSpace: "nowrap" }}>{u.name}</td>
+                    <td style={{ padding: "10px 10px", color: COLORS.textMuted }}>{u.email}</td>
+                    <td style={{ padding: "10px 10px", color: COLORS.textMuted, whiteSpace: "nowrap" }}>
+                      {unitName ? <>{unitName}{su && <> / {su.name}</>}</> : <span style={{ color: COLORS.textLight }}>Semua Unit</span>}
+                    </td>
+                    <td style={{ padding: "8px 10px" }}>
+                      <select
+                        value={u.role}
+                        disabled={savingId === u.id}
+                        onChange={e => changeRole(u, e.target.value)}
+                        style={{ padding: "6px 10px", border: `1px solid ${COLORS.border}`, borderRadius: 7, fontSize: 12.5, fontWeight: 700, fontFamily: "inherit", background: COLORS.white, cursor: "pointer" }}
+                      >
+                        {AC_ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                      </select>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   );
 }
