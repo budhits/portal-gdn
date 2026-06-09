@@ -159,14 +159,15 @@ router.post("/canvases", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// PATCH /api/roadmap/canvases/:id  { name?, posX?, posY? }
+// PATCH /api/roadmap/canvases/:id  { name?, posX?, posY?, ownerNodeId? }
+// ownerNodeId = null/"" → lepas dari induk (kotak jadi mengambang di kanvas utama).
 router.patch("/canvases/:id", async (req, res, next) => {
   try {
     if (!(await guard(req, res))) return;
-    const map = { name: "name", posX: "pos_x", posY: "pos_y" };
+    const map = { name: "name", posX: "pos_x", posY: "pos_y", ownerNodeId: "owner_node_id" };
     const sets = []; const params = [];
     for (const [k, col] of Object.entries(map)) {
-      if (req.body[k] !== undefined) { params.push(req.body[k]); sets.push(`${col} = $${params.length}`); }
+      if (req.body[k] !== undefined) { params.push(req.body[k] === "" ? null : req.body[k]); sets.push(`${col} = $${params.length}`); }
     }
     if (!sets.length) return res.status(400).json({ error: "Tidak ada perubahan." });
     params.push(req.params.id);

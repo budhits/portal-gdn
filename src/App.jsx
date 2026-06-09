@@ -34,7 +34,7 @@
  */
 
 import { useState, useMemo, useEffect, useRef, createContext, useContext, useCallback } from "react";
-import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, MarkerType, Handle, Position } from "@xyflow/react";
+import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, MarkerType, Handle, Position, BaseEdge, EdgeLabelRenderer, getBezierPath } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { toPng } from "html-to-image";
 import { GDN_LOGO } from "./assets/logo.js";
@@ -11795,6 +11795,30 @@ function RoadmapCanvasBox({ data }) {
 }
 const roadmapNodeTypes = { gdn: RoadmapNodeCard, canvasBox: RoadmapCanvasBox };
 
+// Edge dengan tombol ✕ untuk hapus/lepas — muncul saat panah dipilih (diklik).
+function RoadmapDeletableEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, style, data, selected }) {
+  const [path, labelX, labelY] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition });
+  return (
+    <>
+      <BaseEdge id={id} path={path} markerEnd={markerEnd} style={style} />
+      {selected && data?.canEdit && data?.onDelete && (
+        <EdgeLabelRenderer>
+          <button
+            className="nodrag nopan"
+            onClick={(e) => { e.stopPropagation(); data.onDelete(); }}
+            title={data.kind === "canvas" ? "Lepas anak kanvas dari induk (kotak tetap ada)" : "Hapus panah"}
+            style={{ position: "absolute", transform: `translate(-50%,-50%) translate(${labelX}px,${labelY}px)`, pointerEvents: "all",
+              width: 22, height: 22, borderRadius: 99, background: COLORS.white, border: `1.5px solid ${COLORS.danger}`,
+              color: COLORS.danger, fontSize: 13, fontWeight: 800, lineHeight: 1, cursor: "pointer", display: "flex",
+              alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,.15)", fontFamily: "inherit" }}
+          >×</button>
+        </EdgeLabelRenderer>
+      )}
+    </>
+  );
+}
+const roadmapEdgeTypes = { del: RoadmapDeletableEdge };
+
 const RM_NODE_W = 224, RM_NODE_H = 250, RM_BOX_PAD = 24;
 
 // Angka & satuan node hanya untuk manajemen (Owner/Admin/Leader/Finance/HR) — bukan PIC.
@@ -11870,13 +11894,15 @@ function RoadmapPage({ user }) {
     const rfE = [];
     edges.forEach(e => {
       const on = sel && (e.sourceId === sel || e.targetId === sel);
-      rfE.push({ id: e.id, source: e.sourceId, target: e.targetId,
+      rfE.push({ id: e.id, source: e.sourceId, target: e.targetId, type: "del",
         markerEnd: { type: MarkerType.ArrowClosed, color: on ? COLORS.primary : "#9298A6" },
-        style: { stroke: on ? COLORS.primary : "#9298A6", strokeWidth: on ? 3 : 2 } });
+        style: { stroke: on ? COLORS.primary : "#9298A6", strokeWidth: on ? 3 : 2 },
+        data: { canEdit, kind: "edge", onDelete: () => deleteEdgeById(e.id) } });
     });
     canvases.forEach(c => { if (c.ownerNodeId) rfE.push({ id: "cve-" + c.id, source: c.ownerNodeId, sourceHandle: "b",
-      target: "cv-" + c.id, targetHandle: "t", markerEnd: { type: MarkerType.ArrowClosed, color: COLORS.textLight },
-      style: { stroke: COLORS.textLight, strokeWidth: 1.5, strokeDasharray: "5 4" } }); });
+      target: "cv-" + c.id, targetHandle: "t", type: "del", markerEnd: { type: MarkerType.ArrowClosed, color: COLORS.textLight },
+      style: { stroke: COLORS.textLight, strokeWidth: 1.5, strokeDasharray: "5 4" },
+      data: { canEdit, kind: "canvas", onDelete: () => detachCanvas(c.id) } }); });
 
     setRfNodes(rfN); setRfEdges(rfE);
   };
@@ -11899,7 +11925,14 @@ function RoadmapPage({ user }) {
     } catch { /* */ }
   };
   const onConnect = async (conn) => {
-    if (!canEdit || !conn.source || !conn.target || conn.source.startsWith("cv-") || conn.target.startsWith("cv-")) return;
+    if (!canEdit || !conn.source || !conn.target) return;
+    // Tarik panah dari node ke kotak anak kanvas = tetapkan/ubah induk anak kanvas.
+    if (conn.target.startsWith("cv-") && !conn.source.startsWith("cv-")) {
+      try { await updateRoadmapCanvas(conn.target.slice(3), { ownerNodeId: conn.source }); load(); }
+      catch (err) { alert(err.message || "Gagal menyambung anak kanvas."); }
+      return;
+    }
+    if (conn.source.startsWith("cv-") || conn.target.startsWith("cv-")) return;
     try {
       const canvasId = apiNodesRef.current[conn.source]?.canvasId || null;
       await createRoadmapEdge({ canvasId, sourceId: conn.source, targetId: conn.target });
@@ -11908,7 +11941,25 @@ function RoadmapPage({ user }) {
   };
   const onEdgesDelete = async (eds) => {
     if (!canEdit) return;
-    for (const e of eds) { if (!String(e.id).startsWith("cve-")) { try { await deleteRoadmapEdge(e.id); } catch { /* */ } } }
+    for (const e of eds) {
+      const id = String(e.id);
+      if (id.startsWith("cve-")) {
+        try { await updateRoadmapCanvas(id.slice(4), { ownerNodeId: "" }); } catch { /* */ }
+      } else {
+        try { await deleteRoadmapEdge(e.id); } catch { /* */ }
+      }
+    }
+    load();
+  };
+  // Hapus panah biasa (antar-node).
+  const deleteEdgeById = async (edgeId) => {
+    if (!canEdit) return;
+    try { await deleteRoadmapEdge(edgeId); load(); } catch (e) { alert(e.message || "Gagal menghapus panah."); }
+  };
+  // Lepas benang anak kanvas: induk → null (kotak tetap ada, mengambang).
+  const detachCanvas = async (canvasId) => {
+    if (!canEdit) return;
+    try { await updateRoadmapCanvas(canvasId, { ownerNodeId: "" }); load(); } catch (e) { alert(e.message || "Gagal melepas anak kanvas."); }
   };
   // Status highlight sebuah node terhadap node terpilih: 'self' bila itu sendiri,
   // 'neighbor' bila terhubung panah (sebelum/sesudah), selain itu null.
@@ -12020,7 +12071,7 @@ function RoadmapPage({ user }) {
         ) : (
           <ReactFlow
             onInit={(inst) => { rfInst.current = inst; }}
-            nodes={rfNodes} edges={rfEdges} nodeTypes={roadmapNodeTypes}
+            nodes={rfNodes} edges={rfEdges} nodeTypes={roadmapNodeTypes} edgeTypes={roadmapEdgeTypes}
             onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
             onNodeDragStop={onNodeDragStop} onConnect={onConnect} onEdgesDelete={onEdgesDelete}
             onNodeClick={onNodeClick} onPaneClick={onPaneClick}
