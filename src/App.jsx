@@ -1125,17 +1125,20 @@ function calculateUnitMarginForPeriod(unitId, period) {
 
   for (const entry of entries) {
     if (entry.status === "closed" && isDateInPeriod(entry.closedAt, period)) {
-      // Closed in this period: count it
+      // Sudah closing di periode ini.
       target += entry.targetMargin;
       actual += entry.actualMargin;
       closedCount++;
       closedEntries.push(entry);
     } else if (entry.status === "approved" || entry.status === "estimated") {
-      // Not closed yet — pending
+      // Belum closing: target tetap dihitung (total estimasi), realisasi =
+      // input harian/bulanan yang sudah ada (0 bila belum diinput).
+      target += entry.targetMargin;
+      actual += entry.actualMargin;
       pendingTotal += entry.targetMargin;
       pendingEntries.push(entry);
     }
-    // "closed" but not in this period → ignore (belongs to another period)
+    // "closed" di periode lain → diabaikan.
   }
 
   const percentage = target > 0 ? Math.round((actual / target) * 100) : 0;
@@ -1166,6 +1169,8 @@ function calculateGrandTotalMarginForPeriod(period) {
       target += entry.targetMargin;
       actual += entry.actualMargin;
     } else if (entry.status === "approved" || entry.status === "estimated") {
+      target += entry.targetMargin;
+      actual += entry.actualMargin;
       pendingTotal += entry.targetMargin;
     }
   }
@@ -1458,7 +1463,9 @@ function getDerivedMarginEntries() {
       unitId: sub.unitId,
       status: sub.status,
       targetMargin: m.target,
-      actualMargin: sub.status === "closed" ? m.actual : 0,
+      // Realisasi = nilai yang sudah diinput (closing final, ATAU margin harian/
+      // update bulanan untuk KPI berjalan). 0 bila belum ada input sama sekali.
+      actualMargin: m.actual,
       period: sub.period,
       closedAt: sub.closedAt,
     };
@@ -2569,7 +2576,7 @@ function OwnerDashboard({ user, onSelectUnit, onSelectProject }) {
       <div style={{ marginBottom: 26 }}>
         <SectionHeader
           title={`Margin per Unit · ${selectedPeriod.label}`}
-          subtitle="Target dari estimasi, realisasi dari closing. Sub-unit yang belum closing tampil sebagai pending."
+          subtitle="Target = total estimasi periode ini. Realisasi = input harian/bulanan atau closing. Yang belum closing ditandai."
         />
         {unitsWithMargin.length === 0 ? (
           <Card style={{ padding: 24, textAlign: "center", color: COLORS.textLight, fontSize: 13 }}>
@@ -3147,7 +3154,7 @@ function MarginCardSubRow({ entry }) {
         <span style={{ color: COLORS.text, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>
           <Icon name={icon} size={13} color={COLORS.textMuted} /> {name}
         </span>
-        <span style={{ color, fontWeight: 800 }}>{isPending ? "pending" : `${pct}%`}</span>
+        <span style={{ color, fontWeight: 800 }}>{isPending ? "belum closing" : `${pct}%`}</span>
       </div>
       {!isPending && (
         <ProgressBar value={Math.min(pct, 100)} color={color} height={4} />
@@ -3190,7 +3197,7 @@ function MarginGrandTotalCard({ total, periodLabel, gap, label = "Total Semua Un
               <> • Selisih: {gap >= 0 ? "+" : "−"}{formatRupiah(Math.abs(gap))}</>
             )}
             {total.pendingTotal > 0 && (
-              <> • Pending: {formatRupiah(total.pendingTotal)}</>
+              <> • Belum closing: {formatRupiah(total.pendingTotal)}</>
             )}
           </div>
         </div>
@@ -3249,7 +3256,7 @@ function MarginUnitRow({ unit, isLast }) {
             <div style={{ fontSize: 12, color: COLORS.textMuted }}>
               {closedCount > 0 && `${closedCount} closing di periode ini`}
               {closedCount > 0 && pendingEntries.length > 0 && " • "}
-              {pendingEntries.length > 0 && `${pendingEntries.length} pending closing`}
+              {pendingEntries.length > 0 && `${pendingEntries.length} belum closing`}
               {closedCount === 0 && pendingEntries.length === 0 && "Belum ada data"}
             </div>
           </div>
@@ -4093,7 +4100,7 @@ function MarginDetailPage({ user, onSelectSubmission }) {
         <h1 style={{ fontFamily: FONTS.heading, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: COLORS.dark, margin: 0 }}>Margin · {selectedPeriod.label}
         </h1>
         <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 0" }}>
-          Target dari estimasi · realisasi dari closing · drill-down per sub-unit
+          Target = total estimasi · realisasi dari input harian/bulanan atau closing · drill-down per sub-unit
         </p>
       </div>
 
@@ -4164,7 +4171,7 @@ function MarginDetailPage({ user, onSelectSubmission }) {
             <MarginStat k="Capaian Keseluruhan" v={agg.target > 0 ? `${agg.percentage}%` : "—"} s={`${agg.closingUnits} unit ada closing`} accent={COLORS.primary} />
             <MarginStat k="Unit ≥ Target" v={agg.over} s="mencapai / lewati target" accent={COLORS.success} />
             <MarginStat k="Unit < Target" v={agg.below} s="perlu perhatian" accent={COLORS.danger} />
-            <MarginStat k="Total Pending" v={formatRupiah(agg.pendingTotal)} s={`${agg.pendingSubs} sub-unit belum closing`} accent={COLORS.warning} small />
+            <MarginStat k="Belum Closing" v={formatRupiah(agg.pendingTotal)} s={`${agg.pendingSubs} sub-unit belum closing`} accent={COLORS.warning} small />
           </div>
         </>
       )}
@@ -4216,7 +4223,7 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: FONTS.heading, fontSize: 17, fontWeight: 700, color: COLORS.text, letterSpacing: -0.3 }}>{unit.name}</div>
           <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 3 }}>
-            {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name} · ` : ""}{closedEntries.length} closing{pendingEntries.length > 0 && ` · ${pendingEntries.length} pending`}
+            {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name} · ` : ""}{closedEntries.length} closing{pendingEntries.length > 0 && ` · ${pendingEntries.length} belum closing`}
           </div>
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -4256,7 +4263,7 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
               <div style={{
                 fontSize: 12, fontWeight: 700, color: COLORS.warning,
                 textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6,
-              }}>Pending Closing ({pendingEntries.length})
+              }}>Belum Closing ({pendingEntries.length})
               </div>
               {pendingEntries.map(entry => (
                 <MarginEntryRow key={entry.submissionId || entry.id} entry={entry} isPending onSelectSubmission={onSelectSubmission} />
@@ -4268,7 +4275,7 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
                 fontSize: 12, color: "#92400E",
                 fontStyle: "italic",
               }}>
-                Total estimasi pending: <strong>{formatRupiah(pendingTotal)}</strong>
+                Total estimasi belum closing: <strong>{formatRupiah(pendingTotal)}</strong>
               </div>
             </div>
           )}
@@ -4343,7 +4350,7 @@ function MarginEntryRow({ entry, isPending, onSelectSubmission }) {
       </div>
       <div style={{ textAlign: "right" }}>
         {isPending ? (
-          <span style={{ color: COLORS.warning, fontStyle: "italic", fontWeight: 700 }}>pending</span>
+          <span style={{ color: COLORS.warning, fontStyle: "italic", fontWeight: 700 }}>belum closing</span>
         ) : (
           <>
             <div style={{ fontWeight: 800, color: achColor }}>{achieved}%</div>
