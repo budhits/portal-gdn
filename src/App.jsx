@@ -3724,6 +3724,22 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
   const allProjects = useMemo(() => getProjectsForUser(user), [user, store?.projects]);
   const [filterUnit, setFilterUnit] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [editingProject, setEditingProject] = useState(null);
+  const onProjectSaved = async () => {
+    setEditingProject(null);
+    if (store) store.setProjects(await fetchProjects());
+  };
+  const handleDeleteProject = async (p) => {
+    if (!confirm(`Hapus project "${p.name}"?\n\nSemua milestone & realisasi biaya project ini ikut terhapus. Tindakan ini permanen.`)) return;
+    try {
+      await deleteProject(p.id);
+      if (store) {
+        const [projects, ms] = await Promise.all([fetchProjects(), fetchMilestones()]);
+        store.setProjects(projects);
+        store.setMilestones(groupByProject(ms));
+      }
+    } catch (e) { alert(e.message || "Gagal menghapus project."); }
+  };
 
   const filtered = allProjects.filter(p => {
     if (filterUnit !== "all" && p.unitId !== filterUnit) return false;
@@ -3871,15 +3887,22 @@ function ProjectListPage({ user, onSelectProject, onNewProject }) {
               key={p.id}
               project={p}
               onClick={() => onSelectProject(p.id)}
+              canManage={user.role === ROLES.ADMIN}
+              onEdit={() => setEditingProject(p)}
+              onDelete={() => handleDeleteProject(p)}
             />
           ))}
         </div>
+      )}
+
+      {editingProject && (
+        <EditProjectModal project={editingProject} onClose={() => setEditingProject(null)} onSaved={onProjectSaved} />
       )}
     </div>
   );
 }
 
-function ProjectListItem({ project, onClick }) {
+function ProjectListItem({ project, onClick, canManage, onEdit, onDelete }) {
   const isMobile = useIsMobile();
   const unit = UNITS[project.unitId];
   const subUnit = project.subUnitId ? LIVE.subUnits.find(su => su.id === project.subUnitId) : null;
@@ -3934,7 +3957,23 @@ function ProjectListItem({ project, onClick }) {
           </div>
         </div>
 
-        <Icon name="arrowRight" size={18} color={COLORS.textLight} />
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+          {canManage && (
+            <>
+              <button type="button" title="Edit project (admin)"
+                onClick={(e) => { e.stopPropagation(); onEdit && onEdit(); }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, lineHeight: 0, borderRadius: 7, display: "inline-flex" }}>
+                <Icon name="edit" size={16} color={COLORS.textMuted} />
+              </button>
+              <button type="button" title="Hapus project (admin)"
+                onClick={(e) => { e.stopPropagation(); onDelete && onDelete(); }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, lineHeight: 0, borderRadius: 7, display: "inline-flex" }}>
+                <Icon name="trash" size={16} color={COLORS.danger} />
+              </button>
+            </>
+          )}
+          <Icon name="arrowRight" size={18} color={COLORS.textLight} />
+        </div>
       </div>
     </Card>
   );
@@ -6829,6 +6868,19 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
     setShowEditProject(false);
     if (store) store.setProjects(await fetchProjects());
   };
+  const deleteThisProject = async () => {
+    if (!project) return;
+    if (!confirm(`Hapus project "${project.name}"?\n\nSemua milestone & realisasi biaya project ini ikut terhapus. Tindakan ini permanen.`)) return;
+    try {
+      await deleteProject(project.id);
+      if (store) {
+        const [projects, ms] = await Promise.all([fetchProjects(), fetchMilestones()]);
+        store.setProjects(projects);
+        store.setMilestones(groupByProject(ms));
+      }
+      onBack && onBack();
+    } catch (e) { alert(e.message || "Gagal menghapus project."); }
+  };
 
   // Mirror local milestone/expense edits back to the global store so the
   // dashboard budget summary and project progress reflect them across menus.
@@ -7055,13 +7107,21 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
               {project.desc}
             </div>
           </div>
-          {(isOwnerLevel(user.role) || (user.role === ROLES.LEADER && user.unitId === project.unitId)) && (
-            <button onClick={() => setShowEditProject(true)} type="button" title="Edit project"
-              style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 13px",
-                background: "rgba(255,255,255,0.16)", color: COLORS.white, border: "1px solid rgba(255,255,255,0.35)",
-                borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-              <Icon name="edit" size={14} color={COLORS.white} /> Edit
-            </button>
+          {user.role === ROLES.ADMIN && (
+            <div style={{ flexShrink: 0, display: "inline-flex", gap: 8 }}>
+              <button onClick={() => setShowEditProject(true)} type="button" title="Edit project (admin)"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 13px",
+                  background: "rgba(255,255,255,0.16)", color: COLORS.white, border: "1px solid rgba(255,255,255,0.35)",
+                  borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                <Icon name="edit" size={14} color={COLORS.white} /> Edit
+              </button>
+              <button onClick={deleteThisProject} type="button" title="Hapus project (admin)"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 13px",
+                  background: "rgba(192,69,59,0.9)", color: COLORS.white, border: "1px solid rgba(255,255,255,0.35)",
+                  borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                <Icon name="trash" size={14} color={COLORS.white} /> Hapus
+              </button>
+            </div>
           )}
         </div>
 
