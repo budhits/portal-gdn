@@ -195,9 +195,10 @@ router.patch("/:id", async (req, res, next) => {
     const actor = await loadActor(req.user.id);
     if (!canWrite(actor, sub)) return res.status(403).json({ error: "Anda tidak berwenang mengubah KPI ini." });
 
-    const { actualValues, dailyMargin, marginInputMode } = req.body || {};
-    if (actualValues === undefined && dailyMargin === undefined && marginInputMode === undefined) {
-      return res.status(400).json({ error: "actualValues, dailyMargin, atau marginInputMode wajib diisi." });
+    const { actualValues, dailyMargin, marginInputMode, estimatedValues, period } = req.body || {};
+    if (actualValues === undefined && dailyMargin === undefined && marginInputMode === undefined
+        && estimatedValues === undefined && period === undefined) {
+      return res.status(400).json({ error: "Tidak ada perubahan." });
     }
 
     const sets = [];
@@ -210,6 +211,20 @@ router.patch("/:id", async (req, res, next) => {
       params.push(JSON.stringify(dailyMargin));
       sets.push(`daily_margin = $${params.length}`);
     }
+    // Ubah target/estimasi & periode: HANYA Admin.
+    if (estimatedValues !== undefined || period !== undefined) {
+      if (actor.role !== "admin") {
+        return res.status(403).json({ error: "Hanya Admin yang boleh mengubah target/estimasi & periode KPI." });
+      }
+      if (estimatedValues !== undefined) {
+        params.push(JSON.stringify(estimatedValues));
+        sets.push(`estimated_values = $${params.length}`);
+      }
+      if (period !== undefined && String(period).trim()) {
+        params.push(String(period).trim());
+        sets.push(`period = $${params.length}`);
+      }
+    }
     if (marginInputMode !== undefined) {
       // Ganti cara input margin hanya boleh Admin/Owner.
       if (actor.role !== "admin" && actor.role !== "owner") {
@@ -221,7 +236,9 @@ router.patch("/:id", async (req, res, next) => {
     }
     await query(`UPDATE kpi_submissions SET ${sets.join(", ")} WHERE id = $1`, params);
 
-    const label = marginInputMode !== undefined && actualValues === undefined && dailyMargin === undefined
+    const label = (estimatedValues !== undefined || period !== undefined)
+      ? `Edit target/periode KPI ${sub.period}`
+      : marginInputMode !== undefined && actualValues === undefined && dailyMargin === undefined
       ? `Ganti cara input margin KPI ${sub.period}`
       : dailyMargin !== undefined && actualValues === undefined
       ? `Input margin harian KPI ${sub.period}`

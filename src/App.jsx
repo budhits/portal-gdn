@@ -54,7 +54,7 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
   fetchTemplates, createTemplate, updateTemplate, deleteTemplate,
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
-  closeSubmission, updateSubmissionActual, deleteSubmission, saveDailyMargin, saveDailyMarginAndActual, setMarginInputMode, fetchAudit,
+  closeSubmission, updateSubmissionActual, deleteSubmission, editSubmissionTargets, saveDailyMargin, saveDailyMarginAndActual, setMarginInputMode, fetchAudit,
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
   createProject, updateProject, deleteProject,
   createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
@@ -4272,7 +4272,8 @@ function MarginEntryRow({ entry, isPending, onSelectSubmission }) {
 function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
   const store = useDataStore();
   const submissions = useMemo(() => getSubmissionsForUser(user), [user, store?.submissions]);
-  const canDeleteKpi = user.role === ROLES.ADMIN; // hanya Admin boleh hapus KPI
+  const canManageKpi = user.role === ROLES.ADMIN; // hanya Admin boleh hapus/edit KPI
+  const [editingKpi, setEditingKpi] = useState(null);
   const handleDeleteKpi = async (sub) => {
     if (!confirm(`Hapus KPI ${sub.period} (${getFormTemplate(sub.templateId)?.name || "—"})?\n\nTindakan ini permanen dan tidak bisa dibatalkan.`)) return;
     try {
@@ -4281,6 +4282,10 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
     } catch (e) {
       alert(e.message || "Gagal menghapus KPI.");
     }
+  };
+  const onKpiSaved = async () => {
+    setEditingKpi(null);
+    if (store) store.setSubmissions(await fetchSubmissions());
   };
   const [filterUnit, setFilterUnit] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -4431,7 +4436,7 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
             <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8FAFC" }}>
-                  {[["Periode","left"],["Unit","left"],["Sub Unit","left"],["Template","left"],["Skor","right"],["Margin","right"],["Status","left"],["Tanggal","left"], ...(canDeleteKpi ? [["","right"]] : [])].map(([h, al], i) => (
+                  {[["Periode","left"],["Unit","left"],["Sub Unit","left"],["Template","left"],["Skor","right"],["Margin","right"],["Status","left"],["Tanggal","left"], ...(canManageKpi ? [["","right"]] : [])].map(([h, al], i) => (
                     <th key={h || `act-${i}`} style={{ padding: "11px 12px", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, textAlign: al, textTransform: "uppercase", letterSpacing: 0.4, whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -4439,7 +4444,7 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
               <tbody>
                 {groups.filter(g => g.rows.length > 0).flatMap(g => [
                   <tr key={`grp-${g.key}`}>
-                    <td colSpan={canDeleteKpi ? 9 : 8} style={{ padding: "9px 12px", background: COLORS.bgMuted, borderTop: `1px solid ${COLORS.border}` }}>
+                    <td colSpan={canManageKpi ? 9 : 8} style={{ padding: "9px 12px", background: COLORS.bgMuted, borderTop: `1px solid ${COLORS.border}` }}>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                         <span style={{ width: 9, height: 9, borderRadius: 5, background: g.color }} />
                         <span style={{ fontSize: 12.5, fontWeight: 800, color: COLORS.dark }}>{g.label}</span>
@@ -4449,13 +4454,17 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
                   </tr>,
                   ...g.rows.map(sub => (
                     <KPIHistoryRow key={sub.id} submission={sub} onClick={() => onSelectSubmission && onSelectSubmission(sub.id)}
-                      canDelete={canDeleteKpi} onDelete={() => handleDeleteKpi(sub)} />
+                      canManage={canManageKpi} onEdit={() => setEditingKpi(sub)} onDelete={() => handleDeleteKpi(sub)} />
                   )),
                 ])}
               </tbody>
             </table>
           </div>
         </Card>
+      )}
+
+      {editingKpi && (
+        <EditKpiModal submission={editingKpi} onClose={() => setEditingKpi(null)} onSaved={onKpiSaved} />
       )}
     </div>
   );
@@ -4472,7 +4481,7 @@ const selectStyle = {
   cursor: "pointer",
 };
 
-function KPIHistoryRow({ submission, onClick, canDelete, onDelete }) {
+function KPIHistoryRow({ submission, onClick, canManage, onEdit, onDelete }) {
   const sub = LIVE.subUnits.find(s => s.id === submission.subUnitId);
   const unit = sub ? UNITS[sub.unitId] : null;
   const template = getFormTemplate(submission.templateId);
@@ -4542,16 +4551,99 @@ function KPIHistoryRow({ submission, onClick, canDelete, onDelete }) {
       <td style={{ padding: "10px 12px", color: COLORS.textMuted, fontSize: 12.5 }}>
         {formatDate(showDate)}
       </td>
-      {canDelete && (
+      {canManage && (
         <td style={{ padding: "10px 12px", textAlign: "right", whiteSpace: "nowrap" }}>
-          <button type="button" title="Hapus KPI (admin)"
-            onClick={(e) => { e.stopPropagation(); onDelete && onDelete(); }}
-            style={{ background: "transparent", border: "none", cursor: "pointer", padding: 5, lineHeight: 0, borderRadius: 6, display: "inline-flex" }}>
-            <Icon name="trash" size={15} color={COLORS.danger} />
-          </button>
+          <span style={{ display: "inline-flex", gap: 2 }}>
+            <button type="button" title="Edit target/periode KPI (admin)"
+              onClick={(e) => { e.stopPropagation(); onEdit && onEdit(); }}
+              style={{ background: "transparent", border: "none", cursor: "pointer", padding: 5, lineHeight: 0, borderRadius: 6, display: "inline-flex" }}>
+              <Icon name="edit" size={15} color={COLORS.textMuted} />
+            </button>
+            <button type="button" title="Hapus KPI (admin)"
+              onClick={(e) => { e.stopPropagation(); onDelete && onDelete(); }}
+              style={{ background: "transparent", border: "none", cursor: "pointer", padding: 5, lineHeight: 0, borderRadius: 6, display: "inline-flex" }}>
+              <Icon name="trash" size={15} color={COLORS.danger} />
+            </button>
+          </span>
         </td>
       )}
     </tr>
+  );
+}
+
+// Form edit target/estimasi & periode KPI (khusus Admin). Memakai Modal seragam.
+function EditKpiModal({ submission, onClose, onSaved }) {
+  const template = getFormTemplate(submission.templateId);
+  const editableFields = (template?.fields || []).filter(f => f.type !== "auto");
+  const [period, setPeriod] = useState(submission.period || "");
+  const [vals, setVals] = useState(() => {
+    const v = {};
+    editableFields.forEach(f => {
+      const x = submission.estimatedValues ? submission.estimatedValues[f.id] : undefined;
+      v[f.id] = (x === undefined || x === null) ? "" : x;
+    });
+    return v;
+  });
+  const [busy, setBusy] = useState(false);
+
+  const setVal = (id, raw) => setVals(p => ({ ...p, [id]: raw }));
+
+  const save = async () => {
+    if (!period.trim()) { alert("Periode wajib diisi."); return; }
+    const estimatedValues = { ...(submission.estimatedValues || {}) };
+    editableFields.forEach(f => {
+      const raw = vals[f.id];
+      if (f.type === "date") { estimatedValues[f.id] = raw || ""; }
+      else { estimatedValues[f.id] = (raw === "" || raw === null || raw === undefined) ? 0 : (isNaN(Number(raw)) ? raw : Number(raw)); }
+    });
+    setBusy(true);
+    try {
+      await editSubmissionTargets(submission.id, { period: period.trim(), estimatedValues });
+      onSaved();
+    } catch (e) { alert(e.message || "Gagal menyimpan perubahan KPI."); setBusy(false); }
+  };
+
+  return (
+    <Modal title="Edit Target KPI" icon="edit" onClose={onClose} maxWidth={560}
+      footer={<>
+        <button onClick={onClose} type="button" style={adminBtnStyle}>Batal</button>
+        <button onClick={save} type="button" disabled={busy} style={{ ...modalPrimaryBtn, opacity: busy ? 0.6 : 1 }}>{busy ? "Menyimpan…" : "Simpan"}</button>
+      </>}>
+      <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 12 }}>
+        {template?.name} · {LIVE.subUnits.find(s => s.id === submission.subUnitId)?.name || "—"}
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <label style={labelStyle}>Periode <span style={{ color: COLORS.danger }}>*</span></label>
+        <input style={inputStyle} value={period} onChange={e => setPeriod(e.target.value)} placeholder="cth: Juni 2026" />
+      </div>
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.dark, marginBottom: 8 }}>Target / Estimasi per variabel</div>
+      {editableFields.length === 0 ? (
+        <div style={{ fontSize: 13, color: COLORS.textLight }}>Template ini tak punya variabel input manual.</div>
+      ) : (
+        <div style={{ display: "grid", gap: 9 }}>
+          {editableFields.map(f => (
+            <div key={f.id} style={{ display: "grid", gridTemplateColumns: "1fr 170px", gap: 10, alignItems: "center" }}>
+              <label style={{ fontSize: 13, color: COLORS.text, fontWeight: 600 }}>
+                {f.name}{f.satuan ? <span style={{ color: COLORS.textLight, fontWeight: 400 }}> ({f.satuan})</span> : null}
+                {f.isMargin ? <span style={{ marginLeft: 6, fontSize: 9.5, color: COLORS.success, fontWeight: 800 }}>MARGIN</span> : null}
+              </label>
+              {f.type === "date" ? (
+                <input type="date" style={inputStyle} value={vals[f.id] || ""} onChange={e => setVal(f.id, e.target.value)} />
+              ) : (
+                <input
+                  type="number"
+                  step="any"
+                  style={{ ...inputStyle, textAlign: "right" }}
+                  value={vals[f.id] === "" || vals[f.id] === null || vals[f.id] === undefined ? "" : vals[f.id]}
+                  onChange={e => setVal(f.id, e.target.value)}
+                  placeholder="0"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
   );
 }
 

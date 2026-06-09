@@ -61,6 +61,8 @@ export const closeSubmission        = (id, body) => apiFetch(`/submissions/${id}
 export const updateSubmissionActual = (id, body) => apiFetch(`/submissions/${id}`, { method: "PATCH", body });
 // Hapus KPI submission — hanya Admin (divalidasi server).
 export const deleteSubmission       = (id)       => apiFetch(`/submissions/${id}`, { method: "DELETE" });
+// Edit target/estimasi & periode KPI — hanya Admin (divalidasi server).
+export const editSubmissionTargets  = (id, body) => apiFetch(`/submissions/${id}`, { method: "PATCH", body });
 export const saveDailyMargin        = (id, dailyMargin) => apiFetch(`/submissions/${id}`, { method: "PATCH", body: { dailyMargin } });
 // PATCH gabungan: simpan dailyMargin sekaligus perbarui actualValues (mis. total margin harian → realisasi field margin).
 export const saveDailyMarginAndActual = (id, dailyMargin, actualValues) =>
