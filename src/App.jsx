@@ -7163,94 +7163,59 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
             </div>
           </div>
 
-          {/* Add/edit milestone — popup di tengah layar (overlay) */}
+          {/* Add/edit milestone — popup seragam (Modal) */}
           {showMsForm && (
-            <div
-              onClick={() => setShowMsForm(false)}
-              style={{
-                position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000,
-                display: "flex", alignItems: "flex-start", justifyContent: "center",
-                padding: "60px 16px", overflowY: "auto",
-              }}
+            <Modal
+              title={editingMsId === null ? "Milestone Baru" : "Edit Milestone"}
+              icon="check"
+              onClose={() => setShowMsForm(false)}
+              footer={<>
+                <button onClick={() => setShowMsForm(false)} type="button" style={adminBtnStyle}>Batal</button>
+                <button onClick={saveMilestone} type="button" style={modalPrimaryBtn}>{editingMsId === null ? "Tambah" : "Simpan"}</button>
+              </>}
             >
-              <div
-                onClick={e => e.stopPropagation()}
-                style={{
-                  background: COLORS.white, borderRadius: 16, width: "100%", maxWidth: 520,
-                  boxShadow: "0 24px 70px rgba(0,0,0,0.35)", overflow: "hidden",
-                }}
-              >
-                {/* Header */}
-                <div style={{ padding: "16px 20px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, color: COLORS.dark }}>
-                    {editingMsId === null ? "Milestone Baru" : "Edit Milestone"}
-                  </div>
-                  <button onClick={() => setShowMsForm(false)} type="button" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}>
-                    <Icon name="x" size={18} color={COLORS.textMuted} />
-                  </button>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Nama <span style={{ color: COLORS.danger }}>*</span></label>
+                <input
+                  type="text"
+                  value={msFormName}
+                  onChange={e => setMsFormName(e.target.value)}
+                  placeholder="cth: Survey & izin lahan"
+                  style={inputStyle}
+                  autoFocus
+                />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 14 }}>
+                <div>
+                  <label style={labelStyle}>Target Tgl <span style={{ color: COLORS.danger }}>*</span></label>
+                  <input type="date" value={msFormDate} onChange={e => setMsFormDate(e.target.value)} style={inputStyle} />
                 </div>
-
-                {/* Body */}
-                <div style={{ padding: "18px 20px" }}>
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={labelStyle}>Nama <span style={{ color: COLORS.danger }}>*</span></label>
-                    <input
-                      type="text"
-                      value={msFormName}
-                      onChange={e => setMsFormName(e.target.value)}
-                      placeholder="cth: Survey & izin lahan"
-                      style={inputStyle}
-                      autoFocus
-                    />
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 14 }}>
-                    <div>
-                      <label style={labelStyle}>Target Tgl <span style={{ color: COLORS.danger }}>*</span></label>
-                      <input type="date" value={msFormDate} onChange={e => setMsFormDate(e.target.value)} style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Alokasi Budget</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={msFormBudget === "" ? "" : Number(msFormBudget).toLocaleString("id-ID")}
-                        onChange={e => {
-                          const raw = e.target.value.replace(/[^\d]/g, "");
-                          setMsFormBudget(raw === "" ? "" : Number(raw));
-                        }}
-                        placeholder="Rp"
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>PIC</label>
-                    <input
-                      type="text"
-                      value={msFormPic}
-                      onChange={e => setMsFormPic(e.target.value)}
-                      placeholder="opsional"
-                      style={inputStyle}
-                    />
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div style={{ padding: "14px 20px", borderTop: `1px solid ${COLORS.bgMuted}`, background: COLORS.bg, display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                  <button onClick={() => setShowMsForm(false)} type="button" style={adminBtnStyle}>Batal</button>
-                  <button
-                    onClick={saveMilestone}
-                    type="button"
-                    style={{
-                      padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none",
-                      borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                <div>
+                  <label style={labelStyle}>Alokasi Budget</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={msFormBudget === "" ? "" : Number(msFormBudget).toLocaleString("id-ID")}
+                    onChange={e => {
+                      const raw = e.target.value.replace(/[^\d]/g, "");
+                      setMsFormBudget(raw === "" ? "" : Number(raw));
                     }}
-                  >
-                    {editingMsId === null ? "Tambah" : "Simpan"}
-                  </button>
+                    placeholder="Rp"
+                    style={inputStyle}
+                  />
                 </div>
               </div>
-            </div>
+              <div>
+                <label style={labelStyle}>PIC</label>
+                <input
+                  type="text"
+                  value={msFormPic}
+                  onChange={e => setMsFormPic(e.target.value)}
+                  placeholder="opsional"
+                  style={inputStyle}
+                />
+              </div>
+            </Modal>
           )}
 
           {milestones.map((ms, i) => (
@@ -7324,71 +7289,53 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
       {/* Popup Update OpEx / Realisasi Budget — terpusat, bisa dibuka dari tab
           Milestone (tombol "Update OpEx" per milestone) maupun tab Expense. */}
       {showExpenseForm && (
-        <div
-          onClick={() => setShowExpenseForm(false)}
-          style={{
-            position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000,
-            display: "flex", alignItems: "flex-start", justifyContent: "center",
-            padding: "60px 16px", overflowY: "auto",
-          }}
+        <Modal
+          title={editingExpenseId ? "Edit Realisasi Budget" : "Update OpEx (Realisasi Budget)"}
+          icon="money"
+          onClose={() => setShowExpenseForm(false)}
+          footer={<>
+            <button onClick={() => setShowExpenseForm(false)} type="button" style={adminBtnStyle}>Batal</button>
+            <button onClick={saveExpense} type="button" style={modalPrimaryBtn}>{editingExpenseId ? "Simpan Perubahan" : "Simpan Realisasi"}</button>
+          </>}
         >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ background: COLORS.white, borderRadius: 16, width: "100%", maxWidth: 520, boxShadow: "0 24px 70px rgba(0,0,0,0.35)", overflow: "hidden" }}
-          >
-            <div style={{ padding: "16px 20px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, color: COLORS.dark, display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <Icon name="money" size={17} color={COLORS.secondary} /> {editingExpenseId ? "Edit Realisasi Budget" : "Update OpEx (Realisasi Budget)"}
-              </div>
-              <button onClick={() => setShowExpenseForm(false)} type="button" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}>
-                <Icon name="x" size={18} color={COLORS.textMuted} />
-              </button>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Kaitkan ke Milestone</label>
+            <select value={exMilestoneId} onChange={e => setExMilestoneId(e.target.value)} style={inputStyle}>
+              <option value="">— Tidak terkait milestone tertentu —</option>
+              {milestones.map(m => (<option key={m.id} value={m.id}>{m.name}</option>))}
+            </select>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Keterangan <span style={{ color: COLORS.danger }}>*</span></label>
+            <input type="text" value={exName} onChange={e => setExName(e.target.value)} placeholder="cth: Beli pipa PVC + sambungan" style={inputStyle} autoFocus />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 14 }}>
+            <div>
+              <label style={labelStyle}>Jumlah (Rp) <span style={{ color: COLORS.danger }}>*</span></label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={exAmount === "" ? "" : Number(exAmount).toLocaleString("id-ID")}
+                onChange={e => { const raw = e.target.value.replace(/[^\d]/g, ""); setExAmount(raw === "" ? "" : Number(raw)); }}
+                placeholder="cth: 9.300.000"
+                style={inputStyle}
+              />
             </div>
-            <div style={{ padding: "18px 20px" }}>
-              <div style={{ marginBottom: 14 }}>
-                <label style={labelStyle}>Kaitkan ke Milestone</label>
-                <select value={exMilestoneId} onChange={e => setExMilestoneId(e.target.value)} style={inputStyle}>
-                  <option value="">— Tidak terkait milestone tertentu —</option>
-                  {milestones.map(m => (<option key={m.id} value={m.id}>{m.name}</option>))}
-                </select>
-              </div>
-              <div style={{ marginBottom: 14 }}>
-                <label style={labelStyle}>Keterangan <span style={{ color: COLORS.danger }}>*</span></label>
-                <input type="text" value={exName} onChange={e => setExName(e.target.value)} placeholder="cth: Beli pipa PVC + sambungan" style={inputStyle} autoFocus />
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 14 }}>
-                <div>
-                  <label style={labelStyle}>Jumlah (Rp) <span style={{ color: COLORS.danger }}>*</span></label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={exAmount === "" ? "" : Number(exAmount).toLocaleString("id-ID")}
-                    onChange={e => { const raw = e.target.value.replace(/[^\d]/g, ""); setExAmount(raw === "" ? "" : Number(raw)); }}
-                    placeholder="cth: 9.300.000"
-                    style={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>Tanggal <span style={{ color: COLORS.danger }}>*</span></label>
-                  <input type="date" value={exDate} onChange={e => setExDate(e.target.value)} style={inputStyle} />
-                </div>
-              </div>
-              <div
-                onClick={() => setExHasReceipt(!exHasReceipt)}
-                style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", background: exHasReceipt ? COLORS.successBg : COLORS.white, border: `1px solid ${exHasReceipt ? COLORS.success : COLORS.border}`, borderRadius: 8, cursor: "pointer" }}
-              >
-                <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, border: `2px solid ${exHasReceipt ? COLORS.success : COLORS.textLight}`, background: exHasReceipt ? COLORS.success : COLORS.white, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {exHasReceipt && <Icon name="check" size={11} color={COLORS.white} strokeWidth={3} />}
-                </div>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.dark }}>Bukti/nota terlampir <span style={{ color: COLORS.danger }}>*</span> (wajib untuk realisasi)</span>
-              </div>
-            </div>
-            <div style={{ padding: "14px 20px", borderTop: `1px solid ${COLORS.bgMuted}`, background: COLORS.bg, display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button onClick={() => setShowExpenseForm(false)} type="button" style={adminBtnStyle}>Batal</button>
-              <button onClick={saveExpense} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{editingExpenseId ? "Simpan Perubahan" : "Simpan Realisasi"}</button>
+            <div>
+              <label style={labelStyle}>Tanggal <span style={{ color: COLORS.danger }}>*</span></label>
+              <input type="date" value={exDate} onChange={e => setExDate(e.target.value)} style={inputStyle} />
             </div>
           </div>
-        </div>
+          <div
+            onClick={() => setExHasReceipt(!exHasReceipt)}
+            style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", background: exHasReceipt ? COLORS.successBg : COLORS.white, border: `1px solid ${exHasReceipt ? COLORS.success : COLORS.border}`, borderRadius: 8, cursor: "pointer" }}
+          >
+            <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, border: `2px solid ${exHasReceipt ? COLORS.success : COLORS.textLight}`, background: exHasReceipt ? COLORS.success : COLORS.white, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {exHasReceipt && <Icon name="check" size={11} color={COLORS.white} strokeWidth={3} />}
+            </div>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.dark }}>Bukti/nota terlampir <span style={{ color: COLORS.danger }}>*</span> (wajib untuk realisasi)</span>
+          </div>
+        </Modal>
       )}
     </div>
   );
@@ -7614,6 +7561,47 @@ function ExpenseRow({ expense, milestones, isLast, canEdit, onEdit, onDelete }) 
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// Tombol primer (aksi utama) seragam untuk semua modal.
+const modalPrimaryBtn = {
+  padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none",
+  borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+};
+
+/**
+ * Modal/popup seragam: overlay gelap, kartu putih di tengah, header (judul +
+ * ikon opsional + tombol X), body, dan footer aksi opsional. Drag-seleksi teks
+ * keluar kotak TIDAK menutup modal (hanya klik yang benar2 dimulai di latar).
+ */
+function Modal({ title, icon, onClose, children, footer, maxWidth = 520 }) {
+  const downRef = useRef(false);
+  return (
+    <div
+      onMouseDown={e => { downRef.current = e.target === e.currentTarget; }}
+      onClick={e => { if (e.target === e.currentTarget && downRef.current) onClose(); downRef.current = false; }}
+      style={{ position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000,
+        display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "60px 16px", overflowY: "auto" }}
+    >
+      <div style={{ background: COLORS.white, borderRadius: 16, width: "100%", maxWidth,
+        boxShadow: "0 24px 70px rgba(0,0,0,0.35)", overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, color: COLORS.dark, display: "inline-flex", alignItems: "center", gap: 8 }}>
+            {icon && <Icon name={icon} size={17} color={COLORS.secondary} />} {title}
+          </div>
+          <button onClick={onClose} type="button" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}>
+            <Icon name="x" size={18} color={COLORS.textMuted} />
+          </button>
+        </div>
+        <div style={{ padding: "18px 20px" }}>{children}</div>
+        {footer && (
+          <div style={{ padding: "14px 20px", borderTop: `1px solid ${COLORS.bgMuted}`, background: COLORS.bg, display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            {footer}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
