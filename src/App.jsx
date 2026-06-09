@@ -8131,10 +8131,25 @@ function ApprovalDetail({ submission, onProcessed }) {
   const [weights, setWeights] = useState(() => {
     const w = {};
     template?.fields.forEach(f => {
-      if (f.type === "auto" || f.defaultWeight > 0) {
-        w[f.id] = f.defaultWeight;
+      if (f.type === "auto" || f.defaultWeight > 0 || f.isMargin) {
+        w[f.id] = f.defaultWeight || 0;
       }
     });
+    // Bila tak ada bobot default sama sekali (mis. template margin tunggal),
+    // beri 100% ke field margin; jika tak ada margin, sebar rata — agar
+    // total bisa 100% & KPI bisa di-approve tanpa harus diisi manual dulu.
+    const ids = Object.keys(w);
+    const sum = ids.reduce((s, id) => s + Number(w[id] || 0), 0);
+    if (ids.length && sum === 0) {
+      const marginField = template.fields.find(f => f.isMargin && w[f.id] !== undefined);
+      if (marginField) {
+        w[marginField.id] = 100;
+      } else {
+        const each = Math.floor(100 / ids.length);
+        ids.forEach(id => { w[id] = each; });
+        w[ids[ids.length - 1]] += 100 - each * ids.length;
+      }
+    }
     return w;
   });
 
@@ -11636,8 +11651,13 @@ function RoadmapNodeCard({ data }) {
   const st = RM_STATUS[data.status] || RM_STATUS.planned;
   const hasMs = data.msTotal > 0;
   const pct = hasMs ? Math.round((data.msDone / data.msTotal) * 100) : 0;
+  const ring = data.hl === "self"
+    ? { border: `2px solid ${COLORS.primary}`, boxShadow: `0 0 0 4px ${COLORS.primary}33, 0 10px 26px rgba(20,30,50,.14)` }
+    : data.hl === "neighbor"
+    ? { border: `2px solid ${COLORS.primary}`, boxShadow: `0 0 0 3px ${COLORS.primary}22, 0 10px 26px rgba(20,30,50,.12)` }
+    : { border: `1px solid ${COLORS.border}`, boxShadow: "0 10px 26px rgba(20,30,50,.12), 0 2px 6px rgba(20,30,50,.06)" };
   return (
-    <div style={{ width: 224, background: "linear-gradient(180deg,#FFFFFF 0%,#FBFBFD 100%)", border: `1px solid ${COLORS.border}`, borderRadius: 16, boxShadow: "0 10px 26px rgba(20,30,50,.12), 0 2px 6px rgba(20,30,50,.06)", overflow: "hidden" }}>
+    <div style={{ width: 224, background: "linear-gradient(180deg,#FFFFFF 0%,#FBFBFD 100%)", borderRadius: 16, overflow: "hidden", transition: "box-shadow .12s, border-color .12s", ...ring }}>
       <Handle type="target" position={Position.Left} style={{ background: COLORS.textLight, width: 8, height: 8 }} />
       <div style={{ height: 5, background: `linear-gradient(90deg, ${st.color}, ${st.color}99)` }} />
       <div style={{ padding: "11px 13px" }}>
@@ -11650,6 +11670,13 @@ function RoadmapNodeCard({ data }) {
                 onClick={(e) => { e.stopPropagation(); data.onAddCanvas && data.onAddCanvas(data.nodeId); }}
                 style={{ background: "transparent", border: "none", cursor: "pointer", padding: 3, lineHeight: 0, borderRadius: 6, display: "inline-flex" }}>
                 <Icon name="plus" size={14} color={COLORS.textLight} />
+              </button>
+            )}
+            {data.canEdit && (
+              <button className="nodrag" title="Edit node ini"
+                onClick={(e) => { e.stopPropagation(); data.onEdit && data.onEdit(data.nodeId); }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 3, lineHeight: 0, borderRadius: 6, display: "inline-flex" }}>
+                <Icon name="edit" size={13} color={COLORS.textLight} />
               </button>
             )}
             {data.canEdit && (
@@ -11731,6 +11758,8 @@ function RoadmapPage({ user }) {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const apiNodesRef = useRef({});
+  const apiEdgesRef = useRef([]);
+  const selectedRef = useRef(null);
   const flowWrapRef = useRef(null);
   const rfInst = useRef(null);
 
@@ -11743,8 +11772,9 @@ function RoadmapPage({ user }) {
       picName: pic?.name || null, picRole: pic ? ROLE_LABELS[pic.role] : null,
       picInitial: pic?.name?.charAt(0) || null, projectName: proj?.name || null,
       msDone: ms.filter(m => m.done).length, msTotal: ms.length,
-      nodeId: n.id, onAddCanvas: addCanvas, onDelete: deleteNode, canEdit,
+      nodeId: n.id, onAddCanvas: addCanvas, onDelete: deleteNode, onEdit: openEditor, canEdit,
       metricValue: n.metricValue, metricUnit: n.metricUnit, metricLabel: n.metricLabel, showMetric: canSeeMetric,
+      hl: selectedRef.current ? hlStateFor(n.id, selectedRef.current) : null,
     };
   };
 
@@ -11752,6 +11782,7 @@ function RoadmapPage({ user }) {
   // berisi node-nya; panah vertikal (emas) dari node induk ke box.
   const assemble = ({ nodes, edges, canvases }) => {
     const nodeById = {}; nodes.forEach(n => { nodeById[n.id] = n; }); apiNodesRef.current = nodeById;
+    apiEdgesRef.current = edges;
     const canvasById = {}; canvases.forEach(c => { canvasById[c.id] = c; });
     const nodesByCanvas = {}; nodes.forEach(n => { const k = n.canvasId || "__main__"; (nodesByCanvas[k] = nodesByCanvas[k] || []).push(n); });
     const ownerCanvasOf = (c) => (nodeById[c.ownerNodeId]?.canvasId) || null; // null = utama
@@ -11783,9 +11814,14 @@ function RoadmapPage({ user }) {
       (nodesByCanvas[c.id] || []).forEach(n => rfN.push(gdnRf(n)));
     });
 
+    const sel = selectedRef.current;
     const rfE = [];
-    edges.forEach(e => rfE.push({ id: e.id, source: e.sourceId, target: e.targetId,
-      markerEnd: { type: MarkerType.ArrowClosed, color: "#9298A6" }, style: { stroke: "#9298A6", strokeWidth: 2 } }));
+    edges.forEach(e => {
+      const on = sel && (e.sourceId === sel || e.targetId === sel);
+      rfE.push({ id: e.id, source: e.sourceId, target: e.targetId,
+        markerEnd: { type: MarkerType.ArrowClosed, color: on ? COLORS.primary : "#9298A6" },
+        style: { stroke: on ? COLORS.primary : "#9298A6", strokeWidth: on ? 3 : 2 } });
+    });
     canvases.forEach(c => { if (c.ownerNodeId) rfE.push({ id: "cve-" + c.id, source: c.ownerNodeId, sourceHandle: "b",
       target: "cv-" + c.id, targetHandle: "t", markerEnd: { type: MarkerType.ArrowClosed, color: COLORS.textLight },
       style: { stroke: COLORS.textLight, strokeWidth: 1.5, strokeDasharray: "5 4" } }); });
@@ -11822,9 +11858,37 @@ function RoadmapPage({ user }) {
     if (!canEdit) return;
     for (const e of eds) { if (!String(e.id).startsWith("cve-")) { try { await deleteRoadmapEdge(e.id); } catch { /* */ } } }
   };
+  // Status highlight sebuah node terhadap node terpilih: 'self' bila itu sendiri,
+  // 'neighbor' bila terhubung panah (sebelum/sesudah), selain itu null.
+  const hlStateFor = (nodeId, selId) => {
+    if (!selId) return null;
+    if (nodeId === selId) return "self";
+    const touch = apiEdgesRef.current.some(e =>
+      (e.sourceId === selId && e.targetId === nodeId) || (e.targetId === selId && e.sourceId === nodeId));
+    return touch ? "neighbor" : null;
+  };
+  // Terapkan highlight ke node & panah saat sebuah node dipilih (tanpa fetch ulang).
+  const applyHighlight = (selId) => {
+    selectedRef.current = selId;
+    setRfNodes(nds => nds.map(n => n.type === "gdn"
+      ? { ...n, data: { ...n.data, hl: hlStateFor(n.id, selId) } } : n));
+    setRfEdges(eds => eds.map(e => {
+      if (String(e.id).startsWith("cve-")) return e;
+      const on = selId && (e.source === selId || e.target === selId);
+      return { ...e, markerEnd: { type: MarkerType.ArrowClosed, color: on ? COLORS.primary : "#9298A6" },
+        style: { stroke: on ? COLORS.primary : "#9298A6", strokeWidth: on ? 3 : 2 } };
+    }));
+  };
+  // Klik node = pilih & birukan node sebelum/sesudahnya (semua role).
   const onNodeClick = (_e, node) => {
-    if (!canEdit || node.id.startsWith("cv-")) return;
-    const api = apiNodesRef.current[node.id];
+    if (node.id.startsWith("cv-")) { applyHighlight(null); return; }
+    applyHighlight(selectedRef.current === node.id ? null : node.id);
+  };
+  const onPaneClick = () => applyHighlight(null);
+  // Buka editor lewat tombol pensil (hanya editor).
+  const openEditor = (nodeId) => {
+    if (!canEdit) return;
+    const api = apiNodesRef.current[nodeId];
     if (api) setEditing({ ...api });
   };
 
@@ -11907,7 +11971,7 @@ function RoadmapPage({ user }) {
             nodes={rfNodes} edges={rfEdges} nodeTypes={roadmapNodeTypes}
             onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
             onNodeDragStop={onNodeDragStop} onConnect={onConnect} onEdgesDelete={onEdgesDelete}
-            onNodeClick={onNodeClick}
+            onNodeClick={onNodeClick} onPaneClick={onPaneClick}
             nodesDraggable={canEdit} nodesConnectable={canEdit} elementsSelectable
             fitView proOptions={{ hideAttribution: true }}
           >
@@ -11938,6 +12002,7 @@ function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
   const [projectId, setProjectId] = useState(node.projectId || "");
   const [ms, setMs] = useState(node.milestones || []);
   const [newMs, setNewMs] = useState("");
+  const backdropDownRef = useRef(false); // cegah modal tertutup saat drag-seleksi teks keluar kotak
   const inp = { width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13.5, border: `1.5px solid ${COLORS.border}`, outline: "none", fontFamily: "inherit", background: COLORS.bg, boxSizing: "border-box" };
   const lbl = { fontSize: 12, fontWeight: 700, color: COLORS.text, display: "block", marginBottom: 5 };
   const hasMs = ms.length > 0;
@@ -11958,8 +12023,11 @@ function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
   };
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "48px 16px", overflowY: "auto" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: COLORS.white, borderRadius: 16, width: "100%", maxWidth: 470, boxShadow: "0 24px 70px rgba(0,0,0,0.35)", overflow: "hidden" }}>
+    <div
+      onMouseDown={e => { backdropDownRef.current = (e.target === e.currentTarget); }}
+      onClick={e => { if (e.target === e.currentTarget && backdropDownRef.current) onClose(); backdropDownRef.current = false; }}
+      style={{ position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "48px 16px", overflowY: "auto" }}>
+      <div style={{ background: COLORS.white, borderRadius: 16, width: "100%", maxWidth: 470, boxShadow: "0 24px 70px rgba(0,0,0,0.35)", overflow: "hidden" }}>
         <div style={{ padding: "16px 20px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, color: COLORS.dark }}>{canEdit ? "Edit Node" : "Detail Node"}</div>
           <button onClick={onClose} type="button" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4 }}><Icon name="x" size={18} color={COLORS.textMuted} /></button>
