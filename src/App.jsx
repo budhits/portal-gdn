@@ -56,6 +56,7 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
   closeSubmission, updateSubmissionActual, deleteSubmission, editSubmissionTargets, saveDailyMargin, saveDailyMarginAndActual, setMarginInputMode, fetchAudit,
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
+  fetchMenuAccess, saveMenuAccess,
   createProject, updateProject, deleteProject,
   createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
   createExpense, updateExpense, deleteExpense as apiDeleteExpense,
@@ -1901,59 +1902,67 @@ function LoginScreen({ onAuthenticate, onGoogleAuth, googleClientId }) {
  * Determine navigation items available for a given role.
  * Each menu maps to a page key handled in App router.
  */
-function getNavItems(role) {
-  // Semua role bisa melihat Peta Jalan; ditambahkan ke setiap daftar non-kosong.
-  const base = getBaseNavItems(role);
-  if (base.length) base.push(["roadmap", "Peta Jalan", "pin"]);
-  return base;
+// ── Akses menu per role (bisa diatur Admin di halaman Hak Akses) ─────────────
+// MENU_ACCESS = override { role: { menuKey: bool } } dari DB. Bila kosong, pakai
+// DEFAULT_MENU. Halaman utama (dashboard/workspace) selalu ada; Admin selalu
+// punya menu Admin (agar tak terkunci dari halaman pengaturan).
+let MENU_ACCESS = {};
+function setMenuAccessData(m) { MENU_ACCESS = (m && typeof m === "object") ? m : {}; }
+
+// Menu yang bisa diatur on/off (selain halaman utama).
+const MENU_DEFS = [
+  ["projects", "Project",    "project"],
+  ["margin",   "Margin",     "margin"],
+  ["kpi",      "KPI",        "kpi"],
+  ["inbox",    "Inbox",      "inbox"],
+  ["audit",    "Audit",      "audit"],
+  ["admin",    "Admin",      "admin"],
+  ["roadmap",  "Peta Jalan", "pin"],
+];
+
+// Default akses per role (mencerminkan aturan awal sistem).
+const DEFAULT_MENU = {
+  [ROLES.OWNER]:   { projects: true, margin: true,  kpi: true, inbox: true,  audit: true,  roadmap: true, admin: true },
+  [ROLES.ADMIN]:   { projects: true, margin: true,  kpi: true, inbox: true,  audit: true,  roadmap: true, admin: true },
+  [ROLES.FINANCE]: { projects: true, margin: true,  kpi: true, inbox: false, audit: false, roadmap: true, admin: false },
+  [ROLES.HR]:      { projects: true, margin: true,  kpi: true, inbox: false, audit: false, roadmap: true, admin: true },
+  [ROLES.LEADER]:  { projects: true, margin: false, kpi: true, inbox: true,  audit: true,  roadmap: true, admin: false },
+  [ROLES.PIC]:     { projects: true, margin: false, kpi: true, inbox: true,  audit: false, roadmap: true, admin: false },
+};
+
+// Akses efektif untuk sebuah (role, menuKey): override DB > default. Admin×Admin
+// dikunci true agar admin tak bisa mengunci diri dari pengaturan.
+function menuAllowed(role, key) {
+  if (role === ROLES.ADMIN && key === "admin") return true;
+  const ov = MENU_ACCESS[role];
+  if (ov && Object.prototype.hasOwnProperty.call(ov, key)) return !!ov[key];
+  return !!(DEFAULT_MENU[role] && DEFAULT_MENU[role][key]);
 }
 
-function getBaseNavItems(role) {
-  switch (role) {
-    case ROLES.ADMIN:
-    case ROLES.OWNER:
-      return [
-        ["dashboard", "Dashboard", "dashboard"],
-        ["projects",  "Project",   "project"],
-        ["margin",    "Margin",    "margin"],
-        ["kpi",       "KPI",       "kpi"],
-        ["inbox",     "Inbox",     "inbox"],
-        ["audit",     "Audit",     "audit"],
-        ["admin",     "Admin",     "admin"],
-      ];
-    case ROLES.FINANCE:
-      return [
-        ["dashboard", "Dashboard", "dashboard"],
-        ["projects",  "Project",   "project"],
-        ["margin",    "Margin",    "margin"],
-        ["kpi",       "KPI",       "kpi"],
-      ];
-    case ROLES.HR:
-      return [
-        ["dashboard", "Dashboard", "dashboard"],
-        ["projects",  "Project",   "project"],
-        ["margin",    "Margin",    "margin"],
-        ["kpi",       "KPI",       "kpi"],
-        ["admin",     "Admin",     "admin"],
-      ];
-    case ROLES.LEADER:
-      return [
-        ["workspace", "Workspace",   "workspace"],
-        ["projects",  "Project",     "project"],
-        ["kpi",       "KPI", "kpi"],
-        ["inbox",     "Inbox",       "inbox"],
-        ["audit",     "Audit",       "audit"],
-      ];
-    case ROLES.PIC:
-      return [
-        ["workspace", "Workspace",   "workspace"],
-        ["projects",  "Project",     "project"],
-        ["kpi",       "KPI", "kpi"],
-        ["inbox",     "Inbox",       "inbox"],
-      ];
-    default:
-      return [];
-  }
+function getNavItems(role) {
+  if (!DEFAULT_MENU[role]) return [];
+  const landing = (role === ROLES.LEADER || role === ROLES.PIC)
+    ? ["workspace", "Workspace", "workspace"]
+    : ["dashboard", "Dashboard", "dashboard"];
+  const items = [landing];
+  for (const m of MENU_DEFS) if (menuAllowed(role, m[0])) items.push(m);
+  return items;
+}
+
+// Peta page → menu key, untuk penjagaan akses halaman (renderContent).
+const PAGE_TO_MENU = {
+  projects: "projects", project_detail: "projects",
+  margin: "margin",
+  kpi: "kpi", submission_detail: "kpi",
+  inbox: "inbox",
+  audit: "audit",
+  roadmap: "roadmap",
+  admin: "admin",
+};
+function canAccessPage(role, page) {
+  const key = PAGE_TO_MENU[page];
+  if (!key) return true; // halaman umum (dashboard/workspace/dll) selalu boleh
+  return menuAllowed(role, key);
 }
 
 // Deteksi layar sempit (HP) agar TopNav beralih ke menu hamburger.
@@ -8174,7 +8183,7 @@ const tableCellStyle = {
 // §9  ADMIN PAGES (Owner only)
 // ════════════════════════════════════════════════════════════════════════════
 
-function AdminPanel({ user }) {
+function AdminPanel({ user, onAccessChanged }) {
   // Form Library hanya untuk Owner/Admin. HR mengakses Unit/Sub-unit/User Manager.
   const canForms = isOwnerLevel(user?.role);
   const [section, setSection] = useState(canForms ? "forms" : "units");
@@ -8283,7 +8292,7 @@ function AdminPanel({ user }) {
       {section === "units"     && <UnitManager />}
       {section === "subunits"  && <SubUnitManager />}
       {section === "users"     && <UserManager />}
-      {section === "access"    && <AccessControlPage />}
+      {section === "access"    && <AccessControlPage onAccessChanged={onAccessChanged} />}
     </div>
   );
 }
@@ -8315,10 +8324,39 @@ const AC_MATRIX = [
 ];
 const AC_ROLE_KEY = { [ROLES.OWNER]: "owner", [ROLES.ADMIN]: "admin", [ROLES.FINANCE]: "finance", [ROLES.HR]: "hr", [ROLES.LEADER]: "leader", [ROLES.PIC]: "pic" };
 
-function AccessControlPage() {
+function AccessControlPage({ onAccessChanged }) {
   const [users, setUsers] = useState(() => Object.values(USERS));
   const [savingId, setSavingId] = useState(null);
   const reload = async () => { const list = await fetchUsers(); setUsersData(indexById(list)); setUsers(list); };
+
+  // ── Editable: akses menu per role ──
+  const buildMenuState = () => {
+    const m = {};
+    AC_ROLES.forEach(r => { m[r] = {}; MENU_DEFS.forEach(([k]) => { m[r][k] = menuAllowed(r, k); }); });
+    return m;
+  };
+  const [menu, setMenu] = useState(buildMenuState);
+  const [menuDirty, setMenuDirty] = useState(false);
+  const [menuSaving, setMenuSaving] = useState(false);
+  const toggleMenu = (role, key) => {
+    if (role === ROLES.ADMIN && key === "admin") return; // dikunci
+    setMenu(prev => ({ ...prev, [role]: { ...prev[role], [key]: !prev[role][key] } }));
+    setMenuDirty(true);
+  };
+  const saveMenu = async () => {
+    setMenuSaving(true);
+    try {
+      const payload = {};
+      AC_ROLES.forEach(r => { payload[r] = {}; MENU_DEFS.forEach(([k]) => { payload[r][k] = !!menu[r][k]; }); payload[r].admin = r === ROLES.ADMIN ? true : !!menu[r].admin; });
+      await saveMenuAccess(payload);
+      setMenuAccessData(payload);
+      setMenuDirty(false);
+      if (onAccessChanged) onAccessChanged();
+      alert("Akses menu tersimpan & langsung berlaku.");
+    } catch (e) { alert(e.message || "Gagal menyimpan akses menu."); }
+    finally { setMenuSaving(false); }
+  };
+  const resetMenu = () => { setMenu(buildMenuState()); setMenuDirty(false); };
 
   const changeRole = async (u, role) => {
     if (role === u.role) return;
@@ -8372,6 +8410,56 @@ function AccessControlPage() {
                         {acts.length === 0
                           ? <span style={{ color: COLORS.textLight }}>—</span>
                           : <span style={{ display: "inline-flex", gap: 3, flexWrap: "wrap", justifyContent: "center" }}>{acts.map(a => chip(a))}</span>}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* Editable: Atur Akses Menu per Role */}
+      <Card style={{ padding: 0 }}>
+        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>Atur Akses Menu per Role</h3>
+            <p style={{ margin: "3px 0 0", fontSize: 12.5, color: COLORS.textMuted }}>
+              Centang menu yang boleh DIBUKA tiap role. Mematikan = menu disembunyikan & halaman diblokir. Halaman utama (Dashboard/Workspace) selalu aktif.
+            </p>
+          </div>
+          <div style={{ display: "inline-flex", gap: 8 }}>
+            {menuDirty && <button onClick={resetMenu} type="button" style={adminBtnStyle}>Batal</button>}
+            <button onClick={saveMenu} type="button" disabled={!menuDirty || menuSaving}
+              style={{ ...modalPrimaryBtn, opacity: (!menuDirty || menuSaving) ? 0.5 : 1, cursor: (!menuDirty || menuSaving) ? "default" : "pointer" }}>
+              {menuSaving ? "Menyimpan…" : "Simpan Akses"}
+            </button>
+          </div>
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr>
+                <th style={{ ...th, textAlign: "left", paddingLeft: 18 }}>Menu</th>
+                {AC_ROLES.map(r => <th key={r} style={th}>{ROLE_LABELS[r]}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {MENU_DEFS.map(([key, label], i) => (
+                <tr key={key} style={{ borderTop: i ? `1px solid ${COLORS.bgMuted}` : "none" }}>
+                  <td style={{ padding: "10px 10px 10px 18px", fontWeight: 700, color: COLORS.dark, whiteSpace: "nowrap" }}>{label}</td>
+                  {AC_ROLES.map(r => {
+                    const locked = r === ROLES.ADMIN && key === "admin";
+                    const on = !!menu[r][key];
+                    return (
+                      <td key={r} style={{ padding: "8px 10px", textAlign: "center" }}>
+                        <button type="button" disabled={locked} onClick={() => toggleMenu(r, key)}
+                          title={locked ? "Admin selalu punya akses Admin" : (on ? "Klik untuk matikan" : "Klik untuk aktifkan")}
+                          style={{ width: 26, height: 26, borderRadius: 7, cursor: locked ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            border: `1.5px solid ${on ? COLORS.success : COLORS.border}`, background: on ? COLORS.success : COLORS.white, opacity: locked ? 0.6 : 1, padding: 0 }}>
+                          {on && <Icon name="check" size={14} color={COLORS.white} strokeWidth={3} />}
+                        </button>
                       </td>
                     );
                   })}
@@ -12594,6 +12682,7 @@ function AppInner() {
   const store = useDataStore();
   const [activeUserId, setActiveUserId] = useState(null);
   const [page, setPage] = useState(null);
+  const [navBump, setNavBump] = useState(0); // paksa render ulang nav saat akses menu berubah
   const [restoring, setRestoring] = useState(true); // sedang memulihkan sesi saat reload
 
   // Detail page context (which entity we're viewing)
@@ -12632,8 +12721,10 @@ function AppInner() {
   // Bootstrap: muat seluruh data inti dari API ke binding LIVE/UNITS/USERS.
   // Setelah ini selesai, seluruh aplikasi membaca data asli secara konsisten.
   const loadAllData = async () => {
-    const [{ units, users, subUnits, projects, templates, submissions }, milestones, expenses, audit] =
-      await Promise.all([fetchAllCoreData(), fetchMilestones(), fetchExpenses(), fetchAudit()]);
+    const [{ units, users, subUnits, projects, templates, submissions }, milestones, expenses, audit, menuAccess] =
+      await Promise.all([fetchAllCoreData(), fetchMilestones(), fetchExpenses(), fetchAudit(),
+        fetchMenuAccess().catch(() => ({}))]);
+    setMenuAccessData(menuAccess);
     setUnitsData(indexById(units));
     setUsersData(indexById(users));
     store.setSubUnits(subUnits);
@@ -12752,6 +12843,18 @@ function AppInner() {
     window.history.pushState(rootNav, "");
   }, [activeUserId]);
 
+  // Penjaga akses: bila role tak diizinkan membuka halaman ini (akses menu
+  // diatur Admin), alihkan ke halaman utamanya. (Hook unconditional — sebelum
+  // early return apa pun, agar urutan hook konsisten.)
+  useEffect(() => {
+    const u = USERS[activeUserId];
+    if (u && page && !canAccessPage(u.role, page)) {
+      const home = [ROLES.LEADER, ROLES.PIC].includes(u.role) ? "workspace" : "dashboard";
+      setPage(home);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeUserId, page, navBump]);
+
   // Maju: catat setiap perubahan navigasi sebagai entri history baru.
   useEffect(() => {
     if (!activeUserId || !page) return;
@@ -12867,7 +12970,7 @@ function AppInner() {
 
     // ─── Owner / Finance / HR ───────────────────────────────────────────
     if ([ROLES.ADMIN, ROLES.OWNER, ROLES.FINANCE, ROLES.HR].includes(user.role)) {
-      if (page === "admin" && (isOwnerLevel(user.role) || user.role === ROLES.HR)) return <AdminPanel user={user} />;
+      if (page === "admin" && (isOwnerLevel(user.role) || user.role === ROLES.HR)) return <AdminPanel user={user} onAccessChanged={() => setNavBump(n => n + 1)} />;
       if (page === "unit_detail" && selectedUnitId) {
         return <UnitDetailPage unitId={selectedUnitId} onBack={() => goToPage("dashboard")} onSelectSubmission={goToSubmissionDetail} />;
       }

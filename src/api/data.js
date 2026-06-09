@@ -12,6 +12,8 @@ export const fetchSubmissions  = () => apiFetch("/submissions");
 export const fetchAudit        = () => apiFetch("/audit");
 export const fetchMilestones   = () => apiFetch("/milestones");
 export const fetchExpenses     = () => apiFetch("/expenses");
+export const fetchMenuAccess   = () => apiFetch("/permissions/menu");
+export const saveMenuAccess    = (body) => apiFetch("/permissions/menu", { method: "PUT", body });
 
 /** Kelompokkan array ber-`projectId` menjadi objek { projectId: [item...] }. */
 export function groupByProject(arr) {
