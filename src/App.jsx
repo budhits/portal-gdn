@@ -11656,6 +11656,12 @@ function RoadmapNodeCard({ data }) {
         </div>
         <div style={{ fontFamily: FONTS.heading, fontSize: 14, fontWeight: 700, color: COLORS.text, margin: "8px 0 4px", lineHeight: 1.2 }}>{data.label}</div>
         {data.description ? <div style={{ fontSize: 11, color: COLORS.textMuted, lineHeight: 1.35, margin: "0 0 8px" }}>{data.description}</div> : <div style={{ height: 4 }} />}
+        {data.showMetric && (data.metricValue !== null && data.metricValue !== undefined && data.metricValue !== "") ? (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 5, margin: "0 0 9px", padding: "6px 9px", background: COLORS.infoBg, border: `1px solid ${COLORS.border}`, borderRadius: 8 }}>
+            <span style={{ fontFamily: FONTS.heading, fontSize: 15, fontWeight: 800, color: COLORS.primaryDark, lineHeight: 1 }}>{rmFormatMetric(data.metricValue)}</span>
+            {data.metricUnit ? <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted }}>{data.metricUnit}</span> : null}
+          </div>
+        ) : null}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 24, height: 24, borderRadius: 99, background: COLORS.gold, color: "#2A2410", fontWeight: 800, fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{data.picInitial || "—"}</div>
           <div style={{ minWidth: 0 }}>
@@ -11712,8 +11718,14 @@ const roadmapNodeTypes = { gdn: RoadmapNodeCard, canvasBox: RoadmapCanvasBox };
 
 const RM_NODE_W = 224, RM_NODE_H = 250, RM_BOX_PAD = 24;
 
+// Angka & satuan node hanya untuk manajemen (Owner/Admin/Leader/Finance/HR) — bukan PIC.
+const RM_METRIC_ROLES = [ROLES.OWNER, ROLES.ADMIN, ROLES.LEADER, ROLES.FINANCE, ROLES.HR];
+const rmFormatMetric = (v) => (v === null || v === undefined || v === "" || isNaN(Number(v)))
+  ? "" : Number(v).toLocaleString("id-ID");
+
 function RoadmapPage({ user }) {
   const canEdit = isOwnerLevel(user.role) || user.role === ROLES.LEADER;
+  const canSeeMetric = RM_METRIC_ROLES.includes(user.role);
   const [rfNodes, setRfNodes] = useState([]);
   const [rfEdges, setRfEdges] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11732,6 +11744,7 @@ function RoadmapPage({ user }) {
       picInitial: pic?.name?.charAt(0) || null, projectName: proj?.name || null,
       msDone: ms.filter(m => m.done).length, msTotal: ms.length,
       nodeId: n.id, onAddCanvas: addCanvas, onDelete: deleteNode, canEdit,
+      metricValue: n.metricValue, metricUnit: n.metricUnit, showMetric: canSeeMetric,
     };
   };
 
@@ -11916,6 +11929,8 @@ function RoadmapPage({ user }) {
 function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
   const [label, setLabel] = useState(node.label || "");
   const [description, setDescription] = useState(node.description || "");
+  const [metricValue, setMetricValue] = useState(node.metricValue === null || node.metricValue === undefined ? "" : String(node.metricValue));
+  const [metricUnit, setMetricUnit] = useState(node.metricUnit || "");
   const [status, setStatus] = useState(node.status || "planned");
   const [targetMonth, setTargetMonth] = useState(node.targetMonth || "");
   const [picUserId, setPicUserId] = useState(node.picUserId || "");
@@ -11952,6 +11967,14 @@ function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
           <div><label style={lbl}>Nama inisiatif</label><input style={inp} value={label} onChange={e => setLabel(e.target.value)} disabled={!canEdit} autoFocus /></div>
           <div><label style={lbl}>Deskripsi <span style={{ fontWeight: 500, color: COLORS.textLight }}>(opsional)</span></label>
             <textarea style={{ ...inp, minHeight: 60, resize: "vertical", lineHeight: 1.4 }} value={description} onChange={e => setDescription(e.target.value)} placeholder="Keterangan singkat inisiatif ini…" disabled={!canEdit} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 12 }}>
+            <div><label style={lbl}>Angka <span style={{ fontWeight: 500, color: COLORS.textLight }}>(opsional)</span></label>
+              <input style={inp} type="number" inputMode="numeric" value={metricValue} onChange={e => setMetricValue(e.target.value)} placeholder="cth: 1000000" disabled={!canEdit} />
+              {metricValue !== "" && !isNaN(Number(metricValue)) ? <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 4 }}>{Number(metricValue).toLocaleString("id-ID")}{metricUnit ? ` ${metricUnit}` : ""}</div> : null}
+            </div>
+            <div><label style={lbl}>Satuan</label><input style={inp} value={metricUnit} onChange={e => setMetricUnit(e.target.value)} placeholder="cth: ekor" disabled={!canEdit} /></div>
+          </div>
+          <div style={{ fontSize: 11, color: COLORS.textLight, marginTop: -4 }}>🔒 Angka &amp; satuan hanya terlihat oleh Owner, Admin, Leader, Finance &amp; HR — tidak untuk PIC.</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div><label style={lbl}>Status {hasMs && <span style={{ fontWeight: 500, color: COLORS.textLight }}>(otomatis)</span>}</label>
               <select style={{ ...inp, opacity: hasMs ? 0.6 : 1 }} value={hasMs ? deriveRoadmapStatus({ milestones: ms, status }) : status} onChange={e => setStatus(e.target.value)} disabled={!canEdit || hasMs}>
@@ -11999,7 +12022,7 @@ function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
             <button onClick={onDelete} type="button" style={{ padding: "9px 14px", background: COLORS.white, color: COLORS.danger, border: `1px solid ${COLORS.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Hapus</button>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={onClose} type="button" style={adminBtnStyle}>Tutup</button>
-              <button onClick={() => onSave({ label: label.trim(), description: description.trim(), status, targetMonth, picUserId, projectId })} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan</button>
+              <button onClick={() => onSave({ label: label.trim(), description: description.trim(), metricValue: metricValue === "" ? "" : Number(metricValue), metricUnit: metricUnit.trim(), status, targetMonth, picUserId, projectId })} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan</button>
             </div>
           </div>
         )}

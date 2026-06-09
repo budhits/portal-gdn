@@ -11,6 +11,8 @@ router.use(authenticate);
 
 const nodeToApi = (r) => ({
   id: r.id, canvasId: r.canvas_id || null, label: r.label, description: r.description || "",
+  metricValue: r.metric_value === null || r.metric_value === undefined ? null : Number(r.metric_value),
+  metricUnit: r.metric_unit || "",
   status: r.status, targetMonth: r.target_month || "", picUserId: r.pic_user_id || null,
   projectId: r.project_id || null, posX: Number(r.pos_x) || 0, posY: Number(r.pos_y) || 0,
 });
@@ -78,10 +80,11 @@ router.post("/nodes", async (req, res, next) => {
     const b = req.body || {};
     const id = nid();
     const { rows } = await query(
-      `INSERT INTO roadmap_nodes (id, canvas_id, label, description, status, target_month, pic_user_id, project_id, pos_x, pos_y)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      `INSERT INTO roadmap_nodes (id, canvas_id, label, description, metric_value, metric_unit, status, target_month, pic_user_id, project_id, pos_x, pos_y)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [id, b.canvasId || null, (b.label || "Inisiatif baru").trim(), b.description || null,
-       b.status || "planned", b.targetMonth || null, b.picUserId || null, b.projectId || null,
+       (b.metricValue === "" || b.metricValue === undefined || b.metricValue === null) ? null : Number(b.metricValue),
+       b.metricUnit || null, b.status || "planned", b.targetMonth || null, b.picUserId || null, b.projectId || null,
        Number(b.posX) || 0, Number(b.posY) || 0]
     );
     res.status(201).json(nodeToApi(rows[0]));
@@ -92,8 +95,8 @@ router.post("/nodes", async (req, res, next) => {
 router.patch("/nodes/:id", async (req, res, next) => {
   try {
     if (!(await guard(req, res))) return;
-    const map = { label: "label", description: "description", status: "status", targetMonth: "target_month",
-      picUserId: "pic_user_id", projectId: "project_id", posX: "pos_x", posY: "pos_y" };
+    const map = { label: "label", description: "description", metricValue: "metric_value", metricUnit: "metric_unit",
+      status: "status", targetMonth: "target_month", picUserId: "pic_user_id", projectId: "project_id", posX: "pos_x", posY: "pos_y" };
     const sets = []; const params = [];
     for (const [k, col] of Object.entries(map)) {
       if (req.body[k] !== undefined) { params.push(req.body[k] === "" ? null : req.body[k]); sets.push(`${col} = $${params.length}`); }

@@ -234,6 +234,8 @@ CREATE TABLE roadmap_nodes (
   canvas_id    TEXT,                                  -- NULL = kanvas utama; else id anak kanvas
   label        TEXT NOT NULL DEFAULT '',
   description  TEXT,                                  -- keterangan singkat (opsional)
+  metric_value DOUBLE PRECISION,                      -- angka target (mis. 1000000), hanya non-PIC
+  metric_unit  TEXT,                                  -- satuan angka (mis. 'ekor')
   status       TEXT NOT NULL DEFAULT 'planned',       -- planned|running|done
   target_month TEXT,                                  -- 'Jun 2026' / 'YYYY-MM'
   pic_user_id  TEXT,
