@@ -232,4 +232,22 @@ router.patch("/:id", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── DELETE submission (HANYA Admin) ──────────────────────────────────────────
+// DELETE /api/submissions/:id  — hapus KPI apa pun (berjalan/selesai). Selain
+// Admin ditolak, termasuk Owner/Leader/PIC.
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const sub = await getSubmissionById(req.params.id);
+    if (!sub) return res.status(404).json({ error: "Submission tidak ditemukan." });
+    const actor = await loadActor(req.user.id);
+    if (!actor || actor.role !== "admin") {
+      return res.status(403).json({ error: "Hanya Admin yang boleh menghapus KPI." });
+    }
+    await query("DELETE FROM kpi_submissions WHERE id = $1", [req.params.id]);
+    await logAudit({ actorId: req.user.id, action: "delete", entityType: "kpi_submission",
+      entityId: req.params.id, entityLabel: `Hapus KPI ${sub.period}`, unitId: sub.unitId });
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
 export default router;

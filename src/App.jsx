@@ -54,7 +54,7 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchSubUnits, createSubUnit, updateSubUnit, deleteSubUnit,
   fetchTemplates, createTemplate, updateTemplate, deleteTemplate,
   fetchSubmissions, createSubmission, approveSubmission, rejectSubmission,
-  closeSubmission, updateSubmissionActual, saveDailyMargin, saveDailyMarginAndActual, setMarginInputMode, fetchAudit,
+  closeSubmission, updateSubmissionActual, deleteSubmission, saveDailyMargin, saveDailyMarginAndActual, setMarginInputMode, fetchAudit,
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
   createProject, updateProject, deleteProject,
   createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
@@ -4272,6 +4272,16 @@ function MarginEntryRow({ entry, isPending, onSelectSubmission }) {
 function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
   const store = useDataStore();
   const submissions = useMemo(() => getSubmissionsForUser(user), [user, store?.submissions]);
+  const canDeleteKpi = user.role === ROLES.ADMIN; // hanya Admin boleh hapus KPI
+  const handleDeleteKpi = async (sub) => {
+    if (!confirm(`Hapus KPI ${sub.period} (${getFormTemplate(sub.templateId)?.name || "—"})?\n\nTindakan ini permanen dan tidak bisa dibatalkan.`)) return;
+    try {
+      await deleteSubmission(sub.id);
+      if (store) store.setSubmissions(await fetchSubmissions());
+    } catch (e) {
+      alert(e.message || "Gagal menghapus KPI.");
+    }
+  };
   const [filterUnit, setFilterUnit] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterTemplate, setFilterTemplate] = useState("all");
@@ -4421,15 +4431,15 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
             <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8FAFC" }}>
-                  {[["Periode","left"],["Unit","left"],["Sub Unit","left"],["Template","left"],["Skor","right"],["Margin","right"],["Status","left"],["Tanggal","left"]].map(([h, al]) => (
-                    <th key={h} style={{ padding: "11px 12px", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, textAlign: al, textTransform: "uppercase", letterSpacing: 0.4, whiteSpace: "nowrap" }}>{h}</th>
+                  {[["Periode","left"],["Unit","left"],["Sub Unit","left"],["Template","left"],["Skor","right"],["Margin","right"],["Status","left"],["Tanggal","left"], ...(canDeleteKpi ? [["","right"]] : [])].map(([h, al], i) => (
+                    <th key={h || `act-${i}`} style={{ padding: "11px 12px", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, textAlign: al, textTransform: "uppercase", letterSpacing: 0.4, whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {groups.filter(g => g.rows.length > 0).flatMap(g => [
                   <tr key={`grp-${g.key}`}>
-                    <td colSpan={8} style={{ padding: "9px 12px", background: COLORS.bgMuted, borderTop: `1px solid ${COLORS.border}` }}>
+                    <td colSpan={canDeleteKpi ? 9 : 8} style={{ padding: "9px 12px", background: COLORS.bgMuted, borderTop: `1px solid ${COLORS.border}` }}>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                         <span style={{ width: 9, height: 9, borderRadius: 5, background: g.color }} />
                         <span style={{ fontSize: 12.5, fontWeight: 800, color: COLORS.dark }}>{g.label}</span>
@@ -4438,7 +4448,8 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
                     </td>
                   </tr>,
                   ...g.rows.map(sub => (
-                    <KPIHistoryRow key={sub.id} submission={sub} onClick={() => onSelectSubmission && onSelectSubmission(sub.id)} />
+                    <KPIHistoryRow key={sub.id} submission={sub} onClick={() => onSelectSubmission && onSelectSubmission(sub.id)}
+                      canDelete={canDeleteKpi} onDelete={() => handleDeleteKpi(sub)} />
                   )),
                 ])}
               </tbody>
@@ -4461,7 +4472,7 @@ const selectStyle = {
   cursor: "pointer",
 };
 
-function KPIHistoryRow({ submission, onClick }) {
+function KPIHistoryRow({ submission, onClick, canDelete, onDelete }) {
   const sub = LIVE.subUnits.find(s => s.id === submission.subUnitId);
   const unit = sub ? UNITS[sub.unitId] : null;
   const template = getFormTemplate(submission.templateId);
@@ -4531,6 +4542,15 @@ function KPIHistoryRow({ submission, onClick }) {
       <td style={{ padding: "10px 12px", color: COLORS.textMuted, fontSize: 12.5 }}>
         {formatDate(showDate)}
       </td>
+      {canDelete && (
+        <td style={{ padding: "10px 12px", textAlign: "right", whiteSpace: "nowrap" }}>
+          <button type="button" title="Hapus KPI (admin)"
+            onClick={(e) => { e.stopPropagation(); onDelete && onDelete(); }}
+            style={{ background: "transparent", border: "none", cursor: "pointer", padding: 5, lineHeight: 0, borderRadius: 6, display: "inline-flex" }}>
+            <Icon name="trash" size={15} color={COLORS.danger} />
+          </button>
+        </td>
+      )}
     </tr>
   );
 }
