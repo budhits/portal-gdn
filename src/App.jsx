@@ -1648,18 +1648,65 @@ function getSubUnitSnapshot(subUnitId) {
  * @param {Object} submission
  * @returns {{ score: number|null, weight: number|null, marginTarget: number, marginActual: number, hasMargin: boolean }}
  */
+// Untuk KPI Target Margin yang diinput HARIAN & masih berjalan (belum closed):
+// pencapaian disesuaikan dengan progres hari berjalan. Hari yang sudah lewat
+// tapi belum diisi dianggap 0. Mengembalikan { applicable, pct, actualSoFar, ... }.
+function deriveDailyRunning(submission) {
+  if (!submission || submission.marginInputMode !== "daily" || submission.status === "closed") {
+    return { applicable: false };
+  }
+  const m = deriveMarginFromSubmission(submission);
+  if (!(m.target > 0)) return { applicable: false };
+  const { year, monthIdx } = parsePeriodLabel(submission.period);
+  const totalDays = daysInMonth(year, monthIdx);
+  const now = new Date();
+  const curY = now.getFullYear(), curM = now.getMonth();
+  let daysElapsed;
+  if (year < curY || (year === curY && monthIdx < curM)) daysElapsed = totalDays;      // periode sudah lewat
+  else if (year > curY || (year === curY && monthIdx > curM)) daysElapsed = 0;          // belum mulai
+  else daysElapsed = now.getDate();                                                      // bulan berjalan
+  daysElapsed = Math.max(0, Math.min(totalDays, daysElapsed));
+  const daily = submission.dailyMargin || {};
+  let actualSoFar = 0;
+  for (let d = 1; d <= daysElapsed; d++) actualSoFar += Number(daily[d]) || 0;
+  const expectedSoFar = (m.target / totalDays) * daysElapsed;
+  const pct = expectedSoFar > 0 ? Math.round((actualSoFar / expectedSoFar) * 100) : (actualSoFar > 0 ? 100 : 0);
+  return { applicable: true, daysElapsed, totalDays, expectedSoFar, actualSoFar, target: m.target, pct };
+}
+
 function getSubmissionPerformance(submission) {
-  if (!submission) return { score: null, weight: null, marginTarget: 0, marginActual: 0, hasMargin: false };
+  if (!submission) return { score: null, weight: null, marginTarget: 0, marginActual: 0, marginPct: null, hasMargin: false, running: false };
+
+  const margin = deriveMarginFromSubmission(submission);
+  const run = deriveDailyRunning(submission);
+
+  if (run.applicable) {
+    // KPI margin harian yang berjalan: pencapaian = progres hari berjalan.
+    return {
+      score: run.pct,
+      weight: submission.subUnitWeight || null,
+      marginTarget: margin.target,
+      marginActual: run.actualSoFar,
+      marginPct: run.pct,
+      hasMargin: margin.hasMargin,
+      running: true,
+      daysElapsed: run.daysElapsed,
+      totalDays: run.totalDays,
+    };
+  }
 
   const score = deriveScoreFromSubmission(submission); // null if not yet closed
-  const margin = deriveMarginFromSubmission(submission);
+  const marginActual = submission.status === "closed" ? margin.actual : 0;
+  const marginPct = (margin.hasMargin && margin.target > 0) ? Math.round((marginActual / margin.target) * 100) : null;
 
   return {
     score,
     weight: submission.subUnitWeight || null,
     marginTarget: margin.target,
-    marginActual: submission.status === "closed" ? margin.actual : 0,
+    marginActual,
+    marginPct,
     hasMargin: margin.hasMargin,
+    running: false,
   };
 }
 
@@ -4535,7 +4582,7 @@ function KPIHistoryRow({ submission, onClick, canManage, onEdit, onDelete }) {
   const template = getFormTemplate(submission.templateId);
   const perf = getSubmissionPerformance(submission);
   const scoreStatus = perf.score !== null ? getScoreStatus(perf.score) : null;
-  const marginPct = perf.hasMargin ? Math.round((perf.marginActual / perf.marginTarget) * 100) : null;
+  const marginPct = perf.marginPct;
   const STATUS_INFO = {
     estimated: { label: "Menunggu", color: COLORS.warning, bg: COLORS.warningBg },
     approved:  { label: "Aktif",    color: COLORS.success, bg: COLORS.successBg },
@@ -4569,13 +4616,16 @@ function KPIHistoryRow({ submission, onClick, canManage, onEdit, onDelete }) {
         <span style={{ fontWeight: 700, color: COLORS.dark }}>{sub?.name || "—"}</span>
       </td>
       <td style={{ padding: "10px 12px", color: COLORS.textMuted }}>{template?.name}</td>
-      {/* Skor: dot warna + angka */}
+      {/* Skor: dot warna + angka (margin harian berjalan = progres hari) */}
       <td style={{ padding: "10px 12px", textAlign: "right" }}>
         {perf.score !== null ? (
-          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 99, background: scoreStatus.color, flexShrink: 0 }} />
-            <span style={{ fontWeight: 800, color: scoreStatus.color, fontVariantNumeric: "tabular-nums" }}>{perf.score}%</span>
-          </span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 99, background: scoreStatus.color, flexShrink: 0 }} />
+              <span style={{ fontWeight: 800, color: scoreStatus.color, fontVariantNumeric: "tabular-nums" }}>{perf.score}%</span>
+            </span>
+            {perf.running && <span style={{ fontSize: 10.5, color: COLORS.textLight }} title="Pencapaian disesuaikan progres hari berjalan; hari yang lewat tanpa input = 0">hari {perf.daysElapsed}/{perf.totalDays}</span>}
+          </div>
         ) : (
           <span style={{ color: COLORS.textLight, fontSize: 12.5 }}>—</span>
         )}
