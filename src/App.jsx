@@ -4055,6 +4055,14 @@ function MarginDetailPage({ user, onSelectSubmission }) {
   const [selectedPeriodKey, setSelectedPeriodKey] = useState(getCurrentPeriodKey());
   const selectedPeriod = periods.find(p => p.key === selectedPeriodKey) || periods[periods.length - 2];
 
+  // Import margin harian per unit (Owner/Admin/Leader) — hanya untuk periode bulanan.
+  const canImportMargin = isOwnerLevel(user.role) || user.role === ROLES.LEADER;
+  const [importUnit, setImportUnit] = useState(null);
+  const onImportDone = async () => {
+    setImportUnit(null);
+    if (store) store.setSubmissions(await fetchSubmissions());
+  };
+
   // Filter units based on user role
   const visibleUnits = useMemo(() => {
     if (user.role === ROLES.LEADER) return [UNITS[user.unitId]];
@@ -4182,9 +4190,13 @@ function MarginDetailPage({ user, onSelectSubmission }) {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(480px, 100%), 1fr))", gap: 12 }}>
         {unitsWithMargin.map(unit => (
-          <MarginDetailUnitCard key={unit.id} unit={unit} onSelectSubmission={onSelectSubmission} />
+          <MarginDetailUnitCard key={unit.id} unit={unit} onSelectSubmission={onSelectSubmission}
+            onImport={canImportMargin && selectedPeriod.type === "month" ? () => setImportUnit(unit) : null} />
         ))}
       </div>
+      {importUnit && (
+        <UnitDailyMarginImport unit={importUnit} period={selectedPeriod} onClose={() => setImportUnit(null)} onDone={onImportDone} />
+      )}
     </div>
   );
 }
@@ -4194,7 +4206,7 @@ function MarginStat({ k, v, s, accent, small }) {
   return <StatCard label={k} value={v} sub={s} accent={accent} valueSize={small ? 18 : 28} />;
 }
 
-function MarginDetailUnitCard({ unit, onSelectSubmission }) {
+function MarginDetailUnitCard({ unit, onSelectSubmission, onImport }) {
   const { target, actual, percentage, closedEntries, pendingEntries, pendingTotal } = unit.margin;
   const [expanded, setExpanded] = useState(true);
 
@@ -4226,6 +4238,17 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
             {unit.leaderId ? `Leader: ${getUser(unit.leaderId)?.name} · ` : ""}{closedEntries.length} closing{pendingEntries.length > 0 && ` · ${pendingEntries.length} belum closing`}
           </div>
         </div>
+        {onImport && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onImport(); }}
+            type="button"
+            title="Import margin harian semua sub-unit di unit ini sekaligus"
+            style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 11px",
+              background: COLORS.white, color: COLORS.primary, border: `1px solid ${COLORS.primary}`,
+              borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            <Icon name="upload" size={13} color={COLORS.primary} /> Import Harian
+          </button>
+        )}
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <div style={{ fontFamily: FONTS.heading, fontSize: 26, fontWeight: 700, color: status.color, letterSpacing: -0.6, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
             {hasClosing ? `${percentage}%` : "—"}
@@ -4293,6 +4316,189 @@ function MarginDetailUnitCard({ unit, onSelectSubmission }) {
         </div>
       )}
     </Card>
+  );
+}
+
+// Import margin harian SEKALIGUS untuk semua sub-unit dalam satu unit.
+// Petugas (1 orang) tempel/upload satu tabel: kolom = sub-unit, baris = hari.
+// Disimpan ke KPI margin harian tiap sub-unit + tampil total gabungan se-unit.
+const acNum = (c) => { const n = parseInt(String(c).replace(/[^\d-]/g, ""), 10); return isNaN(n) ? 0 : n; };
+
+function UnitDailyMarginImport({ unit, period, onClose, onDone }) {
+  const store = useDataStore();
+  const { year, monthIdx } = parsePeriodLabel(period.label);
+  const totalDays = daysInMonth(year, monthIdx);
+
+  // KPI margin harian aktif (belum closing) di unit ini untuk periode tsb.
+  // Hanya periode bulanan asli (token pertama = nama bulan) — KPI siklus/lainnya
+  // dilewati agar tidak salah dimasukkan ke bulan ini (parsePeriodLabel default Mei).
+  const isMonthlyLabel = (label) => {
+    const first = (label || "").trim().split(/\s+/)[0] || "";
+    return MONTH_NAMES_ID.some(m => m.toLowerCase() === first.toLowerCase());
+  };
+  const targets = useMemo(() => {
+    return LIVE.submissions
+      .filter(s => s.unitId === unit.id && s.status !== "closed")
+      .filter(s => isMonthlyLabel(s.period))
+      .filter(s => { const p = parsePeriodLabel(s.period); return p.year === year && p.monthIdx === monthIdx; })
+      .filter(s => { const t = getFormTemplate(s.templateId); return t && t.fields.some(f => f.isMargin); })
+      .map(s => {
+        const su = LIVE.subUnits.find(x => x.id === s.subUnitId);
+        const marginField = getFormTemplate(s.templateId).fields.find(f => f.isMargin);
+        return { sub: s, subUnit: su, name: su?.name || s.subUnitId || "—", marginFieldId: marginField.id, target: deriveMarginFromSubmission(s).target };
+      });
+  }, [unit.id, year, monthIdx, store?.submissions]);
+
+  // vals[subId][day] = number
+  const [vals, setVals] = useState(() => {
+    const v = {};
+    targets.forEach(t => { v[t.sub.id] = { ...(t.sub.dailyMargin || {}) }; });
+    return v;
+  });
+  const [tab, setTab] = useState("paste");
+  const [pasteText, setPasteText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef(null);
+
+  const parseTable = (text) => {
+    const rows = text.replace(/\r/g, "").split("\n").map(l => l.trim()).filter(Boolean).map(l => l.split(/[\t;,]/).map(c => c.trim()));
+    if (!rows.length) return;
+    const n = targets.length;
+    // Lewati baris header bila ada huruf di baris pertama.
+    let start = rows[0].some(c => /[a-zA-Z]/.test(c)) ? 1 : 0;
+    const dataRows = rows.slice(start);
+    const hasDayCol = dataRows.length > 0 && dataRows.every(r => r.length >= n + 1);
+    const next = {}; targets.forEach(t => { next[t.sub.id] = {}; });
+    let dayCursor = 0;
+    for (const r of dataRows) {
+      let day, cells;
+      if (hasDayCol) { day = parseInt(r[0], 10); cells = r.slice(1); }
+      else { dayCursor++; day = dayCursor; cells = r; }
+      if (!day || day < 1 || day > totalDays) continue;
+      for (let j = 0; j < n; j++) {
+        const val = acNum(cells[j]);
+        if (val !== 0) next[targets[j].sub.id][day] = val;
+      }
+    }
+    setVals(next);
+  };
+
+  const onFile = (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => { parseTable(String(reader.result || "")); setTab("paste"); };
+    reader.readAsText(f);
+  };
+
+  const subTotal = (sid) => Object.values(vals[sid] || {}).reduce((s, v) => s + (Number(v) || 0), 0);
+  const dayTotal = (d) => targets.reduce((s, t) => s + (Number(vals[t.sub.id]?.[d]) || 0), 0);
+  const grandTotal = targets.reduce((s, t) => s + subTotal(t.sub.id), 0);
+
+  const saveAll = async () => {
+    setBusy(true);
+    try {
+      for (const t of targets) {
+        const daily = {};
+        for (const [d, v] of Object.entries(vals[t.sub.id] || {})) { if (Number(v)) daily[d] = Number(v); }
+        const total = subTotal(t.sub.id);
+        const nextActual = { ...(t.sub.actualValues || {}), [t.marginFieldId]: total };
+        await saveDailyMarginAndActual(t.sub.id, daily, nextActual);
+      }
+      if (onDone) await onDone();
+    } catch (e) { alert(e.message || "Gagal menyimpan import margin."); setBusy(false); return; }
+    setBusy(false);
+    alert(`Import margin harian ${unit.name} tersimpan untuk ${targets.length} sub-unit.\nTotal gabungan se-unit: ${formatRupiahFull(grandTotal)}`);
+  };
+
+  const inp = { width: 78, padding: "4px 6px", borderRadius: 6, fontSize: 12, border: `1px solid ${COLORS.border}`, textAlign: "right", fontFamily: "inherit" };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,26,0.55)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "24px 16px", overflowY: "auto" }}>
+      <div style={{ background: COLORS.white, borderRadius: 14, width: "100%", maxWidth: 980, boxShadow: "0 20px 60px rgba(0,0,0,0.3)", overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", background: `linear-gradient(135deg, ${COLORS.dark}, ${COLORS.darker})`, color: COLORS.white, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+          <div>
+            <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <Icon name="upload" size={16} color={COLORS.white} /> Import Margin Harian — {unit.name}
+            </div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", marginTop: 2 }}>{period.label} · {targets.length} sub-unit · kumulasi se-unit</div>
+          </div>
+          <button onClick={onClose} type="button" style={{ background: "rgba(255,255,255,0.15)", border: "none", color: COLORS.white, width: 32, height: 32, borderRadius: 8, cursor: "pointer", fontSize: 16 }}>×</button>
+        </div>
+
+        {targets.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted, fontSize: 13 }}>
+            Tidak ada KPI margin harian aktif untuk unit ini di periode {period.label}.
+          </div>
+        ) : (
+          <>
+            <div style={{ padding: "12px 20px", borderBottom: `1px solid ${COLORS.bgMuted}` }}>
+              <div style={{ display: "inline-flex", gap: 6, marginBottom: 10 }}>
+                {[["paste", "Tempel (Excel)"], ["csv", "Upload CSV"]].map(([k, l]) => (
+                  <button key={k} onClick={() => setTab(k)} type="button" style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", border: `1px solid ${tab === k ? COLORS.primary : COLORS.border}`, background: tab === k ? COLORS.primary : COLORS.white, color: tab === k ? COLORS.white : COLORS.text }}>{l}</button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 8 }}>
+                Urutan kolom = <b>{targets.map(t => t.name).join(" · ")}</b>. Tiap baris = 1 hari (urut tgl 1..{totalDays}). Boleh ada kolom tanggal di depan & baris header (otomatis dilewati).
+              </div>
+              {tab === "paste" ? (
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <textarea value={pasteText} onChange={e => setPasteText(e.target.value)} placeholder={`Tempel dari Excel (pisah TAB). Contoh:\n1000000\t500000\t...\n1200000\t600000\t...`} style={{ flex: 1, minHeight: 70, padding: "8px 10px", borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 12, fontFamily: "monospace", resize: "vertical" }} />
+                  <button onClick={() => parseTable(pasteText)} type="button" style={{ ...modalPrimaryBtn, padding: "9px 14px" }}>Terapkan</button>
+                </div>
+              ) : (
+                <div style={{ fontSize: 12.5 }}>
+                  <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain" onChange={onFile} />
+                  <div style={{ color: COLORS.textLight, marginTop: 4 }}>CSV: kolom dipisah koma. Dari Excel: "Save As → CSV", atau pakai tab Tempel.</div>
+                </div>
+              )}
+            </div>
+
+            {/* Preview grid */}
+            <div style={{ padding: "0 20px", maxHeight: 360, overflow: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr>
+                    <th style={{ position: "sticky", top: 0, background: COLORS.bgMuted, padding: "8px 8px", textAlign: "left", fontSize: 11, fontWeight: 800, color: COLORS.textMuted }}>Tgl</th>
+                    {targets.map(t => <th key={t.sub.id} style={{ position: "sticky", top: 0, background: COLORS.bgMuted, padding: "8px 8px", textAlign: "right", fontSize: 11, fontWeight: 800, color: COLORS.textMuted, whiteSpace: "nowrap" }}>{t.name}</th>)}
+                    <th style={{ position: "sticky", top: 0, background: COLORS.infoBg, padding: "8px 8px", textAlign: "right", fontSize: 11, fontWeight: 800, color: COLORS.primaryDark }}>Total/hari</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: totalDays }, (_, i) => i + 1).map(d => (
+                    <tr key={d} style={{ borderTop: `1px solid ${COLORS.bgMuted}` }}>
+                      <td style={{ padding: "3px 8px", fontWeight: 700, color: COLORS.textMuted }}>{d}</td>
+                      {targets.map(t => (
+                        <td key={t.sub.id} style={{ padding: "3px 6px", textAlign: "right" }}>
+                          <input style={inp} inputMode="numeric"
+                            value={vals[t.sub.id]?.[d] === undefined || vals[t.sub.id]?.[d] === "" ? "" : Number(vals[t.sub.id][d]).toLocaleString("id-ID")}
+                            onChange={e => { const raw = acNum(e.target.value); setVals(prev => ({ ...prev, [t.sub.id]: { ...prev[t.sub.id], [d]: raw === 0 && e.target.value.replace(/[^\d]/g, "") === "" ? "" : raw } })); }} />
+                        </td>
+                      ))}
+                      <td style={{ padding: "3px 8px", textAlign: "right", fontWeight: 700, color: COLORS.primaryDark, background: "#F7FAFF" }}>{dayTotal(d) ? formatRupiah(dayTotal(d)) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{ borderTop: `2px solid ${COLORS.border}` }}>
+                    <td style={{ padding: "8px", fontWeight: 800 }}>Total</td>
+                    {targets.map(t => <td key={t.sub.id} style={{ padding: "8px 6px", textAlign: "right", fontWeight: 800, color: COLORS.dark, whiteSpace: "nowrap" }}>{formatRupiah(subTotal(t.sub.id))}</td>)}
+                    <td style={{ padding: "8px", textAlign: "right", fontWeight: 800, color: COLORS.success, background: "#F7FAFF", whiteSpace: "nowrap" }}>{formatRupiah(grandTotal)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div style={{ padding: "14px 20px", borderTop: `1px solid ${COLORS.bgMuted}`, background: COLORS.bg, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Total gabungan se-unit: <strong style={{ color: COLORS.dark }}>{formatRupiahFull(grandTotal)}</strong></div>
+              <div style={{ display: "inline-flex", gap: 8 }}>
+                <button onClick={onClose} type="button" style={adminBtnStyle}>Batal</button>
+                <button onClick={saveAll} type="button" disabled={busy} style={{ ...modalPrimaryBtn, opacity: busy ? 0.6 : 1 }}>{busy ? "Menyimpan…" : "Simpan Semua Sub-unit"}</button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
