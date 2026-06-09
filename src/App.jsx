@@ -11658,6 +11658,7 @@ function RoadmapNodeCard({ data }) {
         {data.description ? <div style={{ fontSize: 11, color: COLORS.textMuted, lineHeight: 1.35, margin: "0 0 8px" }}>{data.description}</div> : <div style={{ height: 4 }} />}
         {data.showMetric && (data.metricValue !== null && data.metricValue !== undefined && data.metricValue !== "") ? (
           <div style={{ display: "flex", alignItems: "baseline", gap: 5, margin: "0 0 9px", padding: "6px 9px", background: COLORS.infoBg, border: `1px solid ${COLORS.border}`, borderRadius: 8 }}>
+            <span style={{ fontSize: 9, fontWeight: 800, color: COLORS.primary, textTransform: "uppercase", letterSpacing: 0.5, alignSelf: "center" }}>Target</span>
             <span style={{ fontFamily: FONTS.heading, fontSize: 15, fontWeight: 800, color: COLORS.primaryDark, lineHeight: 1 }}>{rmFormatMetric(data.metricValue)}</span>
             {data.metricUnit ? <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted }}>{data.metricUnit}</span> : null}
           </div>
