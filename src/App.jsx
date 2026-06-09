@@ -6824,6 +6824,11 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
   const [milestones, setMilestones] = useState(LIVE.milestones[projectId] || []);
   const [expenses, setExpenses] = useState(LIVE.expenses[projectId] || []);
   const [tab, setTab] = useState("overview");
+  const [showEditProject, setShowEditProject] = useState(false);
+  const onProjectSaved = async () => {
+    setShowEditProject(false);
+    if (store) store.setProjects(await fetchProjects());
+  };
 
   // Mirror local milestone/expense edits back to the global store so the
   // dashboard budget summary and project progress reflect them across menus.
@@ -7050,6 +7055,14 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
               {project.desc}
             </div>
           </div>
+          {(isOwnerLevel(user.role) || (user.role === ROLES.LEADER && user.unitId === project.unitId)) && (
+            <button onClick={() => setShowEditProject(true)} type="button" title="Edit project"
+              style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 13px",
+                background: "rgba(255,255,255,0.16)", color: COLORS.white, border: "1px solid rgba(255,255,255,0.35)",
+                borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+              <Icon name="edit" size={14} color={COLORS.white} /> Edit
+            </button>
+          )}
         </div>
 
         {/* Dual progress */}
@@ -7429,7 +7442,78 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
           </div>
         </Modal>
       )}
+
+      {showEditProject && (
+        <EditProjectModal project={project} onClose={() => setShowEditProject(false)} onSaved={onProjectSaved} />
+      )}
     </div>
+  );
+}
+
+// Form edit project (Owner/Admin/Leader unitnya) — pakai Modal seragam.
+function EditProjectModal({ project, onClose, onSaved }) {
+  const subUnitOptions = LIVE.subUnits.filter(s => s.unitId === project.unitId);
+  const [name, setName] = useState(project.name || "");
+  const [desc, setDesc] = useState(project.desc || "");
+  const [subUnitId, setSubUnitId] = useState(project.subUnitId || "");
+  const [budgetPlanned, setBudgetPlanned] = useState(project.budgetPlanned ? Number(project.budgetPlanned) : "");
+  const [startDate, setStartDate] = useState((project.startDate || "").slice(0, 10));
+  const [endDate, setEndDate] = useState((project.endDate || "").slice(0, 10));
+  const [busy, setBusy] = useState(false);
+
+  const save = async () => {
+    if (!name.trim()) { alert("Isi nama project"); return; }
+    if (!startDate || !endDate) { alert("Isi tanggal mulai & target selesai"); return; }
+    if (new Date(endDate) < new Date(startDate)) { alert("Target selesai tidak boleh lebih awal dari tanggal mulai"); return; }
+    setBusy(true);
+    try {
+      await updateProject(project.id, {
+        name: name.trim(), desc: desc.trim(), subUnitId: subUnitId || null,
+        budgetPlanned: Number(budgetPlanned) || 0, startDate, endDate,
+      });
+      onSaved();
+    } catch (e) { alert(e.message || "Gagal menyimpan project."); setBusy(false); }
+  };
+
+  return (
+    <Modal title="Edit Project" icon="project" onClose={onClose} maxWidth={560}
+      footer={<>
+        <button onClick={onClose} type="button" style={adminBtnStyle}>Batal</button>
+        <button onClick={save} type="button" disabled={busy} style={{ ...modalPrimaryBtn, opacity: busy ? 0.6 : 1 }}>{busy ? "Menyimpan…" : "Simpan"}</button>
+      </>}>
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>Nama Project <span style={{ color: COLORS.danger }}>*</span></label>
+        <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} autoFocus />
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>Deskripsi</label>
+        <textarea style={{ ...inputStyle, minHeight: 60, resize: "vertical", lineHeight: 1.4 }} value={desc} onChange={e => setDesc(e.target.value)} />
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>Sub Unit</label>
+        <select style={inputStyle} value={subUnitId} onChange={e => setSubUnitId(e.target.value)}>
+          <option value="">— Level Unit (tanpa sub unit) —</option>
+          {subUnitOptions.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+        <div>
+          <label style={labelStyle}>Tgl Mulai <span style={{ color: COLORS.danger }}>*</span></label>
+          <input type="date" style={inputStyle} value={startDate} onChange={e => setStartDate(e.target.value)} />
+        </div>
+        <div>
+          <label style={labelStyle}>Target Selesai <span style={{ color: COLORS.danger }}>*</span></label>
+          <input type="date" style={inputStyle} value={endDate} onChange={e => setEndDate(e.target.value)} />
+        </div>
+      </div>
+      <div>
+        <label style={labelStyle}>Estimasi Budget (Rp)</label>
+        <input inputMode="numeric" style={inputStyle}
+          value={budgetPlanned === "" ? "" : Number(budgetPlanned).toLocaleString("id-ID")}
+          onChange={e => { const raw = e.target.value.replace(/[^\d]/g, ""); setBudgetPlanned(raw === "" ? "" : Number(raw)); }}
+          placeholder="cth: 45.000.000" />
+      </div>
+    </Modal>
   );
 }
 
