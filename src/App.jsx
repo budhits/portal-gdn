@@ -10073,6 +10073,13 @@ function FormLibrary() {
     setShowBuilder(true);
   };
 
+  // Edit template (hanya untuk yang belum dipakai KPI) — pakai editId agar
+  // FormBuilder menyimpan via updateTemplate, bukan membuat baru.
+  const openEdit = (template) => {
+    setBuilderInit({ ...templateToBuilderData(template), name: template.name, editId: template.id });
+    setShowBuilder(true);
+  };
+
   return (
     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(260px, 300px) 1fr", gap: 14 }}>
       {/* List */}
@@ -10122,7 +10129,7 @@ function FormLibrary() {
       </Card>
 
       {/* Detail */}
-      {selected ? <FormTemplateDetail template={selected} onDuplicate={() => openDuplicate(selected)} /> : null}
+      {selected ? <FormTemplateDetail template={selected} onDuplicate={() => openDuplicate(selected)} onEdit={() => openEdit(selected)} /> : null}
 
       {/* Form Builder modal */}
       {showBuilder && (
@@ -10179,7 +10186,7 @@ function FormTemplateListItem({ template, isSelected, onClick }) {
   );
 }
 
-function FormTemplateDetail({ template, onDuplicate }) {
+function FormTemplateDetail({ template, onDuplicate, onEdit }) {
   const store = useDataStore();
   const manualFields = template.fields.filter(f => f.type !== "auto");
   const autoFields = template.fields.filter(f => f.type === "auto");
@@ -10215,16 +10222,12 @@ function FormTemplateDetail({ template, onDuplicate }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-          <button
-            onClick={onDuplicate}
-            type="button"
-            style={adminBtnStyle}
-          >Duplikat</button>
+          <button onClick={onDuplicate} type="button" style={adminBtnStyle}>Duplikat</button>
           {isUsed ? (
             <button
               type="button"
               disabled
-              title={`Tidak bisa dihapus — sudah dipakai di ${usageCount} KPI`}
+              title={`Terkunci — sudah dipakai di ${usageCount} KPI. Pakai Duplikat untuk membuat versi baru.`}
               style={{
                 ...adminBtnStyle,
                 color: COLORS.textLight,
@@ -10240,20 +10243,23 @@ function FormTemplateDetail({ template, onDuplicate }) {
               Terkunci
             </button>
           ) : (
-            <button
-              onClick={async () => {
-                if (!confirm(`Hapus template "${template.name}"?\n\nTemplate ini belum dipakai di KPI manapun, jadi aman dihapus.`)) return;
-                try {
-                  await deleteTemplate(template.id);
-                  if (store) store.setTemplates(await fetchTemplates());
-                  alert(`Template "${template.name}" dihapus dari database.`);
-                } catch (e) {
-                  alert(e.message || "Gagal menghapus template.");
-                }
-              }}
-              type="button"
-              style={adminBtnDanger}
-            >Hapus</button>
+            <>
+              <button onClick={onEdit} type="button" style={adminBtnStyle}>Edit</button>
+              <button
+                onClick={async () => {
+                  if (!confirm(`Hapus template "${template.name}"?\n\nTemplate ini belum dipakai di KPI manapun, jadi aman dihapus.`)) return;
+                  try {
+                    await deleteTemplate(template.id);
+                    if (store) store.setTemplates(await fetchTemplates());
+                    alert(`Template "${template.name}" dihapus dari database.`);
+                  } catch (e) {
+                    alert(e.message || "Gagal menghapus template.");
+                  }
+                }}
+                type="button"
+                style={adminBtnDanger}
+              >Hapus</button>
+            </>
           )}
         </div>
       </div>

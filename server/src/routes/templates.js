@@ -91,6 +91,13 @@ router.patch("/:id", requireRole("owner"), async (req, res, next) => {
     const exist = await query("SELECT 1 FROM form_templates WHERE id = $1", [req.params.id]);
     if (exist.rowCount === 0) return res.status(404).json({ error: "Template tidak ditemukan." });
 
+    // Kunci: template yang sudah dipakai KPI tidak boleh diedit (skor/margin KPI
+    // lama dihitung live dari template). Gunakan Duplikat untuk membuat versi baru.
+    const usedPatch = await query("SELECT COUNT(*)::int AS n FROM kpi_submissions WHERE template_id = $1", [req.params.id]);
+    if (usedPatch.rows[0].n > 0) {
+      return res.status(409).json({ error: `Template terkunci — sudah dipakai di ${usedPatch.rows[0].n} KPI. Gunakan "Duplikat" untuk membuat versi baru.` });
+    }
+
     await withTransaction(async (client) => {
       const sets = [];
       const params = [];
