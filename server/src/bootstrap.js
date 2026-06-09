@@ -105,6 +105,7 @@ async function runMigrations() {
   await pool.query("ALTER TABLE roadmap_nodes ADD COLUMN IF NOT EXISTS description TEXT");
   await pool.query("ALTER TABLE roadmap_nodes ADD COLUMN IF NOT EXISTS metric_value DOUBLE PRECISION");
   await pool.query("ALTER TABLE roadmap_nodes ADD COLUMN IF NOT EXISTS metric_unit TEXT");
+  await pool.query("ALTER TABLE roadmap_nodes ADD COLUMN IF NOT EXISTS metric_label TEXT");
   await pool.query("ALTER TABLE roadmap_edges ADD COLUMN IF NOT EXISTS canvas_id TEXT");
 
   // 4. Kolom formula_expr untuk template buatan user (formula custom).

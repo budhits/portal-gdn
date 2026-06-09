@@ -11646,6 +11646,13 @@ function RoadmapNodeCard({ data }) {
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             {data.targetMonth ? <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.goldDeep, background: "#F6EEDD", padding: "3px 8px", borderRadius: 99 }}>{data.targetMonth}</span> : null}
             {data.canEdit && (
+              <button className="nodrag" title="Tambah anak kanvas (project lebih kecil) di bawah node ini"
+                onClick={(e) => { e.stopPropagation(); data.onAddCanvas && data.onAddCanvas(data.nodeId); }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 3, lineHeight: 0, borderRadius: 6, display: "inline-flex" }}>
+                <Icon name="plus" size={14} color={COLORS.textLight} />
+              </button>
+            )}
+            {data.canEdit && (
               <button className="nodrag" title="Hapus node ini"
                 onClick={(e) => { e.stopPropagation(); data.onDelete && data.onDelete(data.nodeId, data.label); }}
                 style={{ background: "transparent", border: "none", cursor: "pointer", padding: 3, lineHeight: 0, borderRadius: 6, display: "inline-flex" }}>
@@ -11658,7 +11665,7 @@ function RoadmapNodeCard({ data }) {
         {data.description ? <div style={{ fontSize: 11, color: COLORS.textMuted, lineHeight: 1.35, margin: "0 0 8px" }}>{data.description}</div> : <div style={{ height: 4 }} />}
         {data.showMetric && (data.metricValue !== null && data.metricValue !== undefined && data.metricValue !== "") ? (
           <div style={{ display: "flex", alignItems: "baseline", gap: 5, margin: "0 0 9px", padding: "6px 9px", background: COLORS.infoBg, border: `1px solid ${COLORS.border}`, borderRadius: 8 }}>
-            <span style={{ fontSize: 9, fontWeight: 800, color: COLORS.primary, textTransform: "uppercase", letterSpacing: 0.5, alignSelf: "center" }}>Target</span>
+            <span style={{ fontSize: 9, fontWeight: 800, color: COLORS.primary, textTransform: "uppercase", letterSpacing: 0.5, alignSelf: "center" }}>{data.metricLabel || "Target"}</span>
             <span style={{ fontFamily: FONTS.heading, fontSize: 15, fontWeight: 800, color: COLORS.primaryDark, lineHeight: 1 }}>{rmFormatMetric(data.metricValue)}</span>
             {data.metricUnit ? <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted }}>{data.metricUnit}</span> : null}
           </div>
@@ -11678,14 +11685,6 @@ function RoadmapNodeCard({ data }) {
               <div style={{ width: `${pct}%`, height: "100%", background: st.color, borderRadius: 99 }} />
             </div>
           </div>
-        )}
-        {data.canEdit && (
-          <button className="nodrag"
-            onClick={(e) => { e.stopPropagation(); data.onAddCanvas && data.onAddCanvas(data.nodeId); }}
-            title="Buat anak kanvas (project lebih kecil) di bawah node ini"
-            style={{ marginTop: 10, width: "100%", padding: "6px 9px", background: COLORS.bg, border: `1.5px dashed ${COLORS.textLight}`, color: COLORS.textMuted, borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-            ⤓ + Anak kanvas
-          </button>
         )}
       </div>
       <Handle type="source" position={Position.Right} style={{ background: COLORS.primary, width: 9, height: 9 }} />
@@ -11745,7 +11744,7 @@ function RoadmapPage({ user }) {
       picInitial: pic?.name?.charAt(0) || null, projectName: proj?.name || null,
       msDone: ms.filter(m => m.done).length, msTotal: ms.length,
       nodeId: n.id, onAddCanvas: addCanvas, onDelete: deleteNode, canEdit,
-      metricValue: n.metricValue, metricUnit: n.metricUnit, showMetric: canSeeMetric,
+      metricValue: n.metricValue, metricUnit: n.metricUnit, metricLabel: n.metricLabel, showMetric: canSeeMetric,
     };
   };
 
@@ -11932,6 +11931,7 @@ function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
   const [description, setDescription] = useState(node.description || "");
   const [metricValue, setMetricValue] = useState(node.metricValue === null || node.metricValue === undefined ? "" : String(node.metricValue));
   const [metricUnit, setMetricUnit] = useState(node.metricUnit || "");
+  const [metricLabel, setMetricLabel] = useState(node.metricLabel || "");
   const [status, setStatus] = useState(node.status || "planned");
   const [targetMonth, setTargetMonth] = useState(node.targetMonth || "");
   const [picUserId, setPicUserId] = useState(node.picUserId || "");
@@ -11968,13 +11968,14 @@ function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
           <div><label style={lbl}>Nama inisiatif</label><input style={inp} value={label} onChange={e => setLabel(e.target.value)} disabled={!canEdit} autoFocus /></div>
           <div><label style={lbl}>Deskripsi <span style={{ fontWeight: 500, color: COLORS.textLight }}>(opsional)</span></label>
             <textarea style={{ ...inp, minHeight: 60, resize: "vertical", lineHeight: 1.4 }} value={description} onChange={e => setDescription(e.target.value)} placeholder="Keterangan singkat inisiatif ini…" disabled={!canEdit} /></div>
-          <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 10 }}>
+            <div><label style={lbl}>Label</label><input style={inp} value={metricLabel} onChange={e => setMetricLabel(e.target.value)} placeholder="Target" disabled={!canEdit} /></div>
             <div><label style={lbl}>Angka <span style={{ fontWeight: 500, color: COLORS.textLight }}>(opsional)</span></label>
               <input style={inp} type="number" inputMode="numeric" value={metricValue} onChange={e => setMetricValue(e.target.value)} placeholder="cth: 1000000" disabled={!canEdit} />
-              {metricValue !== "" && !isNaN(Number(metricValue)) ? <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 4 }}>{Number(metricValue).toLocaleString("id-ID")}{metricUnit ? ` ${metricUnit}` : ""}</div> : null}
             </div>
             <div><label style={lbl}>Satuan</label><input style={inp} value={metricUnit} onChange={e => setMetricUnit(e.target.value)} placeholder="cth: ekor" disabled={!canEdit} /></div>
           </div>
+          {metricValue !== "" && !isNaN(Number(metricValue)) ? <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: -4 }}><b style={{ color: COLORS.primary, textTransform: "uppercase", fontSize: 10 }}>{metricLabel || "Target"}</b> {Number(metricValue).toLocaleString("id-ID")}{metricUnit ? ` ${metricUnit}` : ""}</div> : null}
           <div style={{ fontSize: 11, color: COLORS.textLight, marginTop: -4 }}>🔒 Angka &amp; satuan hanya terlihat oleh Owner, Admin, Leader, Finance &amp; HR — tidak untuk PIC.</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div><label style={lbl}>Status {hasMs && <span style={{ fontWeight: 500, color: COLORS.textLight }}>(otomatis)</span>}</label>
@@ -12023,7 +12024,7 @@ function RoadmapNodeEditor({ node, canEdit, onSave, onDelete, onClose }) {
             <button onClick={onDelete} type="button" style={{ padding: "9px 14px", background: COLORS.white, color: COLORS.danger, border: `1px solid ${COLORS.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Hapus</button>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={onClose} type="button" style={adminBtnStyle}>Tutup</button>
-              <button onClick={() => onSave({ label: label.trim(), description: description.trim(), metricValue: metricValue === "" ? "" : Number(metricValue), metricUnit: metricUnit.trim(), status, targetMonth, picUserId, projectId })} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan</button>
+              <button onClick={() => onSave({ label: label.trim(), description: description.trim(), metricValue: metricValue === "" ? "" : Number(metricValue), metricUnit: metricUnit.trim(), metricLabel: metricLabel.trim(), status, targetMonth, picUserId, projectId })} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan</button>
             </div>
           </div>
         )}
