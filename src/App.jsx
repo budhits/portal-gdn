@@ -58,7 +58,7 @@ import { fetchAllCoreData, indexById, fetchUsers, createUser, updateUser, delete
   fetchProjects, fetchMilestones, fetchExpenses, groupByProject,
   createProject, updateProject, deleteProject,
   createMilestone, updateMilestone, deleteMilestone as apiDeleteMilestone,
-  createExpense,
+  createExpense, updateExpense, deleteExpense as apiDeleteExpense,
   fetchRoadmap, createRoadmapNode, updateRoadmapNode, deleteRoadmapNode,
   createRoadmapEdge, deleteRoadmapEdge,
   addRoadmapMilestone, updateRoadmapMilestone, deleteRoadmapMilestone,
@@ -6845,6 +6845,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
 
   // ─── Expense / Realisasi rinci (inline, Level A in-session) ───
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState(null); // null = mode tambah
   const [exName, setExName] = useState("");
   const [exAmount, setExAmount] = useState("");
   const [exDate, setExDate] = useState("");
@@ -6853,7 +6854,19 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
 
   const openExpenseForm = (presetMsId = "") => {
     if (!canEdit) { alert("Anda tidak punya akses untuk input realisasi"); return; }
+    setEditingExpenseId(null);
     setExName(""); setExAmount(""); setExDate(""); setExMilestoneId(presetMsId); setExHasReceipt(false);
+    setShowExpenseForm(true);
+  };
+
+  const openEditExpense = (ex) => {
+    if (!canEdit) { alert("Anda tidak punya akses untuk mengubah realisasi"); return; }
+    setEditingExpenseId(ex.id);
+    setExName(ex.name || "");
+    setExAmount(ex.amount === undefined || ex.amount === null ? "" : Number(ex.amount));
+    setExDate(ex.date || "");
+    setExMilestoneId(ex.milestoneId || "");
+    setExHasReceipt(!!ex.hasReceipt);
     setShowExpenseForm(true);
   };
 
@@ -6862,23 +6875,41 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
     if (!exAmount)       { alert("Isi jumlah realisasi"); return; }
     if (!exDate)         { alert("Isi tanggal"); return; }
     if (!exHasReceipt)   { alert("Bukti/nota wajib dikonfirmasi (centang 'Bukti terlampir')"); return; }
-    let created;
+    const body = {
+      projectId,
+      milestoneId: exMilestoneId || null,
+      name: exName.trim(),
+      amount: Number(exAmount),
+      date: exDate,
+      hasReceipt: true,
+    };
     try {
-      created = await createExpense({
-        projectId,
-        milestoneId: exMilestoneId || null,
-        name: exName.trim(),
-        amount: Number(exAmount),
-        date: exDate,
-        hasReceipt: true,
-      });
+      if (editingExpenseId) {
+        const updated = await updateExpense(editingExpenseId, body);
+        setExpenses(prev => prev.map(e => (e.id === editingExpenseId ? updated : e)));
+        alert(`Realisasi "${updated.name}" diperbarui.`);
+      } else {
+        const created = await createExpense(body);
+        setExpenses(prev => [...prev, created]);
+        alert(`Realisasi "${created.name}" sebesar ${formatRupiahFull(created.amount)} dicatat.`);
+      }
     } catch (e) {
-      alert(e.message || "Gagal mencatat realisasi.");
+      alert(e.message || "Gagal menyimpan realisasi.");
       return;
     }
-    setExpenses(prev => [...prev, created]);
-    alert(`Realisasi "${created.name}" sebesar ${formatRupiahFull(created.amount)} dicatat.`);
     setShowExpenseForm(false);
+    setEditingExpenseId(null);
+  };
+
+  const removeExpense = async (ex) => {
+    if (!canEdit) { alert("Anda tidak punya akses untuk menghapus realisasi"); return; }
+    if (!confirm(`Hapus realisasi "${ex.name}" (${formatRupiah(ex.amount)})?`)) return;
+    try {
+      await apiDeleteExpense(ex.id);
+      setExpenses(prev => prev.filter(e => e.id !== ex.id));
+    } catch (e) {
+      alert(e.message || "Gagal menghapus realisasi.");
+    }
   };
 
   return (
@@ -7263,7 +7294,8 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
             </div>
           ) : (
             expenses.map((ex, i) => (
-              <ExpenseRow key={ex.id} expense={ex} milestones={milestones} isLast={i === expenses.length - 1} />
+              <ExpenseRow key={ex.id} expense={ex} milestones={milestones} isLast={i === expenses.length - 1}
+                canEdit={canEdit} onEdit={() => openEditExpense(ex)} onDelete={() => removeExpense(ex)} />
             ))
           )}
         </Card>
@@ -7286,7 +7318,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
           >
             <div style={{ padding: "16px 20px", borderBottom: `1px solid ${COLORS.bgMuted}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ fontFamily: FONTS.heading, fontSize: 16, fontWeight: 800, color: COLORS.dark, display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <Icon name="money" size={17} color={COLORS.secondary} /> Update OpEx (Realisasi Budget)
+                <Icon name="money" size={17} color={COLORS.secondary} /> {editingExpenseId ? "Edit Realisasi Budget" : "Update OpEx (Realisasi Budget)"}
               </div>
               <button onClick={() => setShowExpenseForm(false)} type="button" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}>
                 <Icon name="x" size={18} color={COLORS.textMuted} />
@@ -7333,7 +7365,7 @@ function ProjectDetailPage({ user, projectId, onBack, onAddExpense }) {
             </div>
             <div style={{ padding: "14px 20px", borderTop: `1px solid ${COLORS.bgMuted}`, background: COLORS.bg, display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button onClick={() => setShowExpenseForm(false)} type="button" style={adminBtnStyle}>Batal</button>
-              <button onClick={saveExpense} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Simpan Realisasi</button>
+              <button onClick={saveExpense} type="button" style={{ padding: "9px 20px", background: COLORS.primary, color: COLORS.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{editingExpenseId ? "Simpan Perubahan" : "Simpan Realisasi"}</button>
             </div>
           </div>
         </div>
@@ -7520,8 +7552,9 @@ function MilestoneRow({ milestone, spent = 0, isLast, canEdit, onToggle, onEdit,
   );
 }
 
-function ExpenseRow({ expense, milestones, isLast }) {
+function ExpenseRow({ expense, milestones, isLast, canEdit, onEdit, onDelete }) {
   const ms = milestones.find(m => m.id === expense.milestoneId);
+  const iconBtn = { background: "transparent", border: "none", cursor: "pointer", padding: 5, lineHeight: 0, borderRadius: 6, display: "inline-flex" };
 
   return (
     <div style={{
@@ -7538,7 +7571,7 @@ function ExpenseRow({ expense, milestones, isLast }) {
         flexShrink: 0,
       }}><Icon name="money" size={18} color={COLORS.warning} /></div>
 
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.dark }}>{expense.name}</div>
         <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>
           {formatDate(expense.date)}
@@ -7547,9 +7580,20 @@ function ExpenseRow({ expense, milestones, isLast }) {
         </div>
       </div>
 
-      <div style={{ fontSize: 15, fontWeight: 800, color: COLORS.dark }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: COLORS.dark, whiteSpace: "nowrap" }}>
         {formatRupiah(expense.amount)}
       </div>
+
+      {canEdit && (
+        <div style={{ display: "inline-flex", gap: 2, flexShrink: 0 }}>
+          <button type="button" style={iconBtn} title="Edit realisasi" onClick={onEdit}>
+            <Icon name="edit" size={15} color={COLORS.textMuted} />
+          </button>
+          <button type="button" style={iconBtn} title="Hapus realisasi" onClick={onDelete}>
+            <Icon name="trash" size={15} color={COLORS.danger} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

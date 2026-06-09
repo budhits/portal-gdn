@@ -25,6 +25,8 @@ export const createMilestone = (body)     => apiFetch("/milestones", { method: "
 export const updateMilestone = (id, body) => apiFetch(`/milestones/${id}`, { method: "PATCH", body });
 export const deleteMilestone = (id)       => apiFetch(`/milestones/${id}`, { method: "DELETE" });
 export const createExpense   = (body)     => apiFetch("/expenses", { method: "POST", body });
+export const updateExpense   = (id, body) => apiFetch(`/expenses/${id}`, { method: "PATCH", body });
+export const deleteExpense   = (id)       => apiFetch(`/expenses/${id}`, { method: "DELETE" });
 
 // ── Mutasi user (Owner) ──────────────────────────────────────────────────────
 export const createUser = (body)     => apiFetch("/users", { method: "POST", body });
