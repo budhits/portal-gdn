@@ -4748,7 +4748,7 @@ function KPIHistoryPage({ user, onSelectSubmission, onNewKPI }) {
           Performa & riwayat semua submission KPI ({submissions.length} total)
         </p>
         </div>
-        {isOwnerLevel(user.role) && onNewKPI && (
+        {(isOwnerLevel(user.role) || user.role === ROLES.LEADER) && onNewKPI && (
           <button onClick={onNewKPI} type="button" style={{
             padding: "9px 16px", background: COLORS.primary, color: COLORS.white, border: "none",
             borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
@@ -5630,10 +5630,13 @@ function SubmitKPIForm({ user, context, onBack }) {
   }, [template, values]);
 
   if (!subUnit || !parentUnit) {
-    // Admin/Owner: tampilkan pemilih sub-unit (mereka tak terikat satu sub-unit).
-    if (isOwnerLevel(user.role)) {
+    // Admin/Owner & Leader: tampilkan pemilih sub-unit (tak terikat satu sub-unit).
+    // Leader hanya melihat sub-unit di unit-nya sendiri; Owner/Admin semua unit.
+    if (isOwnerLevel(user.role) || user.role === ROLES.LEADER) {
       const subsByUnit = {};
-      LIVE.subUnits.forEach(s => { (subsByUnit[s.unitId] = subsByUnit[s.unitId] || []).push(s); });
+      LIVE.subUnits
+        .filter(s => user.role === ROLES.LEADER ? s.unitId === user.unitId : true)
+        .forEach(s => { (subsByUnit[s.unitId] = subsByUnit[s.unitId] || []).push(s); });
       return (
         <FormPageWrapper title="Ajukan KPI Baru" subtitle="Pilih sub-unit yang KPI-nya akan diajukan" onBack={onBack}>
           <Card style={{ padding: "16px 18px" }}>
