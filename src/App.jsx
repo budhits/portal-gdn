@@ -4424,21 +4424,37 @@ const acNum = (c) => { const n = parseInt(String(c).replace(/[^\d-]/g, ""), 10);
 
 function UnitDailyMarginImport({ unit, period, onClose, onDone }) {
   const store = useDataStore();
-  const { year, monthIdx } = parsePeriodLabel(period.label);
+  // Pakai period.key ("YYYY-MM") yang andal, bukan label singkat ("Jun 2026")
+  // yang tak dikenali parsePeriodLabel (hanya nama bulan penuh) → salah ke Mei.
+  const [year, monthIdx] = (() => {
+    const [y, m] = String(period.key || "").split("-");
+    const yy = parseInt(y, 10), mm = parseInt(m, 10);
+    if (yy && mm) return [yy, mm - 1];
+    const p = parsePeriodLabel(period.label); return [p.year, p.monthIdx];
+  })();
   const totalDays = daysInMonth(year, monthIdx);
+
+  // Kunci bulan "YYYY-MM" dari label periode KPI — kenali nama bulan singkat
+  // (MONTHS_ID) maupun penuh (MONTH_NAMES_ID); null bila bukan bulan (mis. siklus).
+  const monthKeyOf = (label) => {
+    const parts = (label || "").trim().split(/\s+/);
+    if (parts.length < 2) return null;
+    const tok = parts[0].toLowerCase();
+    let mi = MONTH_NAMES_ID.findIndex(m => m.toLowerCase() === tok);
+    if (mi < 0) mi = MONTHS_ID.findIndex(m => m.toLowerCase() === tok);
+    const y = parseInt(parts[parts.length - 1], 10);
+    if (mi < 0 || !y) return null;
+    return `${y}-${String(mi + 1).padStart(2, "0")}`;
+  };
+  const selectedKey = `${year}-${String(monthIdx + 1).padStart(2, "0")}`;
 
   // KPI margin harian aktif (belum closing) di unit ini untuk periode tsb.
   // Hanya periode bulanan asli (token pertama = nama bulan) — KPI siklus/lainnya
-  // dilewati agar tidak salah dimasukkan ke bulan ini (parsePeriodLabel default Mei).
-  const isMonthlyLabel = (label) => {
-    const first = (label || "").trim().split(/\s+/)[0] || "";
-    return MONTH_NAMES_ID.some(m => m.toLowerCase() === first.toLowerCase());
-  };
+  // dilewati agar tidak salah dimasukkan ke bulan ini.
   const targets = useMemo(() => {
     return LIVE.submissions
       .filter(s => s.unitId === unit.id && s.status !== "closed")
-      .filter(s => isMonthlyLabel(s.period))
-      .filter(s => { const p = parsePeriodLabel(s.period); return p.year === year && p.monthIdx === monthIdx; })
+      .filter(s => monthKeyOf(s.period) === selectedKey)
       .filter(s => { const t = getFormTemplate(s.templateId); return t && t.fields.some(f => f.isMargin); })
       .map(s => {
         const su = LIVE.subUnits.find(x => x.id === s.subUnitId);
